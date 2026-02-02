@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake Quest</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="game-container">
+        <!-- Top UI Bar -->
+        <div class="ui-bar">
+            <div class="score-display">
+                <span class="label">Score</span>
+                <span id="score">0</span>
+            </div>
+            <div class="streak-display">
+                <span class="label">Streak</span>
+                <span id="streak">1x</span>
+            </div>
+            <div class="highscore-display">
+                <span class="label">High Score</span>
+                <span id="highscore">0</span>
+            </div>
+        </div>
+
+        <!-- Active Buff Indicator -->
+        <div id="buff-indicator" class="buff-indicator hidden">
+            <span id="buff-name"></span>
+            <span id="buff-timer"></span>
+        </div>
+
+        <!-- Game Canvas Container -->
+        <div class="canvas-container">
+            <canvas id="gameCanvas" width="600" height="600"></canvas>
+
+            <!-- Start Screen Overlay -->
+            <div id="start-screen" class="overlay start-overlay">
+                <h1>Snake Quest</h1>
+                <p class="instructions">Use Arrow Keys or WASD to move</p>
+                <p class="instructions">P or Escape to pause</p>
+
+                <!-- Game Mode Selection -->
+                <div class="mode-selection">
+                    <h3>Select Game Mode</h3>
+                    <div class="mode-buttons">
+                        <button class="mode-btn active" data-mode="classic">
+                            <span class="mode-name">Classic</span>
+                            <span class="mode-desc">Pure snake gameplay, no extras</span>
+                        </button>
+                        <button class="mode-btn" data-mode="full">
+                            <span class="mode-name">Full Experience</span>
+                            <span class="mode-desc">All enhancements enabled</span>
+                        </button>
+                        <button class="mode-btn" data-mode="custom">
+                            <span class="mode-name">Custom</span>
+                            <span class="mode-desc">Choose your own options</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Custom Mode Options (hidden by default) -->
+                <div id="custom-options" class="custom-options hidden">
+                    <div class="option-row">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="toggle-obstacles">
+                            <span class="toggle-text">Obstacles</span>
+                        </label>
+                        <span class="option-desc">Gray blocks that end the game</span>
+                    </div>
+                    <div class="option-row">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="toggle-bridges">
+                            <span class="toggle-text">Bridges</span>
+                        </label>
+                        <span class="option-desc">Pass under to cross your own body</span>
+                    </div>
+                    <div class="option-row">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="toggle-poison">
+                            <span class="toggle-text">Poison Food</span>
+                        </label>
+                        <span class="option-desc">Purple food that shrinks you</span>
+                    </div>
+                    <div class="option-row">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="toggle-powerups">
+                            <span class="toggle-text">Power-ups</span>
+                        </label>
+                        <span class="option-desc">Golden berries with special effects</span>
+                    </div>
+                    <div class="option-row">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="toggle-wallwrap">
+                            <span class="toggle-text">Wall Wrap</span>
+                        </label>
+                        <span class="option-desc">Wrap around instead of dying at walls</span>
+                    </div>
+                </div>
+
+                <p class="start-prompt">Press Enter to Start</p>
+            </div>
+
+            <!-- Pause Screen Overlay -->
+            <div id="pause-screen" class="overlay hidden">
+                <h2>Paused</h2>
+                <p id="countdown" class="countdown hidden"></p>
+                <p class="pause-prompt">Press P or Escape to Resume</p>
+            </div>
+
+            <!-- Game Over Screen Overlay -->
+            <div id="gameover-screen" class="overlay hidden">
+                <h2>Game Over</h2>
+                <p class="final-score">Final Score: <span id="final-score">0</span></p>
+                <p class="best-streak">Best Streak: <span id="best-streak">1x</span></p>
+                <p class="restart-prompt">Press Enter to Restart</p>
+                <button id="back-to-menu" class="menu-btn">Back to Menu</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
