@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Starfield - Particle System</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <canvas id="starfield"></canvas>
+
+    <div class="controls">
+        <h2>Starfield Controls</h2>
+
+        <div class="mode-buttons">
+            <button class="mode-btn active" data-mode="normal">Normal</button>
+            <button class="mode-btn" data-mode="fountain">Fountain</button>
+            <button class="mode-btn" data-mode="donut">Donut</button>
+            <button class="mode-btn" data-mode="spiral">Spiral</button>
+        </div>
+
+        <div class="slider-group">
+            <label for="speed">Star Speed: <span id="speed-value">100%</span></label>
+            <input type="range" id="speed" min="0" max="200" value="100">
+        </div>
+
+        <div class="slider-group">
+            <label for="count">Number of Stars: <span id="count-value">200</span></label>
+            <input type="range" id="count" min="50" max="500" value="200">
+        </div>
+
+        <div class="slider-group">
+            <label for="trail">Trail Length: <span id="trail-value">50%</span></label>
+            <input type="range" id="trail" min="0" max="100" value="50">
+        </div>
+
+        <div class="slider-group">
+            <label for="size">Star Size: <span id="size-value">3px</span></label>
+            <input type="range" id="size" min="1" max="10" value="3">
+        </div>
+
+        <div class="slider-group">
+            <label for="intensity">Color Intensity: <span id="intensity-value">80%</span></label>
+            <input type="range" id="intensity" min="0" max="100" value="80">
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
