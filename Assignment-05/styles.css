@@ -1,0 +1,339 @@
+/* === Reset & Base === */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: #111;
+  color: #e8e8e8;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* === Biome Backgrounds === */
+.biome-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.4;
+  filter: blur(12px);
+  transition: opacity 0.6s ease;
+}
+
+.biome-jungle {
+  background: linear-gradient(135deg, #0a3d0a 0%, #1a5c1a 30%, #0d4d1a 60%, #072e07 100%);
+}
+
+.biome-savannah {
+  background: linear-gradient(135deg, #c4a035 0%, #d4b84a 30%, #a68b2e 60%, #8a7424 100%);
+}
+
+.biome-underwater {
+  background: linear-gradient(135deg, #0a2a5e 0%, #0e4d6e 30%, #12607a 60%, #083050 100%);
+}
+
+.biome-sunset {
+  background: linear-gradient(135deg, #8b3a1a 0%, #c25e20 30%, #a04010 50%, #6b2080 100%);
+}
+
+.biome-desert {
+  background: linear-gradient(135deg, #c2a060 0%, #a88945 30%, #8b7035 60%, #6e5828 100%);
+}
+
+.biome-microscopic {
+  background: linear-gradient(135deg, #2a1050 0%, #3c2070 30%, #502888 50%, #6030a0 80%, #803898 100%);
+}
+
+.biome-bg.fade-out {
+  opacity: 0;
+}
+
+.biome-bg.fade-in {
+  opacity: 0.4;
+}
+
+/* === App Container === */
+.app-container {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30px 20px 40px;
+  min-height: 100vh;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 300;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+}
+
+.description {
+  font-size: 0.95rem;
+  color: #bbb;
+  font-style: italic;
+  margin-bottom: 28px;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.4);
+  text-align: center;
+}
+
+/* === Main Layout === */
+.main-layout {
+  display: flex;
+  gap: 28px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* === Canvas === */
+.canvas-wrap {
+  flex-shrink: 0;
+}
+
+#canvas {
+  display: block;
+  width: 512px;
+  height: 512px;
+  border-radius: 6px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5), 0 0 60px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: crosshair;
+}
+
+/* === Controls Panel === */
+.controls-panel {
+  background: rgba(15, 15, 20, 0.75);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 22px;
+  width: 350px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.control-section h2 {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #888;
+  margin-bottom: 10px;
+}
+
+/* === Buttons: shared === */
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+/* === Preset Buttons === */
+.preset-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.preset-btn {
+  background: rgba(255, 255, 255, 0.06);
+  color: #ccc;
+  padding: 10px 6px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.preset-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.preset-btn.active {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
+}
+
+/* === Color Scheme Buttons === */
+.color-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+
+.color-btn {
+  background: rgba(255, 255, 255, 0.06);
+  color: #ccc;
+  padding: 8px 4px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.color-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.color-btn.active {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+/* === Parameter Space === */
+.param-space-wrap {
+  position: relative;
+}
+
+#param-space {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: crosshair;
+}
+
+.axis-label {
+  position: absolute;
+  font-size: 0.65rem;
+  color: #777;
+  letter-spacing: 0.04em;
+}
+
+.axis-x {
+  bottom: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.axis-y {
+  top: 50%;
+  left: -8px;
+  transform: translateY(-50%) rotate(-90deg);
+  transform-origin: center;
+  white-space: nowrap;
+}
+
+/* === Sliders === */
+.slider-group {
+  margin-bottom: 10px;
+}
+
+.slider-group:last-child {
+  margin-bottom: 0;
+}
+
+.slider-group label {
+  display: block;
+  font-size: 0.72rem;
+  color: #999;
+  margin-bottom: 4px;
+}
+
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.slider-row input[type="range"] {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 2px;
+  outline: none;
+}
+
+.slider-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #ccc;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s;
+}
+
+.slider-row input[type="range"]::-webkit-slider-thumb:hover {
+  background: #fff;
+}
+
+.slider-row input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #ccc;
+  cursor: pointer;
+  border: none;
+}
+
+.slider-value {
+  font-size: 0.8rem;
+  font-family: 'SF Mono', 'Consolas', monospace;
+  color: #bbb;
+  min-width: 42px;
+  text-align: right;
+}
+
+/* === Action Buttons === */
+.action-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+
+.action-btn {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ccc;
+  padding: 10px 6px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.action-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+/* === Responsive === */
+@media (max-width: 920px) {
+  .main-layout {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  #canvas {
+    width: min(512px, 90vw);
+    height: min(512px, 90vw);
+  }
+
+  .controls-panel {
+    width: min(512px, 90vw);
+  }
+
+  .preset-grid {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}

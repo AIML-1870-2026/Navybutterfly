@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Boids Simulation - Emergent Behavior Explorer</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Orbitron:wght@400;700&family=Bangers&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+
+  <!-- p5.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="theme-minimal">
+
+  <!-- ========== HEADER ========== -->
+  <header class="header">
+    <div class="header-left">
+      <button class="panel-toggle" id="panel-toggle" aria-label="Toggle control panel">&#9776;</button>
+      <span class="header-title">BOIDS SIMULATION</span>
+    </div>
+    <div class="header-right">
+      <select id="theme-select" aria-label="Visual theme">
+        <option value="minimal">Minimal</option>
+        <option value="neon">Neon</option>
+        <option value="nature">Nature</option>
+        <option value="comic">Comic Book</option>
+        <option value="digital">Digital</option>
+      </select>
+      <button class="help-btn" id="help-btn" aria-label="Help">?</button>
+    </div>
+  </header>
+
+  <!-- ========== MAIN LAYOUT ========== -->
+  <div class="main-container">
+
+    <!-- ===== SIDE PANEL ===== -->
+    <aside class="side-panel open" id="side-panel">
+
+      <!-- CONTROLS -->
+      <div class="panel-section">
+        <div class="section-header">Controls</div>
+
+        <div class="control-row">
+          <label data-tooltip="Avoid crowding — higher = more personal space">Separation</label>
+          <input type="range" id="separation" min="0" max="5" step="0.1" value="1.5" aria-label="Separation weight">
+          <span class="control-value" id="separation-val">1.5</span>
+        </div>
+
+        <div class="control-row">
+          <label data-tooltip="Match neighbors' direction — higher = smoother flocking">Alignment</label>
+          <input type="range" id="alignment" min="0" max="5" step="0.1" value="1.0" aria-label="Alignment weight">
+          <span class="control-value" id="alignment-val">1.0</span>
+        </div>
+
+        <div class="control-row">
+          <label data-tooltip="Stay with the group — higher = tighter clusters">Cohesion</label>
+          <input type="range" id="cohesion" min="0" max="5" step="0.1" value="1.0" aria-label="Cohesion weight">
+          <span class="control-value" id="cohesion-val">1.0</span>
+        </div>
+
+        <div class="control-row">
+          <label data-tooltip="How far boids can 'see' neighbors">Radius</label>
+          <input type="range" id="neighbor-radius" min="20" max="200" step="5" value="80" aria-label="Neighbor radius">
+          <span class="control-value" id="neighbor-radius-val">80</span>
+        </div>
+
+        <div class="control-row">
+          <label data-tooltip="Maximum velocity — higher = faster, more chaotic">Max Speed</label>
+          <input type="range" id="max-speed" min="1" max="10" step="0.5" value="4" aria-label="Max speed">
+          <span class="control-value" id="max-speed-val">4.0</span>
+        </div>
+
+        <div class="control-row">
+          <label data-tooltip="Number of boids in the simulation">Boid Count</label>
+          <input type="range" id="boid-count" min="50" max="1000" step="50" value="200" aria-label="Boid count">
+          <span class="control-value" id="boid-count-val">200</span>
+        </div>
+      </div>
+
+      <!-- PRESETS -->
+      <div class="panel-section">
+        <div class="section-header">Presets</div>
+        <div class="preset-row">
+          <button class="preset-btn" id="preset-schooling" aria-label="Schooling preset">Schooling</button>
+          <button class="preset-btn" id="preset-chaotic" aria-label="Chaotic swarm preset">Chaotic</button>
+          <button class="preset-btn" id="preset-tight" aria-label="Tight cluster preset">Tight Cluster</button>
+        </div>
+      </div>
+
+      <!-- MODE -->
+      <div class="panel-section">
+        <div class="section-header">Mode</div>
+        <select class="mode-select" id="mode-select" aria-label="Simulation mode">
+          <option value="normal">Normal</option>
+          <option value="predator">Predator</option>
+          <option value="painter">Painter</option>
+          <option value="evolution">Evolution</option>
+          <option value="sound">Sound Reactive</option>
+        </select>
+
+        <!-- Predator Mode Panel -->
+        <div class="mode-panel" id="mode-predator">
+          <div class="control-row">
+            <label>Predator Radius</label>
+            <input type="range" id="predator-radius" min="50" max="300" step="10" value="150" aria-label="Predator radius">
+            <span class="control-value" id="predator-radius-val">150</span>
+          </div>
+          <div class="checkbox-row">
+            <input type="checkbox" id="predator-follow" aria-label="Predator follows mouse with delay">
+            <label for="predator-follow">Hunting mode (follows with delay)</label>
+          </div>
+          <div class="checkbox-row">
+            <input type="checkbox" id="predator-fear-trail" checked aria-label="Enable fear trail">
+            <label for="predator-fear-trail">Fear trail</label>
+          </div>
+          <div class="kill-counter">Kills: <span id="kill-count">0</span></div>
+        </div>
+
+        <!-- Painter Mode Panel -->
+        <div class="mode-panel" id="mode-painter">
+          <div class="control-row">
+            <label>Obstacle Size</label>
+            <input type="range" id="obstacle-radius" min="10" max="80" step="5" value="30" aria-label="Obstacle radius">
+            <span class="control-value" id="obstacle-radius-val">30</span>
+          </div>
+          <div class="control-row">
+            <label>Type</label>
+            <select id="obstacle-type" style="flex:1;font-size:11px;padding:2px 4px;background:var(--button-bg);color:var(--button-text);border:1px solid var(--panel-border);border-radius:3px;" aria-label="Obstacle type">
+              <option value="static">Static</option>
+              <option value="drift">Drift</option>
+              <option value="repel">Repel</option>
+            </select>
+          </div>
+          <div class="checkbox-row">
+            <input type="checkbox" id="obstacle-follow" aria-label="One obstacle follows mouse">
+            <label for="obstacle-follow">Follow mode (one follows mouse)</label>
+          </div>
+          <div class="action-row" style="margin-top:6px">
+            <button class="action-btn" id="clear-obstacles" aria-label="Clear all obstacles">Clear All</button>
+            <button class="action-btn" id="generate-maze" aria-label="Generate random maze">Maze</button>
+          </div>
+        </div>
+
+        <!-- Evolution Mode Panel -->
+        <div class="mode-panel" id="mode-evolution">
+          <div class="control-row">
+            <label>Selection Every</label>
+            <input type="range" id="evolution-speed" min="5" max="30" step="1" value="10" aria-label="Evolution selection interval">
+            <span class="control-value" id="evolution-speed-val">10s</span>
+          </div>
+          <div class="evolution-stats">
+            <div>Generation: <span class="stat-highlight" id="generation-count">0</span></div>
+            <div>Top Fitness: <span class="stat-highlight" id="top-fitness">50</span></div>
+            <div>Avg Fitness: <span class="stat-highlight" id="avg-fitness">50</span></div>
+          </div>
+          <div class="fitness-histogram" id="fitness-histogram"></div>
+        </div>
+
+        <!-- Sound Reactive Mode Panel -->
+        <div class="mode-panel" id="mode-sound">
+          <div class="audio-source-row">
+            <button id="audio-mic-btn" aria-label="Use microphone">Microphone</button>
+            <button id="audio-file-btn" aria-label="Upload audio file">Upload File</button>
+          </div>
+          <input type="file" id="audio-file-input" accept="audio/*">
+          <div class="eq-display" id="eq-display">
+            <div class="eq-bar bass" id="eq-bass" style="height:2px"></div>
+            <div class="eq-bar mid" id="eq-mid" style="height:2px"></div>
+            <div class="eq-bar treble" id="eq-treble" style="height:2px"></div>
+          </div>
+          <div class="control-row">
+            <label>Bass Sens.</label>
+            <input type="range" id="bass-sensitivity" min="0" max="5" step="0.1" value="2.0" aria-label="Bass sensitivity">
+            <span class="control-value" id="bass-sensitivity-val">2.0</span>
+          </div>
+          <div class="control-row">
+            <label>Mid Sens.</label>
+            <input type="range" id="mid-sensitivity" min="0" max="5" step="0.1" value="2.0" aria-label="Mid sensitivity">
+            <span class="control-value" id="mid-sensitivity-val">2.0</span>
+          </div>
+          <div class="control-row">
+            <label>Treble Sens.</label>
+            <input type="range" id="treble-sensitivity" min="0" max="5" step="0.1" value="2.0" aria-label="Treble sensitivity">
+            <span class="control-value" id="treble-sensitivity-val">2.0</span>
+          </div>
+          <div class="checkbox-row">
+            <input type="checkbox" id="audio-mute" aria-label="Mute audio processing">
+            <label for="audio-mute">Mute</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- OPTIONS -->
+      <div class="panel-section">
+        <div class="section-header">Options</div>
+
+        <div class="option-row">
+          <span>Boundary</span>
+          <div class="toggle-group">
+            <button class="toggle-btn active" id="boundary-wrap" aria-label="Wrap boundary">Wrap</button>
+            <button class="toggle-btn" id="boundary-bounce" aria-label="Bounce boundary">Bounce</button>
+          </div>
+        </div>
+
+        <div class="option-row">
+          <span>Vision</span>
+          <div class="toggle-group">
+            <button class="toggle-btn active" id="vision-omni" aria-label="Omnidirectional vision">Omni</button>
+            <button class="toggle-btn" id="vision-cone" aria-label="Cone vision">Cone</button>
+          </div>
+        </div>
+
+        <div class="checkbox-row">
+          <input type="checkbox" id="trails-toggle" aria-label="Enable trails">
+          <label for="trails-toggle">Trails</label>
+        </div>
+
+        <div class="checkbox-row">
+          <input type="checkbox" id="spatial-toggle" checked aria-label="Enable spatial grid">
+          <label for="spatial-toggle">Spatial Grid</label>
+          <span class="spatial-info" id="spatial-info"></span>
+        </div>
+
+        <div class="checkbox-row">
+          <input type="checkbox" id="species-toggle" aria-label="Enable two species">
+          <label for="species-toggle">Two Species</label>
+        </div>
+
+        <div class="checkbox-row">
+          <input type="checkbox" id="debug-toggle" aria-label="Debug vision cones">
+          <label for="debug-toggle">Debug Vision</label>
+        </div>
+      </div>
+
+      <!-- ACTIONS -->
+      <div class="panel-section">
+        <div class="section-header">Actions</div>
+        <div class="action-row">
+          <button class="action-btn primary" id="pause-btn" aria-label="Pause or resume simulation">Pause</button>
+          <button class="action-btn" id="reset-btn" aria-label="Reset simulation">Reset</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ===== CANVAS ===== -->
+    <div class="canvas-container" id="canvas-container"></div>
+  </div>
+
+  <!-- ========== STATS BAR ========== -->
+  <div class="stats-bar" id="stats-bar">
+    <div class="stat-item">
+      <span class="stat-label">FPS</span>
+      <span class="stat-value" id="stat-fps">0</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-label">Boids</span>
+      <span class="stat-value" id="stat-boids">200</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-label">Avg Speed</span>
+      <span class="stat-value" id="stat-speed">0.0</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-label">Avg Neighbors</span>
+      <span class="stat-value" id="stat-neighbors">0.0</span>
+    </div>
+    <div class="stats-spacer"></div>
+    <button class="chart-toggle-btn" id="chart-toggle" aria-label="Toggle chart panel">Show Charts</button>
+  </div>
+
+  <!-- ========== CHART PANEL ========== -->
+  <div class="chart-panel" id="chart-panel">
+    <canvas id="chart-canvas"></canvas>
+  </div>
+
+  <!-- ========== HELP MODAL ========== -->
+  <div class="modal-overlay" id="help-modal">
+    <div class="modal">
+      <button class="modal-close" id="modal-close" aria-label="Close help">&times;</button>
+      <h2>Boids Simulation</h2>
+      <p>An interactive simulation of emergent flocking behavior, based on Craig Reynolds' 1987 Boids algorithm.</p>
+
+      <h3>What are Boids?</h3>
+      <p>Boids are simple agents that follow three rules: <strong>Separation</strong> (avoid crowding), <strong>Alignment</strong> (steer toward average heading), and <strong>Cohesion</strong> (move toward average position). Complex flocking emerges from these simple rules.</p>
+
+      <h3>Controls</h3>
+      <ul>
+        <li><strong>Sliders</strong> — Adjust separation, alignment, cohesion, perception radius, speed, and count</li>
+        <li><strong>Presets</strong> — One-click configurations for different behaviors</li>
+        <li><strong>Boundary</strong> — Wrap (teleport) or Bounce (reflect)</li>
+        <li><strong>Vision</strong> — Omnidirectional or 120&deg; forward cone</li>
+        <li><strong>Trails</strong> — Toggle motion trails</li>
+        <li><strong>Spatial Grid</strong> — Performance optimization for large flocks</li>
+      </ul>
+
+      <h3>Modes</h3>
+      <ul>
+        <li><strong>Predator</strong> — Mouse becomes a hawk; boids flee in panic</li>
+        <li><strong>Painter</strong> — Click to place obstacles; right-click to remove</li>
+        <li><strong>Evolution</strong> — Boids adapt over generations via natural selection</li>
+        <li><strong>Sound Reactive</strong> — Boids respond to music or microphone input</li>
+      </ul>
+
+      <h3>Tips</h3>
+      <ul>
+        <li>Click a boid to select it and see its perception range</li>
+        <li>Enable "Debug Vision" to visualize perception cones</li>
+        <li>Try 1000 boids with Spatial Grid ON for best performance</li>
+      </ul>
+
+      <p style="margin-top:12px"><a href="https://www.red3d.com/cwr/boids/" target="_blank" rel="noopener">Craig Reynolds' original Boids paper</a></p>
+    </div>
+  </div>
+
+  <!-- ========== SCRIPTS ========== -->
+  <script src="spatial-grid.js"></script>
+  <script src="audio-analyzer.js"></script>
+  <script src="themes.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

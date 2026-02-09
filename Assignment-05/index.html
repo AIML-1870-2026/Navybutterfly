@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Turing Patterns Explorer</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="biome-bg" class="biome-bg biome-jungle"></div>
+  <div id="biome-bg-next" class="biome-bg"></div>
+
+  <div class="app-container">
+    <h1 class="title">Turing Patterns Explorer</h1>
+    <p id="preset-description" class="description">Leopard spots emerge from simple chemical rules</p>
+
+    <div class="main-layout">
+      <div class="canvas-wrap">
+        <canvas id="canvas" width="512" height="512"></canvas>
+      </div>
+
+      <div class="controls-panel">
+        <section class="control-section">
+          <h2>Presets</h2>
+          <div class="preset-grid">
+            <button class="preset-btn active" data-preset="leopard">Leopard Spots</button>
+            <button class="preset-btn" data-preset="zebra">Zebra Stripes</button>
+            <button class="preset-btn" data-preset="coral">Coral Pattern</button>
+            <button class="preset-btn" data-preset="giraffe">Giraffe Patches</button>
+            <button class="preset-btn" data-preset="maze">Maze</button>
+            <button class="preset-btn" data-preset="mitosis">Mitosis</button>
+          </div>
+        </section>
+
+        <section class="control-section">
+          <h2>Parameter Space</h2>
+          <div class="param-space-wrap">
+            <canvas id="param-space" width="300" height="200"></canvas>
+            <span class="axis-label axis-x">Feed Rate (F)</span>
+            <span class="axis-label axis-y">Kill Rate (K)</span>
+          </div>
+        </section>
+
+        <section class="control-section">
+          <h2>Manual Controls</h2>
+          <div class="slider-group">
+            <label for="slider-f">Feed Rate (F)</label>
+            <div class="slider-row">
+              <input type="range" id="slider-f" min="0" max="0.08" step="0.001" value="0.035">
+              <span id="value-f" class="slider-value">0.035</span>
+            </div>
+          </div>
+          <div class="slider-group">
+            <label for="slider-k">Kill Rate (K)</label>
+            <div class="slider-row">
+              <input type="range" id="slider-k" min="0.045" max="0.07" step="0.001" value="0.065">
+              <span id="value-k" class="slider-value">0.065</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="control-section">
+          <h2>Colors</h2>
+          <div class="color-grid">
+            <button class="color-btn active" data-color="natural">Natural</button>
+            <button class="color-btn" data-color="ocean">Ocean</button>
+            <button class="color-btn" data-color="thermal">Thermal</button>
+          </div>
+        </section>
+
+        <section class="control-section">
+          <h2>Actions</h2>
+          <div class="action-grid">
+            <button id="btn-reset" class="action-btn">Reset</button>
+            <button id="btn-pause" class="action-btn">Pause</button>
+            <button id="btn-save" class="action-btn">Save Image</button>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

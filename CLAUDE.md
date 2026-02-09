@@ -31,7 +31,7 @@ When I say "Deploy":
 
 4. **Report Success**
    - Confirm the push succeeded
-   - Remind me of my live URL: https://aiml-1870-2026.github.io/NavyButterfly/
+   - Remind me of my live URL: https://aiml-1870-2026.github.io/Navybutterfly/
 
 ### New Assignment
 When I say "Start [AssignmentName]":
