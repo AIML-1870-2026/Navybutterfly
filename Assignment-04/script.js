@@ -10,7 +10,7 @@ const DEFAULT_RADIUS = 80;
 const DEFAULT_MAX_SPEED = 4;
 const DEFAULT_BOID_COUNT = 200;
 const MAX_FORCE = 0.2;
-const PERCEPTION_CONE_ANGLE = PI / 3; // 60° half-angle = 120° total
+const PERCEPTION_CONE_ANGLE = Math.PI / 3; // 60° half-angle = 120° total
 const TRAIL_LIFETIME = 1000; // ms
 const TRAIL_RECORD_INTERVAL = 50; // ms between trail points
 
