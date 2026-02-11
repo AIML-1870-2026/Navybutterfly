@@ -1,0 +1,148 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#E8A735"/>
+      <stop offset="60%" stop-color="#D4952A"/>
+      <stop offset="100%" stop-color="#C47F1F"/>
+    </linearGradient>
+  </defs>
+
+  <style>
+    .zebra1 { animation: trot1 4s ease-in-out infinite alternate; }
+    .zebra2 { animation: trot2 5s ease-in-out infinite alternate; }
+    .zebra3 { animation: trot3 4.5s ease-in-out infinite alternate; }
+    .grass  { animation: sway 6s ease-in-out infinite alternate; transform-origin: bottom center; }
+    .tree1-canopy { animation: treesway 8s ease-in-out infinite alternate; transform-origin: 350px 540px; }
+    @keyframes trot1 { 0% { transform: translate(550px,720px); } 100% { transform: translate(550px,716px); } }
+    @keyframes trot2 { 0% { transform: translate(900px,700px) scale(0.7); } 100% { transform: translate(900px,697px) scale(0.7); } }
+    @keyframes trot3 { 0% { transform: translate(1150px,690px) scale(0.5); } 100% { transform: translate(1150px,687px) scale(0.5); } }
+    @keyframes sway { 0% { transform: rotate(-1.5deg); } 100% { transform: rotate(1.5deg); } }
+    @keyframes treesway { 0% { transform: rotate(-0.4deg); } 100% { transform: rotate(0.4deg); } }
+  </style>
+
+  <!-- Sky -->
+  <rect width="1920" height="1080" fill="url(#sky)"/>
+
+  <!-- Sun -->
+  <circle cx="1500" cy="200" r="100" fill="#F2D16B" stroke="#222" stroke-width="3"/>
+
+  <!-- Distant hills -->
+  <path d="M0 650 Q200 580 500 620 Q800 560 1100 610 Q1400 570 1700 600 L1920 590 L1920 1080 L0 1080Z" fill="#8B6914" stroke="#222" stroke-width="2"/>
+
+  <!-- Mid ground -->
+  <path d="M0 720 Q300 680 600 710 Q900 670 1200 700 Q1500 680 1920 690 L1920 1080 L0 1080Z" fill="#A07818" stroke="#222" stroke-width="2"/>
+
+  <!-- Foreground grass -->
+  <path d="M0 800 Q250 770 500 790 Q750 760 1000 780 Q1250 765 1500 785 Q1750 770 1920 780 L1920 1080 L0 1080Z" fill="#B8891E" stroke="#222" stroke-width="2"/>
+
+  <!-- Grass tufts -->
+  <g class="grass" stroke="#222" stroke-width="2" fill="#9A7416">
+    <path d="M100 850 Q105 820 110 850 Q115 810 120 850 Q125 825 130 850Z"/>
+    <path d="M350 830 Q355 800 360 830 Q365 790 370 830 Q375 805 380 830Z"/>
+    <path d="M700 860 Q705 830 710 860 Q715 820 720 860Z"/>
+    <path d="M1050 840 Q1055 810 1060 840 Q1065 800 1070 840 Q1075 815 1080 840Z"/>
+    <path d="M1400 855 Q1405 825 1410 855 Q1415 815 1420 855Z"/>
+    <path d="M1700 835 Q1705 805 1710 835 Q1715 795 1720 835 Q1725 810 1730 835Z"/>
+  </g>
+
+  <!-- Acacia tree 1 (left) -->
+  <g stroke="#222" stroke-width="3">
+    <rect x="340" y="520" width="20" height="280" fill="#5C3D1A" rx="4"/>
+    <path class="tree1-canopy" d="M250 540 Q280 470 350 460 Q420 470 450 540 Q400 520 350 530 Q300 520 250 540Z" fill="#4A6B2A" stroke-width="3"/>
+    <path d="M270 520 Q310 450 350 440 Q390 450 430 520" fill="none" stroke-width="2"/>
+    <!-- Branches -->
+    <line x1="350" y1="560" x2="280" y2="530" stroke-width="2"/>
+    <line x1="350" y1="570" x2="430" y2="535" stroke-width="2"/>
+  </g>
+
+  <!-- Acacia tree 2 (right, smaller/distant) -->
+  <g stroke="#222" stroke-width="2.5">
+    <rect x="1340" y="570" width="14" height="200" fill="#5C3D1A" rx="3"/>
+    <path d="M1270 590 Q1300 530 1347 520 Q1394 530 1424 590 Q1385 575 1347 580 Q1310 575 1270 590Z" fill="#4A6B2A"/>
+    <line x1="1347" y1="600" x2="1290" y2="580" stroke-width="2"/>
+    <line x1="1347" y1="610" x2="1410" y2="585" stroke-width="2"/>
+  </g>
+
+  <!-- Zebra 1 (center-left) -->
+  <g class="zebra1" transform="translate(550, 720)" stroke="#222" stroke-width="2.5">
+    <!-- Body -->
+    <ellipse cx="0" cy="0" rx="65" ry="35" fill="#F0EDE0"/>
+    <!-- Stripes -->
+    <path d="M-40 -20 Q-35 0 -40 20" fill="none" stroke="#222" stroke-width="4"/>
+    <path d="M-25 -28 Q-20 0 -25 28" fill="none" stroke="#222" stroke-width="4"/>
+    <path d="M-8 -32 Q-3 0 -8 32" fill="none" stroke="#222" stroke-width="4"/>
+    <path d="M10 -33 Q15 0 10 33" fill="none" stroke="#222" stroke-width="4"/>
+    <path d="M28 -28 Q33 0 28 28" fill="none" stroke="#222" stroke-width="4"/>
+    <path d="M44 -22 Q49 0 44 22" fill="none" stroke="#222" stroke-width="4"/>
+    <!-- Legs -->
+    <line x1="-30" y1="30" x2="-35" y2="70" stroke-width="3"/>
+    <line x1="-10" y1="32" x2="-12" y2="70" stroke-width="3"/>
+    <line x1="20" y1="32" x2="18" y2="70" stroke-width="3"/>
+    <line x1="40" y1="28" x2="42" y2="70" stroke-width="3"/>
+    <!-- Neck -->
+    <path d="M-50 -15 Q-70 -55 -65 -80" fill="#F0EDE0" stroke-width="2.5"/>
+    <rect x="-75" y="-80" width="20" height="50" fill="#F0EDE0" rx="5"/>
+    <!-- Head -->
+    <ellipse cx="-65" cy="-90" rx="22" ry="14" fill="#F0EDE0"/>
+    <!-- Neck stripes -->
+    <path d="M-72 -40 L-58 -40" stroke-width="3"/>
+    <path d="M-73 -52 L-57 -52" stroke-width="3"/>
+    <path d="M-74 -64 L-56 -64" stroke-width="3"/>
+    <!-- Ear -->
+    <path d="M-72 -100 Q-68 -115 -60 -102" fill="#F0EDE0" stroke-width="2"/>
+    <!-- Eye -->
+    <circle cx="-72" cy="-90" r="3" fill="#222"/>
+    <!-- Muzzle -->
+    <circle cx="-84" cy="-86" r="5" fill="#C8C0B0" stroke-width="2"/>
+    <!-- Tail -->
+    <path d="M60 -10 Q80 -20 85 -35" fill="none" stroke-width="2"/>
+    <line x1="82" y1="-35" x2="88" y2="-45" stroke-width="2"/>
+    <line x1="85" y1="-35" x2="90" y2="-40" stroke-width="2"/>
+  </g>
+
+  <!-- Zebra 2 (right, smaller/distant) -->
+  <g class="zebra2" transform="translate(900, 700) scale(0.7)" stroke="#222" stroke-width="2.5">
+    <ellipse cx="0" cy="0" rx="65" ry="35" fill="#F0EDE0"/>
+    <path d="M-40 -20 Q-35 0 -40 20" fill="none" stroke="#222" stroke-width="4"/>
+    <path d="M-22 -28 Q-17 0 -22 28" fill="none" stroke="#222" stroke-width="4"/>
+    <path d="M-4 -32 Q1 0 -4 32" fill="none" stroke="#222" stroke-width="4"/>
+    <path d="M14 -33 Q19 0 14 33" fill="none" stroke="#222" stroke-width="4"/>
+    <path d="M32 -28 Q37 0 32 28" fill="none" stroke="#222" stroke-width="4"/>
+    <path d="M48 -20 Q53 0 48 20" fill="none" stroke="#222" stroke-width="4"/>
+    <line x1="-30" y1="30" x2="-35" y2="70" stroke-width="3"/>
+    <line x1="-10" y1="32" x2="-12" y2="70" stroke-width="3"/>
+    <line x1="20" y1="32" x2="18" y2="70" stroke-width="3"/>
+    <line x1="40" y1="28" x2="42" y2="70" stroke-width="3"/>
+    <path d="M-50 -15 Q-70 -55 -65 -80" fill="#F0EDE0" stroke-width="2.5"/>
+    <rect x="-75" y="-80" width="20" height="50" fill="#F0EDE0" rx="5"/>
+    <ellipse cx="-65" cy="-90" rx="22" ry="14" fill="#F0EDE0"/>
+    <path d="M-72 -40 L-58 -40" stroke-width="3"/>
+    <path d="M-73 -52 L-57 -52" stroke-width="3"/>
+    <path d="M-74 -64 L-56 -64" stroke-width="3"/>
+    <path d="M-72 -100 Q-68 -115 -60 -102" fill="#F0EDE0" stroke-width="2"/>
+    <circle cx="-72" cy="-90" r="3" fill="#222"/>
+    <circle cx="-84" cy="-86" r="5" fill="#C8C0B0" stroke-width="2"/>
+    <path d="M60 -10 Q80 -20 85 -35" fill="none" stroke-width="2"/>
+  </g>
+
+  <!-- Zebra 3 (far right, even smaller) -->
+  <g class="zebra3" transform="translate(1150, 690) scale(0.5)" stroke="#222" stroke-width="3">
+    <ellipse cx="0" cy="0" rx="65" ry="35" fill="#F0EDE0"/>
+    <path d="M-35 -20 Q-30 0 -35 20" fill="none" stroke="#222" stroke-width="5"/>
+    <path d="M-15 -30 Q-10 0 -15 30" fill="none" stroke="#222" stroke-width="5"/>
+    <path d="M5 -33 Q10 0 5 33" fill="none" stroke="#222" stroke-width="5"/>
+    <path d="M25 -30 Q30 0 25 30" fill="none" stroke="#222" stroke-width="5"/>
+    <path d="M45 -20 Q50 0 45 20" fill="none" stroke="#222" stroke-width="5"/>
+    <line x1="-30" y1="30" x2="-35" y2="70" stroke-width="4"/>
+    <line x1="-5" y1="33" x2="-7" y2="70" stroke-width="4"/>
+    <line x1="20" y1="33" x2="18" y2="70" stroke-width="4"/>
+    <line x1="42" y1="28" x2="44" y2="70" stroke-width="4"/>
+    <path d="M-50 -15 Q-70 -55 -65 -80" fill="#F0EDE0" stroke-width="3"/>
+    <rect x="-75" y="-80" width="20" height="50" fill="#F0EDE0" rx="5"/>
+    <ellipse cx="-65" cy="-90" rx="22" ry="14" fill="#F0EDE0"/>
+    <circle cx="-72" cy="-90" r="4" fill="#222"/>
+  </g>
+
+  <!-- Ground line accent -->
+  <path d="M0 800 L1920 780" fill="none" stroke="#222" stroke-width="2" opacity="0.3"/>
+</svg>

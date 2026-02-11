@@ -1,0 +1,160 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="cavebg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1A1A20"/>
+      <stop offset="50%" stop-color="#252830"/>
+      <stop offset="100%" stop-color="#1E2028"/>
+    </linearGradient>
+    <radialGradient id="cavelight" cx="50%" cy="30%">
+      <stop offset="0%" stop-color="#3A4A50" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#1A1A20" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <style>
+    .bat1 { animation: bat-fly1 3s ease-in-out infinite alternate; }
+    .bat2 { animation: bat-fly2 3.5s ease-in-out infinite alternate; }
+    .bat3 { animation: bat-fly3 4s ease-in-out infinite alternate; }
+    .bat4 { animation: bat-fly4 3.2s ease-in-out infinite alternate; }
+    .bat5 { animation: bat-fly5 3.8s ease-in-out infinite alternate; }
+    .bat6 { animation: bat-fly6 4.2s ease-in-out infinite alternate; }
+    .water-pool { animation: shimmer 4s ease-in-out infinite alternate; }
+    @keyframes bat-fly1 { 0% { transform: translate(500px,350px); } 100% { transform: translate(508px,342px); } }
+    @keyframes bat-fly2 { 0% { transform: translate(800px,300px) scale(0.8); } 100% { transform: translate(790px,293px) scale(0.8); } }
+    @keyframes bat-fly3 { 0% { transform: translate(1200px,320px) scale(0.9); } 100% { transform: translate(1210px,313px) scale(0.9); } }
+    @keyframes bat-fly4 { 0% { transform: translate(650px,280px) scale(0.5); } 100% { transform: translate(658px,274px) scale(0.5); } }
+    @keyframes bat-fly5 { 0% { transform: translate(1050px,290px) scale(0.55); } 100% { transform: translate(1042px,284px) scale(0.55); } }
+    @keyframes bat-fly6 { 0% { transform: translate(1500px,340px) scale(0.7); } 100% { transform: translate(1508px,333px) scale(0.7); } }
+    @keyframes shimmer  { 0% { opacity: 0.5; } 100% { opacity: 0.35; } }
+  </style>
+
+  <!-- Cave background -->
+  <rect width="1920" height="1080" fill="url(#cavebg)"/>
+
+  <!-- Ambient light glow -->
+  <rect width="1920" height="1080" fill="url(#cavelight)"/>
+
+  <!-- Cave ceiling (irregular rocky surface) -->
+  <path d="M0 0 L1920 0 L1920 180 Q1800 220 1700 170 Q1600 140 1500 200 Q1400 230 1300 160 Q1200 130 1100 190 Q1000 220 900 150 Q800 120 700 180 Q600 210 500 150 Q400 130 300 170 Q200 200 100 160 Q50 140 0 180Z" fill="#2A2C35" stroke="#1A1A20" stroke-width="2"/>
+
+  <!-- Cave floor -->
+  <path d="M0 1080 L1920 1080 L1920 850 Q1800 820 1700 860 Q1600 890 1500 840 Q1400 810 1300 850 Q1200 880 1100 830 Q1000 810 900 860 Q800 890 700 840 Q600 810 500 850 Q400 880 300 840 Q200 810 100 850 Q50 870 0 860Z" fill="#2A2C35" stroke="#1A1A20" stroke-width="2"/>
+
+  <!-- Cave walls (sides) -->
+  <path d="M0 180 Q30 300 20 450 Q10 600 30 750 L0 860 L0 180Z" fill="#303540" stroke="#222" stroke-width="2"/>
+  <path d="M1920 180 Q1890 320 1900 480 Q1910 630 1895 770 L1920 850 L1920 180Z" fill="#303540" stroke="#222" stroke-width="2"/>
+
+  <!-- Stalactites -->
+  <g fill="#3A3E48" stroke="#222" stroke-width="2">
+    <path d="M200 170 Q210 170 215 250 Q210 310 205 360 Q200 310 195 250 Q190 170 200 170Z"/>
+    <path d="M350 150 Q358 150 362 210 Q358 260 355 300 Q350 260 347 210 Q343 150 350 150Z"/>
+    <path d="M550 190 Q560 190 568 290 Q565 360 560 420 Q555 360 550 290 Q543 190 550 190Z"/>
+    <path d="M750 160 Q758 160 762 230 Q758 280 755 320 Q750 280 747 230 Q743 160 750 160Z"/>
+    <path d="M950 200 Q960 200 966 280 Q962 340 958 390 Q953 340 948 280 Q942 200 950 200Z"/>
+    <path d="M1150 155 Q1160 155 1166 250 Q1162 330 1158 390 Q1153 330 1148 250 Q1142 155 1150 155Z"/>
+    <path d="M1350 180 Q1358 180 1362 240 Q1358 290 1355 330 Q1350 290 1347 240 Q1343 180 1350 180Z"/>
+    <path d="M1550 170 Q1560 170 1565 260 Q1562 330 1558 380 Q1553 330 1548 260 Q1542 170 1550 170Z"/>
+    <path d="M1700 195 Q1707 195 1710 250 Q1707 290 1705 320 Q1700 290 1697 250 Q1694 195 1700 195Z"/>
+  </g>
+
+  <!-- Smaller stalactites -->
+  <g fill="#35384A" stroke="#222" stroke-width="1.5">
+    <path d="M130 175 Q135 175 137 220 Q135 240 133 260 Q130 240 128 220 Q126 175 130 175Z"/>
+    <path d="M450 155 Q454 155 456 195 Q454 215 452 230 Q450 215 448 195 Q446 155 450 155Z"/>
+    <path d="M650 180 Q654 180 656 215 Q654 235 652 250 Q650 235 648 215 Q646 180 650 180Z"/>
+    <path d="M1050 190 Q1054 190 1056 225 Q1054 245 1052 260 Q1050 245 1048 225 Q1046 190 1050 190Z"/>
+    <path d="M1250 165 Q1254 165 1256 205 Q1254 225 1252 245 Q1250 225 1248 205 Q1246 165 1250 165Z"/>
+    <path d="M1450 175 Q1454 175 1456 210 Q1454 230 1452 245 Q1450 230 1448 210 Q1446 175 1450 175Z"/>
+    <path d="M1830 185 Q1834 185 1836 220 Q1834 240 1832 255 Q1830 240 1828 220 Q1826 185 1830 185Z"/>
+  </g>
+
+  <!-- Stalagmites -->
+  <g fill="#3A3E48" stroke="#222" stroke-width="2">
+    <path d="M280 860 Q290 860 295 780 Q290 730 285 690 Q280 730 275 780 Q270 860 280 860Z"/>
+    <path d="M500 850 Q508 850 512 790 Q508 740 505 700 Q500 740 497 790 Q493 850 500 850Z"/>
+    <path d="M700 870 Q710 870 715 800 Q712 760 708 720 Q703 760 698 800 Q693 870 700 870Z"/>
+    <path d="M1000 840 Q1010 840 1014 770 Q1010 720 1007 680 Q1002 720 997 770 Q993 840 1000 840Z"/>
+    <path d="M1200 860 Q1208 860 1212 800 Q1208 760 1205 730 Q1200 760 1197 800 Q1193 860 1200 860Z"/>
+    <path d="M1450 850 Q1458 850 1462 785 Q1458 740 1455 700 Q1450 740 1447 785 Q1443 850 1450 850Z"/>
+    <path d="M1650 865 Q1657 865 1660 810 Q1657 775 1655 745 Q1650 775 1647 810 Q1644 865 1650 865Z"/>
+  </g>
+
+  <!-- Smaller stalagmites -->
+  <g fill="#35384A" stroke="#222" stroke-width="1.5">
+    <path d="M400 855 Q404 855 406 820 Q404 800 402 785 Q400 800 398 820 Q396 855 400 855Z"/>
+    <path d="M850 845 Q854 845 856 815 Q854 795 852 780 Q850 795 848 815 Q846 845 850 845Z"/>
+    <path d="M1100 855 Q1104 855 1106 825 Q1104 805 1102 790 Q1100 805 1098 825 Q1096 855 1100 855Z"/>
+    <path d="M1800 855 Q1804 855 1806 825 Q1804 810 1802 795 Q1800 810 1798 825 Q1796 855 1800 855Z"/>
+  </g>
+
+  <!-- Moss/lichen accents -->
+  <g fill="#3A5A3A" opacity="0.5">
+    <ellipse cx="280" cy="690" rx="12" ry="6"/>
+    <ellipse cx="500" cy="700" rx="10" ry="5"/>
+    <ellipse cx="1000" cy="680" rx="14" ry="6"/>
+    <ellipse cx="1450" cy="700" rx="11" ry="5"/>
+    <ellipse cx="550" cy="420" rx="8" ry="4"/>
+    <ellipse cx="1150" cy="390" rx="10" ry="5"/>
+  </g>
+
+  <!-- Water pool reflection (bottom center) -->
+  <g class="water-pool">
+    <ellipse cx="960" cy="950" rx="200" ry="30" fill="#2A3848" stroke="#222" stroke-width="1.5" opacity="0.5"/>
+    <ellipse cx="960" cy="950" rx="140" ry="18" fill="#304050" opacity="0.3"/>
+  </g>
+
+  <!-- Bats -->
+  <g fill="#1A1A20" stroke="#222" stroke-width="1.5">
+    <!-- Bat 1 -->
+    <g class="bat1" transform="translate(500, 350)">
+      <ellipse cx="0" cy="0" rx="6" ry="8" fill="#2A2A30"/>
+      <path d="M-5 -2 Q-18 -15 -30 -8 Q-22 -2 -15 -5 Q-10 2 -5 0Z"/>
+      <path d="M5 -2 Q18 -15 30 -8 Q22 -2 15 -5 Q10 2 5 0Z"/>
+      <circle cx="-2" cy="-4" r="1.5" fill="#556"/>
+      <circle cx="2" cy="-4" r="1.5" fill="#556"/>
+      <path d="M-1 2 Q0 4 1 2" fill="none" stroke-width="1"/>
+    </g>
+    <!-- Bat 2 -->
+    <g class="bat2" transform="translate(800, 300) scale(0.8)">
+      <ellipse cx="0" cy="0" rx="6" ry="8" fill="#2A2A30"/>
+      <path d="M-5 -2 Q-20 -18 -35 -10 Q-25 -3 -17 -6 Q-10 2 -5 0Z"/>
+      <path d="M5 -2 Q20 -18 35 -10 Q25 -3 17 -6 Q10 2 5 0Z"/>
+      <circle cx="-2" cy="-4" r="1.5" fill="#556"/>
+      <circle cx="2" cy="-4" r="1.5" fill="#556"/>
+    </g>
+    <!-- Bat 3 -->
+    <g class="bat3" transform="translate(1200, 320) scale(0.9)">
+      <ellipse cx="0" cy="0" rx="6" ry="8" fill="#2A2A30"/>
+      <path d="M-5 -2 Q-18 -12 -28 -5 Q-20 -1 -13 -4 Q-8 2 -5 0Z"/>
+      <path d="M5 -2 Q18 -12 28 -5 Q20 -1 13 -4 Q8 2 5 0Z"/>
+      <circle cx="-2" cy="-4" r="1.5" fill="#556"/>
+      <circle cx="2" cy="-4" r="1.5" fill="#556"/>
+    </g>
+    <!-- Bat 4 (small, distant) -->
+    <g class="bat4" transform="translate(650, 280) scale(0.5)">
+      <ellipse cx="0" cy="0" rx="6" ry="8" fill="#2A2A30"/>
+      <path d="M-5 -2 Q-20 -16 -32 -8 Q-22 -2 -15 -5 Q-10 2 -5 0Z"/>
+      <path d="M5 -2 Q20 -16 32 -8 Q22 -2 15 -5 Q10 2 5 0Z"/>
+    </g>
+    <!-- Bat 5 (small, distant) -->
+    <g class="bat5" transform="translate(1050, 290) scale(0.55)">
+      <ellipse cx="0" cy="0" rx="6" ry="8" fill="#2A2A30"/>
+      <path d="M-5 -2 Q-18 -14 -30 -7 Q-20 -1 -13 -4 Q-8 2 -5 0Z"/>
+      <path d="M5 -2 Q18 -14 30 -7 Q20 -1 13 -4 Q8 2 5 0Z"/>
+    </g>
+    <!-- Bat 6 -->
+    <g class="bat6" transform="translate(1500, 340) scale(0.7)">
+      <ellipse cx="0" cy="0" rx="6" ry="8" fill="#2A2A30"/>
+      <path d="M-5 -2 Q-18 -16 -30 -8 Q-22 -2 -15 -5 Q-10 2 -5 0Z"/>
+      <path d="M5 -2 Q18 -16 30 -8 Q22 -2 15 -5 Q10 2 5 0Z"/>
+    </g>
+  </g>
+
+  <!-- Mineral veins in rock -->
+  <g stroke="#4A5060" stroke-width="1" fill="none" opacity="0.3">
+    <path d="M100 400 Q150 420 200 400 Q250 380 300 410"/>
+    <path d="M1600 500 Q1650 480 1700 500 Q1750 520 1800 490"/>
+    <path d="M400 900 Q500 910 600 895 Q700 880 800 900"/>
+    <path d="M1200 920 Q1300 910 1400 925"/>
+  </g>
+</svg>

@@ -83,8 +83,8 @@ offscreen.height = GRID;
 const offCtx = offscreen.getContext('2d');
 const imageData = offCtx.createImageData(GRID, GRID);
 const descEl = document.getElementById('preset-description');
-const bgCurrent = document.getElementById('biome-bg');
-const bgNext = document.getElementById('biome-bg-next');
+let bgCurrent = document.getElementById('biome-bg');
+let bgNext = document.getElementById('biome-bg-next');
 const btnPause = document.getElementById('btn-pause');
 const paramCanvas = document.getElementById('param-space');
 const paramCtx = paramCanvas.getContext('2d');
@@ -332,31 +332,77 @@ function loop() {
 }
 
 // === Background Transitions ===
-function setBiome(biome) {
+const BIOME_FILES = {
+  jungle: 'biome-jungle.svg',
+  savannah: 'biome-savannah.svg',
+  underwater: 'biome-underwater.svg',
+  sunset: 'biome-sunset.svg',
+  desert: 'biome-caves.svg',
+  microscopic: 'biome-microscopic.svg',
+};
+const svgCache = {};
+let currentBiome = '';
+
+async function loadBiomeSVG(biome) {
+  if (svgCache[biome] !== undefined) return svgCache[biome];
+  const file = BIOME_FILES[biome];
+  if (!file) { svgCache[biome] = ''; return ''; }
+  try {
+    const resp = await fetch(file);
+    if (!resp.ok) throw new Error(resp.status);
+    const text = await resp.text();
+    svgCache[biome] = text;
+    return text;
+  } catch {
+    // fetch fails on file:// protocol — mark so we use <object> fallback
+    svgCache[biome] = '';
+    return '';
+  }
+}
+
+async function setBiome(biome) {
+  if (biome === currentBiome) return;
+  currentBiome = biome;
+
   const biomeClass = 'biome-' + biome;
+  const file = BIOME_FILES[biome];
 
-  // If already showing the same biome, skip
-  if (bgCurrent.classList.contains(biomeClass)) return;
+  // Try inline SVG via fetch (animations work with blur on servers/GitHub Pages)
+  // Fall back to <object> element (works on file:// but animations may freeze under blur)
+  let content = '';
+  if (file) {
+    const svgText = await loadBiomeSVG(biome);
+    content = svgText
+      ? svgText
+      : '<object data="' + file + '" type="image/svg+xml" aria-hidden="true"></object>';
+  }
 
-  // Setup next bg behind current
+  // Guard: user may have switched biome while we were fetching
+  if (currentBiome !== biome) return;
+
   bgNext.className = 'biome-bg ' + biomeClass;
+  bgNext.innerHTML = content;
   bgNext.style.opacity = '0';
 
   // Force reflow
   bgNext.offsetHeight;
 
-  // Fade next in, current out
+  // Crossfade
   bgNext.style.transition = 'opacity 0.6s ease';
   bgNext.style.opacity = '0.4';
   bgCurrent.style.transition = 'opacity 0.6s ease';
   bgCurrent.style.opacity = '0';
 
+  const capturedBiome = biome;
   setTimeout(() => {
-    bgCurrent.className = 'biome-bg ' + biomeClass;
-    bgCurrent.style.transition = 'none';
-    bgCurrent.style.opacity = '0.4';
+    if (currentBiome !== capturedBiome) return;
+    // Swap references — bgNext (now visible) becomes current
+    const temp = bgCurrent;
+    bgCurrent = bgNext;
+    bgNext = temp;
     bgNext.style.transition = 'none';
     bgNext.style.opacity = '0';
+    bgNext.innerHTML = '';
   }, 620);
 }
 
@@ -474,4 +520,5 @@ btnPause.addEventListener('click', () => {
 // === Start ===
 drawParamSpace();
 initGrid();
+setBiome('jungle');
 loop();

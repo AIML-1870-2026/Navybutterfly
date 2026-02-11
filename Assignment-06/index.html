@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cosmic Fractal Explorer</title>
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, sans-serif;
+  color: #e0e0f0;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background: #020208;
+}
+
+.bg-stars {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: -1;
+  background: radial-gradient(ellipse at 50% 0%, #0d0d2b 0%, #050510 50%, #020208 100%);
+}
+
+header {
+  text-align: center;
+  padding: 24px 16px 8px;
+}
+
+header h1 {
+  font-size: 1.8rem;
+  font-weight: 300;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, #a78bfa, #60a5fa, #f472b6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+header .subtitle {
+  font-size: 0.85rem;
+  color: #8888aa;
+  margin-top: 6px;
+  font-weight: 300;
+}
+
+main {
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.canvas-row {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.panel {
+  flex: 1;
+  min-width: 300px;
+  max-width: 650px;
+  background: rgba(15, 15, 35, 0.6);
+  border: 1px solid rgba(120, 120, 180, 0.15);
+  border-radius: 12px;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(120, 120, 180, 0.1);
+}
+
+.panel-title {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #9999bb;
+}
+
+.coordinates {
+  font-size: 0.75rem;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  color: #7788cc;
+}
+
+.canvas-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4/3;
+  cursor: crosshair;
+  overflow: hidden;
+}
+
+.canvas-wrapper canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  transition: opacity 0.25s ease;
+}
+
+.canvas-wrapper canvas.rendering {
+  opacity: 0.7;
+}
+
+.crosshair-marker {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  display: none;
+  z-index: 5;
+}
+
+.crosshair-marker::before,
+.crosshair-marker::after {
+  content: '';
+  position: absolute;
+  background: rgba(255, 150, 200, 0.9);
+  border-radius: 1px;
+  box-shadow: 0 0 6px rgba(255, 150, 200, 0.6);
+}
+
+.crosshair-marker::before {
+  width: 100%;
+  height: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.crosshair-marker::after {
+  width: 2px;
+  height: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.controls {
+  margin-top: 16px;
+  background: rgba(15, 15, 35, 0.6);
+  border: 1px solid rgba(120, 120, 180, 0.15);
+  border-radius: 12px;
+  padding: 20px 24px;
+  backdrop-filter: blur(10px);
+}
+
+.control-section {
+  margin-bottom: 18px;
+}
+
+.control-section:last-child {
+  margin-bottom: 0;
+}
+
+.control-section h3 {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #7777aa;
+  margin-bottom: 10px;
+  font-weight: 400;
+}
+
+.palette-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.palette-swatch {
+  width: 100px;
+  height: 32px;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.palette-swatch:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.palette-swatch.active {
+  border-color: rgba(200, 200, 255, 0.6);
+  box-shadow: 0 0 12px rgba(150, 150, 255, 0.3);
+}
+
+.palette-swatch .palette-label {
+  position: absolute;
+  bottom: 2px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+.preset-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.preset-btn {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid rgba(120, 120, 180, 0.25);
+  background: rgba(30, 30, 60, 0.6);
+  color: #b0b0d0;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.preset-btn:hover {
+  background: rgba(60, 60, 120, 0.5);
+  border-color: rgba(150, 150, 220, 0.4);
+  color: #e0e0ff;
+  box-shadow: 0 0 10px rgba(100, 100, 200, 0.2);
+}
+
+.preset-btn.active {
+  background: rgba(80, 60, 140, 0.5);
+  border-color: rgba(160, 140, 255, 0.5);
+  color: #e0d0ff;
+}
+
+.morph-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.morph-btn {
+  padding: 8px 20px;
+  border-radius: 20px;
+  border: 1px solid rgba(120, 120, 180, 0.3);
+  background: rgba(30, 30, 60, 0.6);
+  color: #b0b0d0;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.morph-btn:hover {
+  background: rgba(60, 60, 120, 0.5);
+  color: #e0e0ff;
+}
+
+.morph-btn.active {
+  background: rgba(100, 40, 120, 0.5);
+  border-color: rgba(200, 100, 255, 0.5);
+  color: #f0d0ff;
+  box-shadow: 0 0 14px rgba(180, 80, 255, 0.2);
+}
+
+.speed-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.speed-control label {
+  font-size: 0.7rem;
+  color: #8888aa;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.speed-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 120px;
+  height: 4px;
+  background: rgba(80, 80, 140, 0.3);
+  border-radius: 2px;
+  outline: none;
+}
+
+.speed-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  background: #8080cc;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.speed-slider::-webkit-slider-thumb:hover {
+  background: #a0a0ee;
+}
+
+.info-toggle {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 8px 16px;
+  background: rgba(15, 15, 35, 0.8);
+  border: 1px solid rgba(120, 120, 180, 0.2);
+  border-radius: 20px;
+  color: #9999bb;
+  font-size: 0.8rem;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: all 0.2s ease;
+  z-index: 100;
+}
+
+.info-toggle:hover {
+  background: rgba(30, 30, 60, 0.8);
+  color: #ccccee;
+}
+
+.info-panel {
+  position: fixed;
+  bottom: 60px;
+  right: 20px;
+  width: 380px;
+  max-height: 70vh;
+  overflow-y: auto;
+  background: rgba(10, 10, 30, 0.95);
+  border: 1px solid rgba(120, 120, 180, 0.2);
+  border-radius: 12px;
+  padding: 24px;
+  backdrop-filter: blur(15px);
+  z-index: 99;
+  display: none;
+  animation: fadeSlideUp 0.3s ease;
+}
+
+.info-panel.visible {
+  display: block;
+}
+
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.info-panel h3 {
+  font-size: 1rem;
+  color: #c0c0e0;
+  margin-bottom: 12px;
+  font-weight: 400;
+}
+
+.info-panel p {
+  font-size: 0.82rem;
+  color: #9999bb;
+  line-height: 1.7;
+  margin-bottom: 12px;
+}
+
+.info-panel strong {
+  color: #c0b0e0;
+}
+
+.zoom-hint {
+  position: absolute;
+  bottom: 8px;
+  right: 10px;
+  font-size: 0.6rem;
+  color: rgba(150, 150, 200, 0.4);
+  pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  .canvas-row { flex-direction: column; align-items: center; }
+  .panel { max-width: 100%; }
+  header h1 { font-size: 1.3rem; }
+  .controls { padding: 14px 16px; }
+  .info-panel { width: calc(100% - 40px); right: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="bg-stars" id="bg"></div>
+
+<header>
+  <h1>Cosmic Fractal Explorer</h1>
+  <p class="subtitle">Explore infinite fractal worlds by clicking the Mandelbrot set</p>
+</header>
+
+<main>
+  <div class="canvas-row">
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Mandelbrot Set</span>
+        <span class="coordinates" id="mandelbrot-coords">Click to select c</span>
+      </div>
+      <div class="canvas-wrapper" id="mandelbrot-wrapper">
+        <canvas id="mandelbrot-canvas" width="800" height="600"></canvas>
+        <div class="crosshair-marker" id="crosshair"></div>
+        <span class="zoom-hint">Scroll to zoom &middot; Drag to pan &middot; Double-click to reset</span>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Julia Set</span>
+        <span class="coordinates" id="julia-coords">c = &minus;0.75 + 0.11i</span>
+      </div>
+      <div class="canvas-wrapper" id="julia-wrapper">
+        <canvas id="julia-canvas" width="800" height="600"></canvas>
+        <span class="zoom-hint">Scroll to zoom &middot; Drag to pan &middot; Double-click to reset</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="control-section">
+      <h3>Color Palette</h3>
+      <div class="palette-row" id="palette-row"></div>
+    </div>
+    <div class="control-section">
+      <h3>Preset Julia Sets</h3>
+      <div class="preset-row" id="preset-row"></div>
+    </div>
+    <div class="control-section">
+      <h3>Animation</h3>
+      <div class="morph-row">
+        <button class="morph-btn" id="morph-btn">&#9654; Morph</button>
+        <div class="speed-control">
+          <label>Speed</label>
+          <input type="range" class="speed-slider" id="speed-slider" min="1" max="100" value="30">
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="info-toggle" id="info-toggle">&#8505;&#65039; What am I seeing?</div>
+<div class="info-panel" id="info-panel">
+  <h3>What am I seeing?</h3>
+  <p>The left panel shows the <strong>Mandelbrot set</strong> &mdash; think of it as a map of every possible Julia set. Each point on this map corresponds to a different fractal world.</p>
+  <p>When you click a point on the Mandelbrot set, you're picking a specific value called <strong>c</strong>. The right panel then shows you the <strong>Julia set</strong> for that c value &mdash; a unique fractal shape.</p>
+  <p>The <strong>black regions</strong> are points that stay "trapped" &mdash; they never escape to infinity when you repeatedly apply the formula z &rarr; z&sup2; + c. The <strong>colored regions</strong> are points that do escape, and the color tells you how quickly they fly off.</p>
+  <p>Points right on the <strong>boundary</strong> of the Mandelbrot set produce the most intricate and beautiful Julia sets. Points deep inside give you simple filled shapes, and points far outside give you scattered dust.</p>
+  <p>Try the <strong>Morph</strong> button to watch Julia sets continuously transform as c travels along a path &mdash; it's mesmerizing!</p>
+</div>
+
+<script>
+// =======================================
+// WEB WORKER CODE (inline)
+// =======================================
+const workerSource = `
+self.onmessage = function(e) {
+  var d = e.data;
+  var type = d.type, xMin = d.xMin, xMax = d.xMax, yMin = d.yMin, yMax = d.yMax;
+  var w = d.width, h = d.height, maxIter = d.maxIter;
+  var cReal = d.cReal, cImag = d.cImag, id = d.id;
+  var iterations = new Float32Array(w * h);
+  var log2 = Math.log(2);
+  var escapeR2 = 65536; // 256^2
+
+  for (var py = 0; py < h; py++) {
+    var y0 = yMin + (py / h) * (yMax - yMin);
+    for (var px = 0; px < w; px++) {
+      var x0 = xMin + (px / w) * (xMax - xMin);
+      var zr, zi, cr, ci;
+      if (type === 'mandelbrot') {
+        zr = 0; zi = 0; cr = x0; ci = y0;
+      } else {
+        zr = x0; zi = y0; cr = cReal; ci = cImag;
+      }
+      var iter = 0;
+      var zr2 = zr * zr, zi2 = zi * zi;
+      while (zr2 + zi2 <= escapeR2 && iter < maxIter) {
+        zi = 2 * zr * zi + ci;
+        zr = zr2 - zi2 + cr;
+        zr2 = zr * zr;
+        zi2 = zi * zi;
+        iter++;
+      }
+      if (iter < maxIter) {
+        var logZn = Math.log(zr2 + zi2) * 0.5;
+        var nu = Math.log(logZn / log2) / log2;
+        iterations[py * w + px] = iter + 1 - nu;
+      } else {
+        iterations[py * w + px] = -1;
+      }
+    }
+  }
+  self.postMessage({ iterations: iterations, id: id, width: w, height: h }, [iterations.buffer]);
+};
+`;
+
+const workerBlob = new Blob([workerSource], { type: 'application/javascript' });
+const workerUrl = URL.createObjectURL(workerBlob);
+
+// =======================================
+// PALETTES
+// =======================================
+const PALETTES = {
+  nebula: {
+    name: 'Nebula',
+    gradient: 'linear-gradient(90deg, #000014, #2d0050, #1000a0, #a000b4, #ff64b4, #ffffff)',
+    stops: [
+      [0, 0, 0, 20], [0.15, 45, 0, 80], [0.35, 16, 0, 160],
+      [0.55, 160, 0, 180], [0.75, 255, 100, 180], [0.9, 220, 180, 255], [1, 255, 255, 255]
+    ]
+  },
+  solar: {
+    name: 'Solar Flare',
+    gradient: 'linear-gradient(90deg, #000000, #500000, #c83c00, #dca000, #ffe632, #ffffff)',
+    stops: [
+      [0, 0, 0, 0], [0.15, 80, 0, 0], [0.35, 200, 60, 0],
+      [0.55, 220, 160, 0], [0.75, 255, 230, 50], [0.9, 255, 245, 180], [1, 255, 255, 255]
+    ]
+  },
+  ice: {
+    name: 'Ice / Frost',
+    gradient: 'linear-gradient(90deg, #000000, #000a3c, #285078, #64a0dc, #b4d2f0, #ffffff)',
+    stops: [
+      [0, 0, 0, 0], [0.15, 0, 10, 60], [0.35, 40, 80, 120],
+      [0.55, 100, 160, 220], [0.75, 180, 210, 240], [0.9, 220, 235, 250], [1, 255, 255, 255]
+    ]
+  },
+  inferno: {
+    name: 'Inferno',
+    gradient: 'linear-gradient(90deg, #000000, #3c000a, #b40a00, #dc6400, #ffaa00, #ffff32)',
+    stops: [
+      [0, 0, 0, 0], [0.15, 60, 0, 10], [0.3, 180, 10, 0],
+      [0.5, 220, 100, 0], [0.7, 255, 170, 0], [0.85, 255, 220, 40], [1, 255, 255, 100]
+    ]
+  }
+};
+
+// =======================================
+// PRESETS
+// =======================================
+const PRESETS = [
+  { name: 'Spiral', real: -0.75, imag: 0.11 },
+  { name: 'Dendrite', real: 0, imag: 1 },
+  { name: 'Douady Rabbit', real: -0.123, imag: 0.745 },
+  { name: 'San Marco', real: -0.75, imag: 0 },
+  { name: 'Starfish', real: -0.54, imag: 0.54 },
+  { name: 'Lightning', real: -0.1, imag: 0.8 },
+  { name: 'Galaxy', real: 0.285, imag: 0.01 }
+];
+
+// =======================================
+// STATE
+// =======================================
+const mandelbrotView = { centerX: -0.5, centerY: 0, scale: 3.2 };
+const juliaView = { centerX: 0, centerY: 0, scale: 3.6 };
+const defaultMandelbrotView = { ...mandelbrotView };
+const defaultJuliaView = { ...juliaView };
+let currentC = { real: -0.75, imag: 0.11 };
+let currentPalette = 'nebula';
+let isMorphing = false;
+let morphAngle = 0;
+let morphAnimId = null;
+let mandelbrotIterData = null;
+let juliaIterData = null;
+let mandelbrotWorker = null;
+let juliaWorker = null;
+let mandelbrotRenderVersion = 0;
+let juliaRenderVersion = 0;
+const CANVAS_W = 800;
+const CANVAS_H = 600;
+const MAX_ITER = 200;
+
+// =======================================
+// DOM REFS
+// =======================================
+const mandelbrotCanvas = document.getElementById('mandelbrot-canvas');
+const juliaCanvas = document.getElementById('julia-canvas');
+const mandelbrotCtx = mandelbrotCanvas.getContext('2d');
+const juliaCtx = juliaCanvas.getContext('2d');
+const mandelbrotWrapper = document.getElementById('mandelbrot-wrapper');
+const juliaWrapper = document.getElementById('julia-wrapper');
+const crosshair = document.getElementById('crosshair');
+const mandelbrotCoords = document.getElementById('mandelbrot-coords');
+const juliaCoords = document.getElementById('julia-coords');
+const paletteRow = document.getElementById('palette-row');
+const presetRow = document.getElementById('preset-row');
+const morphBtn = document.getElementById('morph-btn');
+const speedSlider = document.getElementById('speed-slider');
+const infoToggle = document.getElementById('info-toggle');
+const infoPanel = document.getElementById('info-panel');
+
+// =======================================
+// PALETTE INTERPOLATION
+// =======================================
+function interpolatePalette(t, paletteName) {
+  const stops = PALETTES[paletteName].stops;
+  if (t <= 0) return [stops[0][1], stops[0][2], stops[0][3]];
+  if (t >= 1) return [stops[stops.length - 1][1], stops[stops.length - 1][2], stops[stops.length - 1][3]];
+  for (let i = 0; i < stops.length - 1; i++) {
+    if (t >= stops[i][0] && t <= stops[i + 1][0]) {
+      const range = stops[i + 1][0] - stops[i][0];
+      const f = (t - stops[i][0]) / range;
+      const s = f * f * (3 - 2 * f); // smoothstep
+      return [
+        Math.round(stops[i][1] + (stops[i + 1][1] - stops[i][1]) * s),
+        Math.round(stops[i][2] + (stops[i + 1][2] - stops[i][2]) * s),
+        Math.round(stops[i][3] + (stops[i + 1][3] - stops[i][3]) * s)
+      ];
+    }
+  }
+  return [0, 0, 0];
+}
+
+function buildColorTable(paletteName) {
+  const table = new Uint8Array(1024 * 3);
+  for (let i = 0; i < 1024; i++) {
+    const t = i / 1023;
+    const [r, g, b] = interpolatePalette(t, paletteName);
+    table[i * 3] = r;
+    table[i * 3 + 1] = g;
+    table[i * 3 + 2] = b;
+  }
+  return table;
+}
+
+let colorTable = buildColorTable(currentPalette);
+
+// =======================================
+// VIEW HELPERS
+// =======================================
+function getBounds(view) {
+  const aspect = CANVAS_W / CANVAS_H;
+  const halfW = view.scale / 2;
+  const halfH = halfW / aspect;
+  return {
+    xMin: view.centerX - halfW,
+    xMax: view.centerX + halfW,
+    yMin: view.centerY - halfH,
+    yMax: view.centerY + halfH
+  };
+}
+
+function pixelToComplex(px, py, view) {
+  const b = getBounds(view);
+  return {
+    real: b.xMin + (px / CANVAS_W) * (b.xMax - b.xMin),
+    imag: b.yMin + (py / CANVAS_H) * (b.yMax - b.yMin)
+  };
+}
+
+function complexToPixel(real, imag, view) {
+  const b = getBounds(view);
+  return {
+    px: ((real - b.xMin) / (b.xMax - b.xMin)) * CANVAS_W,
+    py: ((imag - b.yMin) / (b.yMax - b.yMin)) * CANVAS_H
+  };
+}
+
+function getCanvasMousePos(wrapper, e) {
+  const rect = wrapper.getBoundingClientRect();
+  return {
+    x: (e.clientX - rect.left) / rect.width * CANVAS_W,
+    y: (e.clientY - rect.top) / rect.height * CANVAS_H
+  };
+}
+
+// =======================================
+// WORKERS
+// =======================================
+function createWorker() {
+  return new Worker(workerUrl);
+}
+
+function initWorkers() {
+  mandelbrotWorker = createWorker();
+  juliaWorker = createWorker();
+
+  mandelbrotWorker.onmessage = function(e) {
+    if (e.data.id !== mandelbrotRenderVersion) return;
+    mandelbrotIterData = e.data.iterations;
+    paintCanvas(mandelbrotCtx, mandelbrotIterData, CANVAS_W, CANVAS_H);
+    drawMandelbrotMarker();
+    mandelbrotCanvas.classList.remove('rendering');
+  };
+
+  juliaWorker.onmessage = function(e) {
+    if (e.data.id !== juliaRenderVersion) return;
+    juliaIterData = e.data.iterations;
+    paintCanvas(juliaCtx, juliaIterData, CANVAS_W, CANVAS_H);
+    juliaCanvas.classList.remove('rendering');
+  };
+}
+
+// =======================================
+// RENDERING
+// =======================================
+function paintCanvas(ctx, iterations, w, h) {
+  const imageData = ctx.createImageData(w, h);
+  const data = imageData.data;
+  const period = 40;
+  for (let i = 0; i < w * h; i++) {
+    const idx = i * 4;
+    const iter = iterations[i];
+    if (iter < 0) {
+      data[idx] = 2;
+      data[idx + 1] = 2;
+      data[idx + 2] = 8;
+      data[idx + 3] = 255;
+    } else {
+      const t = (iter % period) / period;
+      const ci = Math.min(1023, Math.max(0, Math.floor(t * 1023)));
+      data[idx] = colorTable[ci * 3];
+      data[idx + 1] = colorTable[ci * 3 + 1];
+      data[idx + 2] = colorTable[ci * 3 + 2];
+      data[idx + 3] = 255;
+    }
+  }
+  ctx.putImageData(imageData, 0, 0);
+}
+
+function renderMandelbrot() {
+  mandelbrotRenderVersion++;
+  mandelbrotCanvas.classList.add('rendering');
+  const b = getBounds(mandelbrotView);
+  mandelbrotWorker.postMessage({
+    type: 'mandelbrot',
+    xMin: b.xMin, xMax: b.xMax, yMin: b.yMin, yMax: b.yMax,
+    width: CANVAS_W, height: CANVAS_H,
+    maxIter: MAX_ITER,
+    cReal: 0, cImag: 0,
+    id: mandelbrotRenderVersion
+  });
+}
+
+function renderJulia() {
+  juliaRenderVersion++;
+  juliaCanvas.classList.add('rendering');
+  const b = getBounds(juliaView);
+  juliaWorker.postMessage({
+    type: 'julia',
+    xMin: b.xMin, xMax: b.xMax, yMin: b.yMin, yMax: b.yMax,
+    width: CANVAS_W, height: CANVAS_H,
+    maxIter: MAX_ITER,
+    cReal: currentC.real, cImag: currentC.imag,
+    id: juliaRenderVersion
+  });
+}
+
+function repaintBoth() {
+  if (mandelbrotIterData) {
+    paintCanvas(mandelbrotCtx, mandelbrotIterData, CANVAS_W, CANVAS_H);
+    drawMandelbrotMarker();
+  }
+  if (juliaIterData) {
+    paintCanvas(juliaCtx, juliaIterData, CANVAS_W, CANVAS_H);
+  }
+}
+
+// =======================================
+// MANDELBROT MARKER
+// =======================================
+function drawMandelbrotMarker() {
+  const pos = complexToPixel(currentC.real, currentC.imag, mandelbrotView);
+  const wrapper = mandelbrotWrapper;
+  const scaleX = wrapper.clientWidth / CANVAS_W;
+  const scaleY = wrapper.clientHeight / CANVAS_H;
+  crosshair.style.left = (pos.px * scaleX) + 'px';
+  crosshair.style.top = (pos.py * scaleY) + 'px';
+  crosshair.style.display = 'block';
+}
+
+function updateCoordsDisplay() {
+  const sign = currentC.imag >= 0 ? '+' : '\u2212';
+  const absImag = Math.abs(currentC.imag);
+  juliaCoords.textContent = `c = ${currentC.real.toFixed(4)} ${sign} ${absImag.toFixed(4)}i`;
+  mandelbrotCoords.textContent = `c = ${currentC.real.toFixed(4)} ${sign} ${absImag.toFixed(4)}i`;
+}
+
+function selectC(real, imag) {
+  currentC.real = real;
+  currentC.imag = imag;
+  updateCoordsDisplay();
+  drawMandelbrotMarker();
+  juliaView.centerX = defaultJuliaView.centerX;
+  juliaView.centerY = defaultJuliaView.centerY;
+  juliaView.scale = defaultJuliaView.scale;
+  renderJulia();
+}
+
+// =======================================
+// INTERACTION — ZOOM / PAN / CLICK
+// =======================================
+function setupCanvasInteraction(wrapper, canvas, view, renderFn, onClick) {
+  let isDragging = false;
+  let dragStartX, dragStartY;
+  let dragMoved = false;
+
+  wrapper.addEventListener('mousedown', function(e) {
+    if (e.button !== 0) return;
+    isDragging = true;
+    dragMoved = false;
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+    e.preventDefault();
+  });
+
+  window.addEventListener('mousemove', function(e) {
+    if (!isDragging) return;
+    const dx = e.clientX - dragStartX;
+    const dy = e.clientY - dragStartY;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) dragMoved = true;
+    if (!dragMoved) return;
+
+    const rect = wrapper.getBoundingClientRect();
+    const scaleX = (getBounds(view).xMax - getBounds(view).xMin) / rect.width;
+    const scaleY = (getBounds(view).yMax - getBounds(view).yMin) / rect.height;
+    view.centerX -= dx * scaleX;
+    view.centerY -= dy * scaleY;
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+    renderFn();
+  });
+
+  window.addEventListener('mouseup', function(e) {
+    if (!isDragging) return;
+    isDragging = false;
+    if (!dragMoved && onClick) {
+      const pos = getCanvasMousePos(wrapper, e);
+      onClick(pos.x, pos.y);
+    }
+  });
+
+  wrapper.addEventListener('wheel', function(e) {
+    e.preventDefault();
+    const zoomFactor = e.deltaY > 0 ? 1.15 : 1 / 1.15;
+    const pos = getCanvasMousePos(wrapper, e);
+    const before = pixelToComplex(pos.x, pos.y, view);
+    view.scale *= zoomFactor;
+    const after = pixelToComplex(pos.x, pos.y, view);
+    view.centerX += before.real - after.real;
+    view.centerY += before.imag - after.imag;
+    renderFn();
+  }, { passive: false });
+
+  wrapper.addEventListener('dblclick', function(e) {
+    e.preventDefault();
+    if (view === mandelbrotView) {
+      Object.assign(view, defaultMandelbrotView);
+    } else {
+      Object.assign(view, defaultJuliaView);
+    }
+    renderFn();
+  });
+}
+
+// =======================================
+// BUILD PALETTE UI
+// =======================================
+function buildPaletteUI() {
+  Object.keys(PALETTES).forEach(function(key) {
+    const p = PALETTES[key];
+    const swatch = document.createElement('div');
+    swatch.className = 'palette-swatch' + (key === currentPalette ? ' active' : '');
+    swatch.style.background = p.gradient;
+    swatch.innerHTML = '<span class="palette-label">' + p.name + '</span>';
+    swatch.addEventListener('click', function() {
+      currentPalette = key;
+      colorTable = buildColorTable(key);
+      document.querySelectorAll('.palette-swatch').forEach(function(s) { s.classList.remove('active'); });
+      swatch.classList.add('active');
+      repaintBoth();
+    });
+    paletteRow.appendChild(swatch);
+  });
+}
+
+// =======================================
+// BUILD PRESET UI
+// =======================================
+function buildPresetUI() {
+  PRESETS.forEach(function(preset, index) {
+    const btn = document.createElement('button');
+    btn.className = 'preset-btn' + (index === 0 ? ' active' : '');
+    btn.textContent = preset.name;
+    btn.addEventListener('click', function() {
+      if (isMorphing) stopMorph();
+      document.querySelectorAll('.preset-btn').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      selectC(preset.real, preset.imag);
+    });
+    presetRow.appendChild(btn);
+  });
+}
+
+// =======================================
+// MORPH ANIMATION
+// =======================================
+function startMorph() {
+  isMorphing = true;
+  morphBtn.textContent = '\u23F8 Pause';
+  morphBtn.classList.add('active');
+  document.querySelectorAll('.preset-btn').forEach(function(b) { b.classList.remove('active'); });
+  let lastTime = performance.now();
+
+  function morphLoop(now) {
+    if (!isMorphing) return;
+    const dt = (now - lastTime) / 1000;
+    lastTime = now;
+    const speed = speedSlider.value / 50;
+    morphAngle += dt * speed * 0.5;
+
+    const radius = 0.7885;
+    const cr = radius * Math.cos(morphAngle);
+    const ci = radius * Math.sin(morphAngle);
+    currentC.real = cr;
+    currentC.imag = ci;
+    updateCoordsDisplay();
+    drawMandelbrotMarker();
+    renderJulia();
+    morphAnimId = requestAnimationFrame(morphLoop);
+  }
+
+  morphAnimId = requestAnimationFrame(morphLoop);
+}
+
+function stopMorph() {
+  isMorphing = false;
+  morphBtn.textContent = '\u25B6 Morph';
+  morphBtn.classList.remove('active');
+  if (morphAnimId) {
+    cancelAnimationFrame(morphAnimId);
+    morphAnimId = null;
+  }
+}
+
+morphBtn.addEventListener('click', function() {
+  if (isMorphing) stopMorph();
+  else startMorph();
+});
+
+// =======================================
+// INFO PANEL
+// =======================================
+infoToggle.addEventListener('click', function() {
+  infoPanel.classList.toggle('visible');
+});
+
+document.addEventListener('click', function(e) {
+  if (!infoPanel.contains(e.target) && !infoToggle.contains(e.target)) {
+    infoPanel.classList.remove('visible');
+  }
+});
+
+// =======================================
+// STAR FIELD BACKGROUND
+// =======================================
+function generateStars() {
+  const canvas = document.createElement('canvas');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const ctx = canvas.getContext('2d');
+  for (let i = 0; i < 250; i++) {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    const r = Math.random() * 1.2 + 0.2;
+    const alpha = Math.random() * 0.6 + 0.1;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(200, 210, 255, ' + alpha + ')';
+    ctx.fill();
+  }
+  document.getElementById('bg').style.backgroundImage = 'url(' + canvas.toDataURL() + ')';
+  document.getElementById('bg').style.backgroundSize = 'cover';
+}
+
+// =======================================
+// INIT
+// =======================================
+function init() {
+  generateStars();
+  initWorkers();
+  buildPaletteUI();
+  buildPresetUI();
+  updateCoordsDisplay();
+
+  setupCanvasInteraction(
+    mandelbrotWrapper, mandelbrotCanvas, mandelbrotView,
+    function() { renderMandelbrot(); },
+    function(px, py) {
+      const c = pixelToComplex(px, py, mandelbrotView);
+      if (isMorphing) stopMorph();
+      document.querySelectorAll('.preset-btn').forEach(function(b) { b.classList.remove('active'); });
+      selectC(c.real, c.imag);
+    }
+  );
+
+  setupCanvasInteraction(
+    juliaWrapper, juliaCanvas, juliaView,
+    function() { renderJulia(); },
+    null
+  );
+
+  renderMandelbrot();
+  renderJulia();
+}
+
+init();
+</script>
+</body>
+</html>

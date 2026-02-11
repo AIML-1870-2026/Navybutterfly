@@ -1,0 +1,187 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="ocean" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0A3B6E"/>
+      <stop offset="40%" stop-color="#0E4D7A"/>
+      <stop offset="100%" stop-color="#062845"/>
+    </linearGradient>
+  </defs>
+
+  <style>
+    .turtle   { animation: turtle-swim 12s ease-in-out infinite alternate; }
+    .fish1    { animation: fish-drift1 8s ease-in-out infinite alternate; }
+    .fish2    { animation: fish-drift2 10s ease-in-out infinite alternate; }
+    .school   { animation: school-drift 7s ease-in-out infinite alternate; }
+    .kelp-l   { animation: kelp-sway1 5s ease-in-out infinite alternate; transform-origin: 160px 1080px; }
+    .kelp-r   { animation: kelp-sway2 6s ease-in-out infinite alternate; transform-origin: 1760px 1080px; }
+    .bubbles1 { animation: bubble-rise 10s linear infinite; }
+    .bubbles2 { animation: bubble-rise 12s linear infinite; }
+    @keyframes turtle-swim  { 0% { transform: translate(1100px,400px); } 100% { transform: translate(1120px,390px); } }
+    @keyframes fish-drift1  { 0% { transform: translate(600px,550px); } 100% { transform: translate(580px,545px); } }
+    @keyframes fish-drift2  { 0% { transform: translate(1500px,500px); } 100% { transform: translate(1520px,495px); } }
+    @keyframes school-drift { 0% { transform: translate(0,0); } 100% { transform: translate(15px,-8px); } }
+    @keyframes kelp-sway1   { 0% { transform: rotate(-1.5deg); } 100% { transform: rotate(1.5deg); } }
+    @keyframes kelp-sway2   { 0% { transform: rotate(1deg); } 100% { transform: rotate(-1deg); } }
+    @keyframes bubble-rise  { 0% { transform: translateY(0); opacity:0.4; } 50% { opacity:0.3; } 100% { transform: translateY(-80px); opacity:0; } }
+  </style>
+
+  <!-- Water background -->
+  <rect width="1920" height="1080" fill="url(#ocean)"/>
+
+  <!-- Light rays from surface -->
+  <g opacity="0.08" fill="#60C8E8">
+    <polygon points="400,0 500,0 700,1080 300,1080"/>
+    <polygon points="800,0 900,0 1050,1080 650,1080"/>
+    <polygon points="1300,0 1400,0 1500,1080 1100,1080"/>
+  </g>
+
+  <!-- Background bubbles -->
+  <g fill="none" stroke="#4AA8D0" stroke-width="1.5" opacity="0.3">
+    <circle cx="200" cy="300" r="8"/>
+    <circle cx="220" cy="260" r="5"/>
+    <circle cx="600" cy="200" r="6"/>
+    <circle cx="620" cy="160" r="4"/>
+    <circle cx="1100" cy="350" r="7"/>
+    <circle cx="1500" cy="250" r="5"/>
+    <circle cx="1520" cy="210" r="3"/>
+    <circle cx="900" cy="400" r="4"/>
+    <circle cx="1700" cy="320" r="6"/>
+  </g>
+
+  <!-- Sandy ocean floor -->
+  <path d="M0 900 Q200 870 400 890 Q600 860 800 880 Q1000 850 1200 870 Q1400 855 1600 875 Q1800 860 1920 870 L1920 1080 L0 1080Z" fill="#1A5570" stroke="#222" stroke-width="2"/>
+
+  <!-- Kelp strands (left) -->
+  <g class="kelp-l" stroke="#1A7040" stroke-width="6" fill="none" stroke-linecap="round">
+    <path d="M150 1080 Q160 950 140 850 Q130 750 150 650 Q170 550 155 450"/>
+    <path d="M170 1080 Q180 960 165 870 Q155 780 175 680 Q195 580 180 490"/>
+  </g>
+  <!-- Kelp strands (right) -->
+  <g class="kelp-r" stroke="#1A7040" stroke-width="6" fill="none" stroke-linecap="round">
+    <path d="M1750 1080 Q1740 940 1760 840 Q1780 740 1760 640"/>
+    <path d="M1770 1080 Q1760 950 1780 860 Q1800 760 1785 670"/>
+  </g>
+  <!-- Kelp leaves (left) -->
+  <g class="kelp-l" fill="#1A7040" stroke="#111" stroke-width="1.5">
+    <ellipse cx="135" cy="500" rx="20" ry="8" transform="rotate(-20, 135, 500)"/>
+    <ellipse cx="170" cy="540" rx="18" ry="7" transform="rotate(15, 170, 540)"/>
+    <ellipse cx="140" cy="650" rx="22" ry="8" transform="rotate(-25, 140, 650)"/>
+    <ellipse cx="175" cy="700" rx="18" ry="7" transform="rotate(20, 175, 700)"/>
+  </g>
+  <!-- Kelp leaves (right) -->
+  <g class="kelp-r" fill="#1A7040" stroke="#111" stroke-width="1.5">
+    <ellipse cx="1770" cy="700" rx="20" ry="8" transform="rotate(20, 1770, 700)"/>
+    <ellipse cx="1745" cy="750" rx="18" ry="7" transform="rotate(-15, 1745, 750)"/>
+  </g>
+
+  <!-- Coral formations -->
+  <!-- Brain coral (left) -->
+  <g transform="translate(400, 860)" stroke="#222" stroke-width="2">
+    <ellipse cx="0" cy="0" rx="70" ry="45" fill="#D45070"/>
+    <path d="M-50 -10 Q-30 -25 -10 -10 Q10 5 30 -10 Q45 -20 55 -5" fill="none" stroke="#A03050" stroke-width="2"/>
+    <path d="M-45 10 Q-25 -5 -5 10 Q15 25 35 10 Q50 0 60 15" fill="none" stroke="#A03050" stroke-width="2"/>
+    <path d="M-40 25 Q-20 10 0 25 Q20 35 40 25" fill="none" stroke="#A03050" stroke-width="2"/>
+  </g>
+
+  <!-- Branching coral (center) -->
+  <g transform="translate(900, 830)" stroke="#222" stroke-width="2.5">
+    <path d="M0 80 L0 20" stroke="#E06040" stroke-width="10" stroke-linecap="round"/>
+    <path d="M0 40 L-30 -10" stroke="#E06040" stroke-width="8" stroke-linecap="round"/>
+    <path d="M0 20 L25 -20" stroke="#E06040" stroke-width="8" stroke-linecap="round"/>
+    <path d="M-30 -10 L-50 -35" stroke="#E06040" stroke-width="6" stroke-linecap="round"/>
+    <path d="M-30 -10 L-15 -40" stroke="#E06040" stroke-width="6" stroke-linecap="round"/>
+    <path d="M25 -20 L45 -45" stroke="#E06040" stroke-width="6" stroke-linecap="round"/>
+    <path d="M25 -20 L10 -50" stroke="#E06040" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="-50" cy="-35" r="5" fill="#F08060"/>
+    <circle cx="-15" cy="-40" r="5" fill="#F08060"/>
+    <circle cx="45" cy="-45" r="5" fill="#F08060"/>
+    <circle cx="10" cy="-50" r="5" fill="#F08060"/>
+  </g>
+
+  <!-- Fan coral (right) -->
+  <g transform="translate(1400, 840)" stroke="#222" stroke-width="2">
+    <path d="M0 80 L0 20" stroke="#D06090" stroke-width="8" stroke-linecap="round"/>
+    <path d="M0 20 Q-40 -20 -60 -50 Q-30 -30 0 -40 Q30 -30 60 -50 Q40 -20 0 20Z" fill="#D06090"/>
+    <path d="M0 0 Q-25 -20 -40 -40" fill="none" stroke="#B04070" stroke-width="1.5"/>
+    <path d="M0 0 Q25 -20 40 -40" fill="none" stroke="#B04070" stroke-width="1.5"/>
+    <path d="M0 0 L0 -45" fill="none" stroke="#B04070" stroke-width="1.5"/>
+  </g>
+
+  <!-- Small corals -->
+  <g stroke="#222" stroke-width="2">
+    <ellipse cx="650" cy="890" rx="35" ry="20" fill="#50B898"/>
+    <ellipse cx="1150" cy="880" rx="40" ry="22" fill="#E8A050"/>
+    <ellipse cx="1650" cy="885" rx="30" ry="18" fill="#50B898"/>
+  </g>
+
+  <!-- Sea turtle -->
+  <g class="turtle" transform="translate(1100, 400)" stroke="#222" stroke-width="2.5">
+    <!-- Shell -->
+    <ellipse cx="0" cy="0" rx="60" ry="40" fill="#4A8858"/>
+    <!-- Shell pattern -->
+    <path d="M-30 0 Q0 -25 30 0 Q0 25 -30 0Z" fill="#3A7048" stroke-width="1.5"/>
+    <path d="M-45 -5 Q-30 -20 -15 -5" fill="none" stroke="#3A7048" stroke-width="1.5"/>
+    <path d="M15 -5 Q30 -20 45 -5" fill="none" stroke="#3A7048" stroke-width="1.5"/>
+    <path d="M-40 10 Q-25 25 -10 10" fill="none" stroke="#3A7048" stroke-width="1.5"/>
+    <path d="M10 10 Q25 25 40 10" fill="none" stroke="#3A7048" stroke-width="1.5"/>
+    <!-- Head -->
+    <ellipse cx="-72" cy="-2" rx="18" ry="14" fill="#5A9868"/>
+    <circle cx="-80" cy="-7" r="3" fill="#222"/>
+    <!-- Flippers -->
+    <path d="M-30 -30 Q-60 -55 -80 -40" fill="#5A9868" stroke-width="2"/>
+    <path d="M-30 30 Q-60 55 -80 40" fill="#5A9868" stroke-width="2"/>
+    <path d="M40 -25 Q70 -50 85 -30" fill="#5A9868" stroke-width="2"/>
+    <path d="M40 25 Q70 50 85 30" fill="#5A9868" stroke-width="2"/>
+    <!-- Tail -->
+    <path d="M58 0 Q75 -5 80 0 Q75 5 58 0Z" fill="#5A9868"/>
+  </g>
+
+  <!-- Tropical fish 1 (clownfish-style) -->
+  <g class="fish1" transform="translate(600, 550)" stroke="#222" stroke-width="2">
+    <ellipse cx="0" cy="0" rx="30" ry="18" fill="#E87030"/>
+    <!-- White stripes -->
+    <path d="M-10 -18 Q-8 0 -10 18" fill="none" stroke="#F8F0E0" stroke-width="4"/>
+    <path d="M10 -16 Q12 0 10 16" fill="none" stroke="#F8F0E0" stroke-width="4"/>
+    <!-- Tail -->
+    <path d="M28 0 Q40 -15 45 -18 Q38 0 45 18 Q40 15 28 0Z" fill="#E87030"/>
+    <!-- Eye -->
+    <circle cx="-18" cy="-3" r="4" fill="#FFF"/>
+    <circle cx="-18" cy="-3" r="2" fill="#222"/>
+    <!-- Fins -->
+    <path d="M-5 -17 Q0 -28 10 -20" fill="#D06028" stroke-width="1.5"/>
+    <path d="M-5 17 Q0 28 10 20" fill="#D06028" stroke-width="1.5"/>
+  </g>
+
+  <!-- Tropical fish 2 (blue tang style) -->
+  <g class="fish2" transform="translate(1500, 500)" stroke="#222" stroke-width="2">
+    <ellipse cx="0" cy="0" rx="28" ry="20" fill="#2878C8"/>
+    <path d="M-15 -5 Q0 -15 15 -5 Q25 0 15 5 Q0 10 -15 5Z" fill="#1858A0" stroke-width="1"/>
+    <!-- Tail -->
+    <path d="M26 0 Q38 -14 42 -16 Q36 0 42 16 Q38 14 26 0Z" fill="#F8D030"/>
+    <!-- Eye -->
+    <circle cx="-15" cy="-3" r="4" fill="#FFF"/>
+    <circle cx="-15" cy="-3" r="2" fill="#222"/>
+    <!-- Fin -->
+    <path d="M-5 -19 Q2 -30 12 -22" fill="#2878C8" stroke-width="1.5"/>
+  </g>
+
+  <!-- Small fish school -->
+  <g class="school" fill="#60B8D8" stroke="#222" stroke-width="1.5">
+    <ellipse cx="350" cy="300" rx="12" ry="7"/>
+    <ellipse cx="380" cy="285" rx="12" ry="7"/>
+    <ellipse cx="370" cy="315" rx="12" ry="7"/>
+    <ellipse cx="400" cy="305" rx="12" ry="7"/>
+    <ellipse cx="410" cy="280" rx="12" ry="7"/>
+  </g>
+
+  <!-- Foreground bubbles -->
+  <g class="bubbles1" fill="none" stroke="#80D0F0" stroke-width="1.5" opacity="0.4">
+    <circle cx="500" cy="600" r="12"/>
+    <circle cx="520" cy="560" r="8"/>
+    <circle cx="510" cy="520" r="5"/>
+  </g>
+  <g class="bubbles2" fill="none" stroke="#80D0F0" stroke-width="1.5" opacity="0.4">
+    <circle cx="1300" cy="650" r="10"/>
+    <circle cx="1320" cy="610" r="6"/>
+  </g>
+</svg>
