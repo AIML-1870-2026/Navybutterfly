@@ -1,0 +1,1605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Decision Neuron</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #1a1520;
+    --surface: #241e2e;
+    --surface-raised: #2e2739;
+    --border: rgba(255,255,255,0.08);
+    --text: #f0ece4;
+    --text-muted: #9a8fab;
+    --dinner-warm: #e8944a;
+    --dinner-glow: #f4a96160;
+    --show-cool: #6b8aed;
+    --show-glow: #6b8aed40;
+    --gold: #d4a843;
+    --accent-pink: #d4698a;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 999;
+  }
+
+  /* ─── Header ─── */
+  .header {
+    text-align: center;
+    padding: 40px 20px 20px;
+    position: relative;
+  }
+  .header::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, var(--dinner-glow) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .header h1 {
+    font-family: 'Fraunces', serif;
+    font-size: 2.2rem;
+    font-weight: 700;
+    position: relative;
+    z-index: 1;
+    background: linear-gradient(135deg, var(--dinner-warm), var(--accent-pink));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .header p {
+    color: var(--text-muted);
+    margin-top: 6px;
+    font-size: 0.95rem;
+    position: relative; z-index: 1;
+  }
+
+  /* ─── Scenario Bar ─── */
+  .scenario-bar {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 20px;
+    flex-wrap: wrap;
+  }
+  .scenario-chip {
+    padding: 8px 16px;
+    border-radius: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-muted);
+    user-select: none;
+  }
+  .scenario-chip.active {
+    background: linear-gradient(135deg, var(--dinner-warm), var(--accent-pink));
+    color: white;
+    border-color: transparent;
+    font-weight: 600;
+  }
+  .scenario-chip:hover:not(.active) {
+    border-color: rgba(255,255,255,0.2);
+    color: var(--text);
+  }
+
+  /* ─── Tabs ─── */
+  .tabs {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    margin: 16px auto;
+    max-width: 500px;
+    background: var(--surface);
+    border-radius: 14px;
+    padding: 5px;
+  }
+  .tab {
+    flex: 1;
+    padding: 10px 16px;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all 0.25s;
+    user-select: none;
+  }
+  .tab.active {
+    background: var(--surface-raised);
+    color: var(--text);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+  .tab:hover:not(.active) { color: var(--text); }
+
+  /* ─── Main Content ─── */
+  .main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+  }
+
+  /* ─── Panel generic ─── */
+  .panel { display: none; }
+  .panel.active { display: grid; }
+
+  /* ─── Calculator Panel ─── */
+  .panel-calculator {
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  /* Probability hero */
+  .probability-hero {
+    text-align: center;
+    padding: 32px 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .probability-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, var(--dinner-glow) 0%, transparent 60%);
+    opacity: 0.5;
+    transition: background 0.5s;
+  }
+  .prob-emoji { font-size: 3rem; position: relative; z-index: 1; transition: transform 0.3s; }
+  .prob-number {
+    font-family: 'Fraunces', serif;
+    font-size: 4.5rem;
+    font-weight: 700;
+    position: relative; z-index: 1;
+    background: linear-gradient(135deg, var(--dinner-warm), var(--accent-pink));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+    margin: 8px 0;
+    transition: all 0.3s;
+  }
+  .prob-label {
+    font-size: 1.05rem;
+    color: var(--text-muted);
+    position: relative; z-index: 1;
+    font-weight: 500;
+    transition: color 0.3s;
+    min-height: 1.6em;
+  }
+  .prob-bar-track {
+    height: 6px;
+    background: var(--surface-raised);
+    border-radius: 3px;
+    margin-top: 20px;
+    position: relative; z-index: 1;
+    overflow: hidden;
+  }
+  .prob-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--show-cool), var(--dinner-warm));
+    transition: width 0.4s ease;
+  }
+
+  /* Sliders */
+  .slider-group { margin-bottom: 20px; }
+  .slider-group:last-child { margin-bottom: 0; }
+  .slider-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .slider-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+  .slider-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .slider-value {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    min-width: 32px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .weight-badge {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+  .weight-badge.positive {
+    background: rgba(232, 148, 74, 0.15);
+    color: var(--dinner-warm);
+  }
+  .weight-badge.negative {
+    background: rgba(107, 138, 237, 0.15);
+    color: var(--show-cool);
+  }
+
+  input[type="range"] {
+    width: 100%;
+    height: 6px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: var(--surface-raised);
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--text);
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--text);
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  }
+
+  .math-display {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 16px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    line-height: 1.8;
+    font-variant-numeric: tabular-nums;
+  }
+  .math-display .math-label {
+    color: var(--gold);
+    font-weight: 600;
+  }
+
+  .bias-section {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ─── Boundary Panel ─── */
+  .panel-boundary {
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  .heatmap-wrapper {
+    position: relative;
+  }
+  .heatmap-container {
+    aspect-ratio: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .heatmap-container canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 16px;
+  }
+  .boundary-controls .dropdown {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    margin-bottom: 16px;
+    cursor: pointer;
+  }
+  .legend {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* ─── Training Panel ─── */
+  .panel-training {
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  .scatter-container {
+    aspect-ratio: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    position: relative;
+    overflow: hidden;
+    cursor: crosshair;
+  }
+  .scatter-container canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 16px;
+  }
+
+  .label-toggle {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .label-btn {
+    flex: 1;
+    padding: 10px;
+    border-radius: 10px;
+    border: 2px solid var(--border);
+    background: var(--bg);
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+    user-select: none;
+  }
+  .label-btn.active-yes {
+    border-color: var(--dinner-warm);
+    color: var(--dinner-warm);
+    background: rgba(232, 148, 74, 0.1);
+  }
+  .label-btn.active-no {
+    border-color: var(--show-cool);
+    color: var(--show-cool);
+    background: rgba(107, 138, 237, 0.1);
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .btn {
+    flex: 1;
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+  }
+  .btn:hover { filter: brightness(1.1); }
+  .btn:active { transform: scale(0.97); }
+  .btn-step {
+    background: var(--surface-raised);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-train {
+    background: linear-gradient(135deg, var(--dinner-warm), var(--accent-pink));
+    color: white;
+  }
+  .btn-reset {
+    background: var(--bg);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .stat-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+  }
+  .stat-value {
+    font-family: 'Fraunces', serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .weights-readout {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+  }
+  .weights-readout h4 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+  .weight-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    font-size: 0.82rem;
+  }
+  .weight-name { color: var(--text-muted); }
+  .weight-val { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .weight-val.pos { color: var(--dinner-warm); }
+  .weight-val.neg { color: var(--show-cool); }
+
+  .lr-slider {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+  .lr-slider .slider-header { margin-bottom: 6px; }
+
+  /* ─── Custom Scenario Modal ─── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px;
+    max-width: 520px;
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+  .modal h2 {
+    font-family: 'Fraunces', serif;
+    font-size: 1.4rem;
+    margin-bottom: 20px;
+  }
+  .modal label {
+    display: block;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+    margin-top: 14px;
+  }
+  .modal label:first-of-type { margin-top: 0; }
+  .modal input[type="text"], .modal input[type="number"] {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    outline: none;
+  }
+  .modal input[type="text"]:focus, .modal input[type="number"]:focus {
+    border-color: var(--dinner-warm);
+  }
+  .modal-input-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 8px;
+    align-items: end;
+    margin-top: 8px;
+  }
+  .modal-input-row select {
+    padding: 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+  }
+  .modal-input-row input[type="number"] {
+    width: 80px;
+  }
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+  }
+  .modal-actions .btn { padding: 12px 20px; }
+
+  /* ─── Responsive ─── */
+  @media (max-width: 768px) {
+    .panel-calculator,
+    .panel-boundary,
+    .panel-training {
+      grid-template-columns: 1fr;
+    }
+    .header h1 { font-size: 1.6rem; }
+    .prob-number { font-size: 3.5rem; }
+    .tabs { margin-left: 20px; margin-right: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <h1 id="app-title"></h1>
+  <p id="app-subtitle">A single neuron decides your evening</p>
+</div>
+
+<!-- Scenario Chips -->
+<div class="scenario-bar" id="scenario-bar"></div>
+
+<!-- Tabs -->
+<div class="tabs">
+  <div class="tab active" data-panel="calculator">Calculator</div>
+  <div class="tab" data-panel="boundary">Boundary</div>
+  <div class="tab" data-panel="training">Training</div>
+</div>
+
+<div class="main">
+
+  <!-- ═══ CALCULATOR PANEL ═══ -->
+  <div class="panel panel-calculator active" id="panel-calculator">
+    <div class="card">
+      <div id="input-sliders"></div>
+      <div class="bias-section">
+        <div class="slider-header">
+          <span class="slider-label" id="bias-label"></span>
+          <span class="slider-value" id="bias-value">-0.50</span>
+        </div>
+        <input type="range" id="bias-slider" min="-300" max="300" value="-50" step="1">
+      </div>
+      <div class="math-display" id="math-display"></div>
+    </div>
+    <div>
+      <div class="probability-hero" id="prob-hero">
+        <div class="prob-emoji" id="prob-emoji"></div>
+        <div class="prob-number" id="prob-number">50%</div>
+        <div class="prob-label" id="prob-label">Tough call...</div>
+        <div class="prob-bar-track">
+          <div class="prob-bar-fill" id="prob-bar" style="width:50%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ BOUNDARY PANEL ═══ -->
+  <div class="panel panel-boundary" id="panel-boundary">
+    <div class="heatmap-container">
+      <canvas id="heatmap-canvas"></canvas>
+    </div>
+    <div class="card boundary-controls">
+      <h3 style="font-family:'Fraunces',serif;margin-bottom:16px;">Decision Boundary</h3>
+      <select class="dropdown" id="axis-select"></select>
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-dot" style="background:var(--dinner-warm)"></div>
+          <span id="legend-yes"></span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background:var(--show-cool)"></div>
+          <span id="legend-no"></span>
+        </div>
+      </div>
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-dot" style="background:var(--gold);width:20px;height:3px;border-radius:2px;"></div>
+          Decision boundary (50%)
+        </div>
+      </div>
+      <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.6;margin-top:12px;">
+        The gold line is where the neuron is exactly 50/50. Move the sliders on the Calculator tab to shift the crosshair. Change bias or other inputs to shift the boundary.
+      </p>
+      <div class="math-display" id="boundary-math" style="margin-top:16px;"></div>
+    </div>
+  </div>
+
+  <!-- ═══ TRAINING PANEL ═══ -->
+  <div class="panel panel-training" id="panel-training">
+    <div class="scatter-container" id="scatter-container">
+      <canvas id="scatter-canvas"></canvas>
+    </div>
+    <div class="card">
+      <h3 style="font-family:'Fraunces',serif;margin-bottom:16px;">Train the Neuron</h3>
+      <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:16px;">
+        Click the plot to add past decisions. Then watch the neuron learn!
+      </p>
+      <div class="label-toggle" id="label-toggle"></div>
+      <div class="action-buttons">
+        <button class="btn btn-step" id="btn-step">Step</button>
+        <button class="btn btn-train" id="btn-train">Train</button>
+        <button class="btn btn-reset" id="btn-reset">Reset</button>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="stat-steps">0</div>
+          <div class="stat-label">Steps</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-accuracy" style="color:var(--dinner-warm);">—</div>
+          <div class="stat-label">Accuracy</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-points">0</div>
+          <div class="stat-label">Points</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-lr">0.1</div>
+          <div class="stat-label">Learn Rate</div>
+        </div>
+      </div>
+      <div class="weights-readout" id="weights-readout"></div>
+      <div class="lr-slider">
+        <div class="slider-header">
+          <span class="slider-label">Learning Rate</span>
+          <span class="slider-value" id="lr-display">0.10</span>
+        </div>
+        <input type="range" id="lr-slider" min="1" max="100" value="10" step="1">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Custom Scenario Modal -->
+<div class="modal-overlay" id="custom-modal">
+  <div class="modal">
+    <h2>Custom Scenario</h2>
+    <label>Scenario Title</label>
+    <input type="text" id="custom-title" placeholder="e.g. Gym vs Netflix">
+    <label>Emoji</label>
+    <input type="text" id="custom-emoji" placeholder="e.g. 💪" maxlength="4">
+    <label>Yes Label (positive outcome)</label>
+    <input type="text" id="custom-yes" placeholder="e.g. Go to the gym">
+    <label>No Label (negative outcome)</label>
+    <input type="text" id="custom-no" placeholder="e.g. Stay on the couch">
+    <label>Bias Name</label>
+    <input type="text" id="custom-bias-name" placeholder="e.g. Laziness Factor">
+
+    <label style="margin-top:20px;font-weight:600;color:var(--text);">Inputs (4)</label>
+    <div id="custom-inputs"></div>
+
+    <div class="modal-actions">
+      <button class="btn btn-train" id="custom-apply">Apply</button>
+      <button class="btn btn-reset" id="custom-cancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ──────────────────────────────────────
+//  SCENARIOS
+// ──────────────────────────────────────
+const SCENARIOS = [
+  {
+    id: 'dinner',
+    chipLabel: 'Dinner vs Show',
+    chipEmoji: '🍽️',
+    title: '🍽️ Dinner or Show? 📺',
+    yesLabel: 'Go to dinner',
+    yesEmoji: '🍽️',
+    noLabel: 'Watch the show',
+    noEmoji: '📺',
+    biasName: '🏠 Homebody Tendency',
+    defaultBias: -0.5,
+    inputs: [
+      { name: '🍔 Hunger Level',       sign: +1, defaultWeight: 2.0 },
+      { name: '👨‍👩‍👧 Family Miss Factor', sign: +1, defaultWeight: 2.5 },
+      { name: '📺 Show Hype',           sign: -1, defaultWeight: -1.8 },
+      { name: '😴 Tiredness',           sign: -1, defaultWeight: -1.5 },
+    ],
+    celebration: {
+      high: "Definitely going to dinner!",
+      leaning_yes: "Leaning toward family dinner",
+      toss: "Tough call...",
+      leaning_no: "Leaning toward the show",
+      low: "Staying in for sure!"
+    }
+  },
+  {
+    id: 'study',
+    chipLabel: 'Study vs Go Out',
+    chipEmoji: '📚',
+    title: '📚 Study or Go Out? 🎉',
+    yesLabel: 'Hit the books',
+    yesEmoji: '📚',
+    noLabel: 'Go out',
+    noEmoji: '🎉',
+    biasName: '🛋️ Procrastinator Tendency',
+    defaultBias: -0.5,
+    inputs: [
+      { name: '📅 Exam Closeness',  sign: +1, defaultWeight: 2.5 },
+      { name: '😰 Grade Anxiety',   sign: +1, defaultWeight: 2.0 },
+      { name: '😎 Friend FOMO',     sign: -1, defaultWeight: -1.8 },
+      { name: '⚡ Energy Level',    sign: -1, defaultWeight: -1.5 },
+    ],
+    celebration: {
+      high: "Definitely hitting the books!",
+      leaning_yes: "Leaning toward studying",
+      toss: "Tough call...",
+      leaning_no: "Leaning toward going out",
+      low: "Going out for sure!"
+    }
+  },
+  {
+    id: 'cook',
+    chipLabel: 'Cook vs Takeout',
+    chipEmoji: '🍳',
+    title: '🍳 Cook or Takeout? 🥡',
+    yesLabel: 'Cook at home',
+    yesEmoji: '🍳',
+    noLabel: 'Order takeout',
+    noEmoji: '🥡',
+    biasName: '🛒 Convenience Bias',
+    defaultBias: -0.5,
+    inputs: [
+      { name: '🥦 Ingredients Available', sign: +1, defaultWeight: 2.0 },
+      { name: '⏰ Time Available',        sign: +1, defaultWeight: 2.5 },
+      { name: '🤤 Craving Complexity',    sign: -1, defaultWeight: -1.8 },
+      { name: '😪 Laziness',              sign: -1, defaultWeight: -1.5 },
+    ],
+    celebration: {
+      high: "Definitely cooking tonight!",
+      leaning_yes: "Leaning toward cooking",
+      toss: "Tough call...",
+      leaning_no: "Leaning toward takeout",
+      low: "Ordering takeout for sure!"
+    }
+  }
+];
+
+// ──────────────────────────────────────
+//  STATE
+// ──────────────────────────────────────
+let currentScenario = null;
+let inputValues = [0.5, 0.5, 0.5, 0.5];
+let weights = [2.0, 2.5, -1.8, -1.5];
+let bias = -0.5;
+let trainingPoints = [];
+let trainingWeights = [2.0, 2.5, -1.8, -1.5];
+let trainingBias = -0.5;
+let trainingSteps = 0;
+let labelMode = 1; // 1 = yes, 0 = no
+let learningRate = 0.1;
+let isTraining = false;
+let trainAnimFrame = null;
+let activeTab = 'calculator';
+
+// Axis selection for boundary panel: indices into inputs
+let axisX = 0;
+let axisY = 1;
+
+// ──────────────────────────────────────
+//  SIGMOID
+// ──────────────────────────────────────
+function sigmoid(z) {
+  return 1 / (1 + Math.exp(-z));
+}
+
+function computeZ(inputs, w, b) {
+  let z = b;
+  for (let i = 0; i < inputs.length; i++) z += inputs[i] * w[i];
+  return z;
+}
+
+// ──────────────────────────────────────
+//  INIT SCENARIO
+// ──────────────────────────────────────
+function loadScenario(scenario) {
+  currentScenario = scenario;
+  inputValues = [0.5, 0.5, 0.5, 0.5];
+  weights = scenario.inputs.map(inp => inp.defaultWeight);
+  bias = scenario.defaultBias;
+  trainingWeights = [...weights];
+  trainingBias = bias;
+  trainingPoints = [];
+  trainingSteps = 0;
+  isTraining = false;
+  if (trainAnimFrame) { cancelAnimationFrame(trainAnimFrame); trainAnimFrame = null; }
+
+  // Header
+  document.getElementById('app-title').textContent = scenario.title;
+
+  // Scenario chips
+  renderScenarioChips();
+
+  // Build input sliders
+  buildInputSliders();
+
+  // Bias
+  document.getElementById('bias-label').textContent = scenario.biasName + ' (bias)';
+  document.getElementById('bias-slider').value = Math.round(bias * 100);
+  document.getElementById('bias-value').textContent = bias.toFixed(2);
+
+  // Label toggle
+  renderLabelToggle();
+
+  // Axis dropdown
+  buildAxisDropdown();
+
+  // Legend
+  document.getElementById('legend-yes').textContent = scenario.yesEmoji + ' ' + scenario.yesLabel;
+  document.getElementById('legend-no').textContent = scenario.noEmoji + ' ' + scenario.noLabel;
+
+  // Reset axis selection
+  axisX = 0; axisY = 1;
+
+  updateCalculator();
+  updateTrainingUI();
+}
+
+function renderScenarioChips() {
+  const bar = document.getElementById('scenario-bar');
+  bar.innerHTML = '';
+  SCENARIOS.forEach((s, i) => {
+    const chip = document.createElement('div');
+    chip.className = 'scenario-chip' + (s.id === currentScenario.id ? ' active' : '');
+    chip.textContent = s.chipEmoji + ' ' + s.chipLabel;
+    chip.onclick = () => loadScenario(s);
+    bar.appendChild(chip);
+  });
+  // Custom chip
+  const custom = document.createElement('div');
+  custom.className = 'scenario-chip';
+  custom.textContent = '＋ Custom';
+  custom.onclick = openCustomModal;
+  bar.appendChild(custom);
+}
+
+function buildInputSliders() {
+  const container = document.getElementById('input-sliders');
+  container.innerHTML = '';
+  currentScenario.inputs.forEach((inp, i) => {
+    const group = document.createElement('div');
+    group.className = 'slider-group';
+    const isPos = inp.defaultWeight >= 0;
+    group.innerHTML = `
+      <div class="slider-header">
+        <span class="slider-label">${inp.name}</span>
+        <div class="slider-meta">
+          <span class="weight-badge ${isPos ? 'positive' : 'negative'}">w: ${inp.defaultWeight >= 0 ? '+' : ''}${inp.defaultWeight.toFixed(1)}</span>
+          <span class="slider-value" id="input-val-${i}">${inputValues[i].toFixed(2)}</span>
+        </div>
+      </div>
+      <input type="range" min="0" max="100" value="${Math.round(inputValues[i] * 100)}" step="1"
+             oninput="setInput(${i}, this.value)">
+    `;
+    container.appendChild(group);
+  });
+}
+
+function setInput(idx, rawVal) {
+  inputValues[idx] = rawVal / 100;
+  document.getElementById('input-val-' + idx).textContent = inputValues[idx].toFixed(2);
+  updateCalculator();
+  if (activeTab === 'boundary') drawHeatmap();
+}
+
+// Bias slider
+document.getElementById('bias-slider').addEventListener('input', function() {
+  bias = this.value / 100;
+  document.getElementById('bias-value').textContent = (bias >= 0 ? '+' : '') + bias.toFixed(2);
+  updateCalculator();
+  if (activeTab === 'boundary') drawHeatmap();
+});
+
+// ──────────────────────────────────────
+//  CALCULATOR UPDATE
+// ──────────────────────────────────────
+let displayedProb = 50;
+
+function updateCalculator() {
+  const z = computeZ(inputValues, weights, bias);
+  const prob = sigmoid(z) * 100;
+
+  // Animate number
+  animateProb(prob);
+
+  // Label
+  const s = currentScenario;
+  let label, emoji;
+  if (prob >= 80)      { label = s.celebration.high;       emoji = s.yesEmoji; }
+  else if (prob >= 60) { label = s.celebration.leaning_yes; emoji = s.yesEmoji; }
+  else if (prob >= 40) { label = s.celebration.toss;        emoji = '🤔'; }
+  else if (prob >= 20) { label = s.celebration.leaning_no;  emoji = s.noEmoji; }
+  else                 { label = s.celebration.low;         emoji = s.noEmoji; }
+
+  document.getElementById('prob-label').textContent = label;
+  document.getElementById('prob-emoji').textContent = emoji;
+  document.getElementById('prob-bar').style.width = prob + '%';
+
+  // Color shift on probability hero
+  const hero = document.getElementById('prob-hero');
+  const numEl = document.getElementById('prob-number');
+  if (prob >= 50) {
+    hero.style.setProperty('--glow', 'var(--dinner-glow)');
+    numEl.style.background = 'linear-gradient(135deg, var(--dinner-warm), var(--accent-pink))';
+  } else {
+    hero.style.setProperty('--glow', 'var(--show-glow)');
+    numEl.style.background = 'linear-gradient(135deg, var(--show-cool), #8b7ec8)';
+  }
+  numEl.style.webkitBackgroundClip = 'text';
+  numEl.style.webkitTextFillColor = 'transparent';
+  numEl.style.backgroundClip = 'text';
+
+  // Math display
+  const parts = inputValues.map((v, i) => `(${v.toFixed(2)} × ${weights[i] >= 0 ? '+' : ''}${weights[i].toFixed(1)})`);
+  const products = inputValues.map((v, i) => v * weights[i]);
+  const prodStrs = products.map(p => (p >= 0 ? '+' : '') + p.toFixed(2));
+  const biasStr = (bias >= 0 ? '+' : '') + bias.toFixed(2);
+
+  document.getElementById('math-display').innerHTML =
+    `<span class="math-label">z</span> = ${parts.join(' + ')} + (${biasStr})<br>` +
+    `<span class="math-label">z</span> = ${prodStrs.join(' ')} ${biasStr} = <strong>${z.toFixed(2)}</strong><br>` +
+    `<span class="math-label">σ(${z.toFixed(2)})</span> = <strong style="color:${prob >= 50 ? 'var(--dinner-warm)' : 'var(--show-cool)'};">${prob.toFixed(1)}%</strong> → ${emoji} ${label}`;
+}
+
+function animateProb(target) {
+  const el = document.getElementById('prob-number');
+  const start = displayedProb;
+  const diff = target - start;
+  if (Math.abs(diff) < 0.1) { displayedProb = target; el.textContent = Math.round(target) + '%'; return; }
+  const duration = 200;
+  const startTime = performance.now();
+  function tick(now) {
+    const t = Math.min((now - startTime) / duration, 1);
+    const ease = t < 0.5 ? 2*t*t : -1+(4-2*t)*t;
+    displayedProb = start + diff * ease;
+    el.textContent = Math.round(displayedProb) + '%';
+    if (t < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+// ──────────────────────────────────────
+//  TABS
+// ──────────────────────────────────────
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    const panel = tab.dataset.panel;
+    activeTab = panel;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-' + panel).classList.add('active');
+    if (panel === 'boundary') {
+      requestAnimationFrame(() => { resizeCanvas('heatmap-canvas'); drawHeatmap(); });
+    }
+    if (panel === 'training') {
+      requestAnimationFrame(() => { resizeCanvas('scatter-canvas'); drawScatter(); });
+    }
+  });
+});
+
+// ──────────────────────────────────────
+//  BOUNDARY HEATMAP (CANVAS)
+// ──────────────────────────────────────
+function buildAxisDropdown() {
+  const sel = document.getElementById('axis-select');
+  sel.innerHTML = '';
+  const inputs = currentScenario.inputs;
+  for (let i = 0; i < inputs.length; i++) {
+    for (let j = i + 1; j < inputs.length; j++) {
+      const opt = document.createElement('option');
+      opt.value = i + ',' + j;
+      opt.textContent = 'X: ' + inputs[i].name.replace(/^.{1,2}\s/, '') + '  ×  Y: ' + inputs[j].name.replace(/^.{1,2}\s/, '');
+      sel.appendChild(opt);
+    }
+  }
+  sel.value = axisX + ',' + axisY;
+  sel.addEventListener('change', function() {
+    const [a, b] = this.value.split(',').map(Number);
+    axisX = a; axisY = b;
+    drawHeatmap();
+  });
+}
+
+function resizeCanvas(id) {
+  const canvas = document.getElementById(id);
+  const container = canvas.parentElement;
+  const rect = container.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = rect.height + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  return { width: rect.width, height: rect.height, ctx, dpr };
+}
+
+function drawHeatmap() {
+  const canvas = document.getElementById('heatmap-canvas');
+  const container = canvas.parentElement;
+  const rect = container.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const W = rect.width, H = rect.height;
+
+  const pad = { top: 20, right: 20, bottom: 50, left: 55 };
+  const plotW = W - pad.left - pad.right;
+  const plotH = H - pad.top - pad.bottom;
+
+  // Compute heatmap
+  const res = 80;
+  const imgData = ctx.createImageData(res, res);
+
+  for (let py = 0; py < res; py++) {
+    for (let px = 0; px < res; px++) {
+      const xVal = px / (res - 1);
+      const yVal = 1 - py / (res - 1); // flip Y so 0 is bottom
+      const testInputs = [...inputValues];
+      testInputs[axisX] = xVal;
+      testInputs[axisY] = yVal;
+      const z = computeZ(testInputs, weights, bias);
+      const p = sigmoid(z);
+
+      // Color: show-cool (blue) → white → dinner-warm (orange)
+      let r, g, b_c;
+      if (p < 0.5) {
+        const t = p / 0.5;
+        r = Math.round(107 + (240 - 107) * t);
+        g = Math.round(138 + (236 - 138) * t);
+        b_c = Math.round(237 + (228 - 237) * t);
+      } else {
+        const t = (p - 0.5) / 0.5;
+        r = Math.round(240 + (232 - 240) * t);
+        g = Math.round(236 + (148 - 236) * t);
+        b_c = Math.round(228 + (74 - 228) * t);
+      }
+      const idx = (py * res + px) * 4;
+      imgData.data[idx] = r;
+      imgData.data[idx+1] = g;
+      imgData.data[idx+2] = b_c;
+      imgData.data[idx+3] = 220;
+    }
+  }
+
+  // Draw heatmap scaled
+  const offscreen = document.createElement('canvas');
+  offscreen.width = res; offscreen.height = res;
+  offscreen.getContext('2d').putImageData(imgData, 0, 0);
+
+  ctx.fillStyle = '#241e2e';
+  ctx.fillRect(0, 0, W, H);
+  ctx.imageSmoothingEnabled = true;
+  ctx.drawImage(offscreen, pad.left, pad.top, plotW, plotH);
+
+  // Decision boundary (gold line at sigmoid = 0.5, i.e. z = 0)
+  // z = w[axisX]*x + w[axisY]*y + sum(w[i]*inputValues[i] for i not in axes) + bias = 0
+  // => y = -(w[axisX]*x + C) / w[axisY]  where C = sum_others + bias
+  const wX = weights[axisX], wY = weights[axisY];
+  let C = bias;
+  for (let i = 0; i < 4; i++) {
+    if (i !== axisX && i !== axisY) C += weights[i] * inputValues[i];
+  }
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(pad.left, pad.top, plotW, plotH);
+  ctx.clip();
+
+  if (Math.abs(wY) > 0.001) {
+    ctx.strokeStyle = '#d4a843';
+    ctx.lineWidth = 2.5;
+    ctx.shadowColor = '#d4a843';
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    let started = false;
+    for (let px = 0; px <= plotW; px += 2) {
+      const xVal = px / plotW;
+      const yVal = -(wX * xVal + C) / wY;
+      const screenX = pad.left + px;
+      const screenY = pad.top + plotH - yVal * plotH;
+      if (!started) { ctx.moveTo(screenX, screenY); started = true; }
+      else ctx.lineTo(screenX, screenY);
+    }
+    ctx.stroke();
+  } else if (Math.abs(wX) > 0.001) {
+    // Vertical line: x = -C / wX
+    const xVal = -C / wX;
+    const screenX = pad.left + xVal * plotW;
+    ctx.strokeStyle = '#d4a843';
+    ctx.lineWidth = 2.5;
+    ctx.shadowColor = '#d4a843';
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.moveTo(screenX, pad.top);
+    ctx.lineTo(screenX, pad.top + plotH);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // Crosshair
+  const cx = pad.left + inputValues[axisX] * plotW;
+  const cy = pad.top + plotH - inputValues[axisY] * plotH;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 7, 0, Math.PI * 2);
+  ctx.fillStyle = 'white';
+  ctx.fill();
+  ctx.strokeStyle = '#1a1520';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(cx, cy, 9, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Axis labels
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#9a8fab';
+  ctx.font = '12px DM Sans, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(currentScenario.inputs[axisX].name.replace(/^.{1,2}\s/, '') + ' →', pad.left + plotW / 2, H - 10);
+
+  ctx.save();
+  ctx.translate(14, pad.top + plotH / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText(currentScenario.inputs[axisY].name.replace(/^.{1,2}\s/, '') + ' →', 0, 0);
+  ctx.restore();
+
+  // Tick marks
+  ctx.fillStyle = '#9a8fab';
+  ctx.font = '10px DM Sans, sans-serif';
+  ctx.textAlign = 'center';
+  for (let i = 0; i <= 4; i++) {
+    const v = (i / 4).toFixed(1);
+    const x = pad.left + (i / 4) * plotW;
+    ctx.fillText(v, x, H - 30);
+  }
+  ctx.textAlign = 'right';
+  for (let i = 0; i <= 4; i++) {
+    const v = (i / 4).toFixed(1);
+    const y = pad.top + plotH - (i / 4) * plotH;
+    ctx.fillText(v, pad.left - 8, y + 4);
+  }
+
+  // Boundary math
+  const otherTerms = [];
+  for (let i = 0; i < 4; i++) {
+    if (i !== axisX && i !== axisY) {
+      otherTerms.push(`(${inputValues[i].toFixed(2)} × ${weights[i] >= 0 ? '+' : ''}${weights[i].toFixed(1)})`);
+    }
+  }
+  const nameX = currentScenario.inputs[axisX].name.replace(/^.{1,2}\s/, '');
+  const nameY = currentScenario.inputs[axisY].name.replace(/^.{1,2}\s/, '');
+  document.getElementById('boundary-math').innerHTML =
+    `<span class="math-label">Boundary: z = 0</span><br>` +
+    `${wX >= 0 ? '+' : ''}${wX.toFixed(1)}·${nameX} + ${wY >= 0 ? '+' : ''}${wY.toFixed(1)}·${nameY} = ${(-C).toFixed(2)}`;
+}
+
+// ──────────────────────────────────────
+//  TRAINING MODE
+// ──────────────────────────────────────
+function renderLabelToggle() {
+  const container = document.getElementById('label-toggle');
+  const s = currentScenario;
+  container.innerHTML = `
+    <div class="label-btn ${labelMode === 1 ? 'active-yes' : ''}" onclick="setLabelMode(1)">${s.yesEmoji} ${s.yesLabel}</div>
+    <div class="label-btn ${labelMode === 0 ? 'active-no' : ''}" onclick="setLabelMode(0)">${s.noEmoji} ${s.noLabel}</div>
+  `;
+}
+
+function setLabelMode(mode) {
+  labelMode = mode;
+  renderLabelToggle();
+}
+
+function drawScatter() {
+  const canvas = document.getElementById('scatter-canvas');
+  const container = canvas.parentElement;
+  const rect = container.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const W = rect.width, H = rect.height;
+
+  const pad = { top: 20, right: 20, bottom: 50, left: 55 };
+  const plotW = W - pad.left - pad.right;
+  const plotH = H - pad.top - pad.bottom;
+
+  ctx.fillStyle = '#241e2e';
+  ctx.fillRect(0, 0, W, H);
+
+  // Plot area border
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.setLineDash([5, 5]);
+  ctx.strokeRect(pad.left, pad.top, plotW, plotH);
+  ctx.setLineDash([]);
+
+  // Decision boundary line: using training weights
+  const wX = trainingWeights[axisX], wY = trainingWeights[axisY];
+  let C = trainingBias;
+  for (let i = 0; i < 4; i++) {
+    if (i !== axisX && i !== axisY) C += trainingWeights[i] * 0.5; // fixed at 0.5 for non-axis inputs
+  }
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(pad.left, pad.top, plotW, plotH);
+  ctx.clip();
+
+  if (Math.abs(wY) > 0.001) {
+    ctx.strokeStyle = '#d4a843';
+    ctx.lineWidth = 2;
+    ctx.shadowColor = '#d4a843';
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    let started = false;
+    for (let px = 0; px <= plotW; px += 2) {
+      const xVal = px / plotW;
+      const yVal = -(wX * xVal + C) / wY;
+      const screenX = pad.left + px;
+      const screenY = pad.top + plotH - yVal * plotH;
+      if (!started) { ctx.moveTo(screenX, screenY); started = true; }
+      else ctx.lineTo(screenX, screenY);
+    }
+    ctx.stroke();
+  } else if (Math.abs(wX) > 0.001) {
+    const xVal = -C / wX;
+    const screenX = pad.left + xVal * plotW;
+    ctx.strokeStyle = '#d4a843';
+    ctx.lineWidth = 2;
+    ctx.shadowColor = '#d4a843';
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.moveTo(screenX, pad.top);
+    ctx.lineTo(screenX, pad.top + plotH);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // Draw points
+  ctx.shadowBlur = 0;
+  trainingPoints.forEach((pt, i) => {
+    const sx = pad.left + pt.x * plotW;
+    const sy = pad.top + plotH - pt.y * plotH;
+    ctx.beginPath();
+    ctx.arc(sx, sy, 6, 0, Math.PI * 2);
+    ctx.fillStyle = pt.label === 1 ? '#e8944a' : '#6b8aed';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    if (pt.pulse) {
+      ctx.beginPath();
+      ctx.arc(sx, sy, 12, 0, Math.PI * 2);
+      ctx.strokeStyle = pt.label === 1 ? 'rgba(232,148,74,0.5)' : 'rgba(107,138,237,0.5)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+  });
+
+  // Axis labels
+  ctx.fillStyle = '#9a8fab';
+  ctx.font = '12px DM Sans, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(currentScenario.inputs[axisX].name.replace(/^.{1,2}\s/, '') + ' →', pad.left + plotW / 2, H - 10);
+  ctx.save();
+  ctx.translate(14, pad.top + plotH / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText(currentScenario.inputs[axisY].name.replace(/^.{1,2}\s/, '') + ' →', 0, 0);
+  ctx.restore();
+
+  // Tick marks
+  ctx.fillStyle = '#9a8fab';
+  ctx.font = '10px DM Sans, sans-serif';
+  ctx.textAlign = 'center';
+  for (let i = 0; i <= 4; i++) {
+    const v = (i / 4).toFixed(1);
+    ctx.fillText(v, pad.left + (i / 4) * plotW, H - 30);
+  }
+  ctx.textAlign = 'right';
+  for (let i = 0; i <= 4; i++) {
+    const v = (i / 4).toFixed(1);
+    const y = pad.top + plotH - (i / 4) * plotH;
+    ctx.fillText(v, pad.left - 8, y + 4);
+  }
+}
+
+// Click to add point
+document.getElementById('scatter-canvas').addEventListener('click', function(e) {
+  const canvas = this;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const W = rect.width, H = rect.height;
+  const pad = { top: 20, right: 20, bottom: 50, left: 55 };
+  const plotW = W - pad.left - pad.right;
+  const plotH = H - pad.top - pad.bottom;
+
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  if (mx < pad.left || mx > pad.left + plotW || my < pad.top || my > pad.top + plotH) return;
+
+  const xVal = (mx - pad.left) / plotW;
+  const yVal = 1 - (my - pad.top) / plotH;
+
+  trainingPoints.push({ x: xVal, y: yVal, label: labelMode, pulse: false });
+  updateTrainingUI();
+  drawScatter();
+});
+
+// Step
+document.getElementById('btn-step').addEventListener('click', function() {
+  if (trainingPoints.length === 0) return;
+  doTrainStep();
+  updateTrainingUI();
+  drawScatter();
+});
+
+function doTrainStep() {
+  const idx = Math.floor(Math.random() * trainingPoints.length);
+  const pt = trainingPoints[idx];
+
+  // Build input vector: axis values from point, others at 0.5
+  const inp = [0.5, 0.5, 0.5, 0.5];
+  inp[axisX] = pt.x;
+  inp[axisY] = pt.y;
+
+  const z = computeZ(inp, trainingWeights, trainingBias);
+  const pred = sigmoid(z);
+  const error = pt.label - pred;
+
+  // Gradient descent update (sigmoid derivative included)
+  for (let i = 0; i < 4; i++) {
+    trainingWeights[i] += learningRate * error * pred * (1 - pred) * inp[i];
+  }
+  trainingBias += learningRate * error * pred * (1 - pred);
+
+  trainingSteps++;
+
+  // Pulse
+  trainingPoints.forEach(p => p.pulse = false);
+  pt.pulse = true;
+  setTimeout(() => { pt.pulse = false; if (activeTab === 'training') drawScatter(); }, 400);
+}
+
+// Train (multiple steps)
+document.getElementById('btn-train').addEventListener('click', function() {
+  if (trainingPoints.length === 0) return;
+  if (isTraining) { isTraining = false; return; }
+  isTraining = true;
+  this.textContent = 'Stop';
+  let count = 0;
+  function step() {
+    if (!isTraining || count >= 100) {
+      isTraining = false;
+      document.getElementById('btn-train').textContent = 'Train';
+      return;
+    }
+    doTrainStep();
+    count++;
+    updateTrainingUI();
+    drawScatter();
+    trainAnimFrame = requestAnimationFrame(() => setTimeout(step, 50));
+  }
+  step();
+});
+
+// Reset
+document.getElementById('btn-reset').addEventListener('click', function() {
+  isTraining = false;
+  if (trainAnimFrame) cancelAnimationFrame(trainAnimFrame);
+  document.getElementById('btn-train').textContent = 'Train';
+  trainingPoints = [];
+  trainingWeights = [...weights];
+  trainingBias = bias;
+  trainingSteps = 0;
+  updateTrainingUI();
+  drawScatter();
+});
+
+function updateTrainingUI() {
+  document.getElementById('stat-steps').textContent = trainingSteps;
+  document.getElementById('stat-points').textContent = trainingPoints.length;
+  document.getElementById('stat-lr').textContent = learningRate.toFixed(2);
+
+  // Accuracy
+  if (trainingPoints.length > 0) {
+    let correct = 0;
+    trainingPoints.forEach(pt => {
+      const inp = [0.5, 0.5, 0.5, 0.5];
+      inp[axisX] = pt.x;
+      inp[axisY] = pt.y;
+      const z = computeZ(inp, trainingWeights, trainingBias);
+      const pred = sigmoid(z) >= 0.5 ? 1 : 0;
+      if (pred === pt.label) correct++;
+    });
+    const acc = (correct / trainingPoints.length * 100).toFixed(1);
+    document.getElementById('stat-accuracy').textContent = acc + '%';
+  } else {
+    document.getElementById('stat-accuracy').textContent = '—';
+  }
+
+  // Weights readout
+  const wr = document.getElementById('weights-readout');
+  let html = '<h4>Live Weights</h4>';
+  currentScenario.inputs.forEach((inp, i) => {
+    const v = trainingWeights[i];
+    html += `<div class="weight-row">
+      <span class="weight-name">${inp.name}</span>
+      <span class="weight-val ${v >= 0 ? 'pos' : 'neg'}">${v >= 0 ? '+' : ''}${v.toFixed(3)}</span>
+    </div>`;
+  });
+  html += `<div class="weight-row" style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px;">
+    <span class="weight-name">${currentScenario.biasName}</span>
+    <span class="weight-val ${trainingBias >= 0 ? 'pos' : 'neg'}">${trainingBias >= 0 ? '+' : ''}${trainingBias.toFixed(3)}</span>
+  </div>`;
+  wr.innerHTML = html;
+}
+
+// Learning rate slider
+document.getElementById('lr-slider').addEventListener('input', function() {
+  learningRate = this.value / 100;
+  document.getElementById('lr-display').textContent = learningRate.toFixed(2);
+  document.getElementById('stat-lr').textContent = learningRate.toFixed(2);
+});
+
+// ──────────────────────────────────────
+//  CUSTOM SCENARIO MODAL
+// ──────────────────────────────────────
+function openCustomModal() {
+  document.getElementById('custom-modal').classList.add('open');
+  // Populate custom input fields
+  const container = document.getElementById('custom-inputs');
+  container.innerHTML = '';
+  for (let i = 0; i < 4; i++) {
+    const row = document.createElement('div');
+    row.className = 'modal-input-row';
+    row.innerHTML = `
+      <input type="text" placeholder="Input ${i+1} name" id="ci-name-${i}">
+      <select id="ci-sign-${i}">
+        <option value="+">+ (positive)</option>
+        <option value="-"${i >= 2 ? ' selected' : ''}>- (negative)</option>
+      </select>
+      <input type="number" step="0.1" value="${i < 2 ? '2.0' : '1.8'}" id="ci-weight-${i}" style="width:70px;">
+    `;
+    container.appendChild(row);
+  }
+}
+
+document.getElementById('custom-cancel').addEventListener('click', () => {
+  document.getElementById('custom-modal').classList.remove('open');
+});
+
+document.getElementById('custom-apply').addEventListener('click', () => {
+  const title = document.getElementById('custom-title').value || 'Custom Scenario';
+  const emoji = document.getElementById('custom-emoji').value || '🎯';
+  const yesLabel = document.getElementById('custom-yes').value || 'Yes';
+  const noLabel = document.getElementById('custom-no').value || 'No';
+  const biasName = document.getElementById('custom-bias-name').value || 'Bias';
+
+  const inputs = [];
+  for (let i = 0; i < 4; i++) {
+    const name = document.getElementById('ci-name-' + i).value || 'Input ' + (i + 1);
+    const sign = document.getElementById('ci-sign-' + i).value === '+' ? 1 : -1;
+    const w = parseFloat(document.getElementById('ci-weight-' + i).value) || 1.5;
+    inputs.push({ name, sign, defaultWeight: sign * Math.abs(w) });
+  }
+
+  const custom = {
+    id: 'custom-' + Date.now(),
+    chipLabel: title,
+    chipEmoji: emoji,
+    title: emoji + ' ' + title,
+    yesLabel,
+    yesEmoji: emoji,
+    noLabel,
+    noEmoji: '❌',
+    biasName: '🎛️ ' + biasName,
+    defaultBias: -0.5,
+    inputs,
+    celebration: {
+      high: "Definitely yes!",
+      leaning_yes: "Leaning toward yes",
+      toss: "Tough call...",
+      leaning_no: "Leaning toward no",
+      low: "Definitely no!"
+    }
+  };
+
+  document.getElementById('custom-modal').classList.remove('open');
+  loadScenario(custom);
+});
+
+// Close modal on overlay click
+document.getElementById('custom-modal').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('open');
+});
+
+// ──────────────────────────────────────
+//  RESIZE HANDLING
+// ──────────────────────────────────────
+window.addEventListener('resize', () => {
+  if (activeTab === 'boundary') { resizeCanvas('heatmap-canvas'); drawHeatmap(); }
+  if (activeTab === 'training') { resizeCanvas('scatter-canvas'); drawScatter(); }
+});
+
+// ──────────────────────────────────────
+//  INIT
+// ──────────────────────────────────────
+loadScenario(SCENARIOS[0]);
+</script>
+</body>
+</html>

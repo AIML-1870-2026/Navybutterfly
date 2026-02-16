@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Decision Neuron – UI Wireframe</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #1a1520;
+    --surface: #241e2e;
+    --surface-raised: #2e2739;
+    --border: rgba(255,255,255,0.08);
+    --text: #f0ece4;
+    --text-muted: #9a8fab;
+    --dinner-warm: #e8944a;
+    --dinner-glow: #f4a96150;
+    --show-cool: #6b8aed;
+    --show-glow: #6b8aed40;
+    --gold: #d4a843;
+    --accent-pink: #d4698a;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Subtle grain overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 999;
+  }
+
+  /* ─── Header ─── */
+  .header {
+    text-align: center;
+    padding: 40px 20px 20px;
+    position: relative;
+  }
+  .header::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, var(--dinner-glow) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .header h1 {
+    font-family: 'Fraunces', serif;
+    font-size: 2.2rem;
+    font-weight: 700;
+    position: relative;
+    z-index: 1;
+    background: linear-gradient(135deg, var(--dinner-warm), var(--accent-pink));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .header p {
+    color: var(--text-muted);
+    margin-top: 6px;
+    font-size: 0.95rem;
+    position: relative; z-index: 1;
+  }
+
+  /* ─── Scenario Bar ─── */
+  .scenario-bar {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 20px;
+    flex-wrap: wrap;
+  }
+  .scenario-chip {
+    padding: 8px 16px;
+    border-radius: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-muted);
+  }
+  .scenario-chip.active {
+    background: linear-gradient(135deg, var(--dinner-warm), var(--accent-pink));
+    color: white;
+    border-color: transparent;
+    font-weight: 600;
+  }
+  .scenario-chip:hover:not(.active) {
+    border-color: rgba(255,255,255,0.2);
+    color: var(--text);
+  }
+
+  /* ─── Tabs ─── */
+  .tabs {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    padding: 0 20px;
+    margin: 16px auto;
+    max-width: 500px;
+    background: var(--surface);
+    border-radius: 14px;
+    padding: 5px;
+  }
+  .tab {
+    flex: 1;
+    padding: 10px 16px;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all 0.25s;
+  }
+  .tab.active {
+    background: var(--surface-raised);
+    color: var(--text);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+
+  /* ─── Main Content ─── */
+  .main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  /* ─── Panel: Calculator ─── */
+  .panel-calculator {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+  }
+
+  /* Probability hero */
+  .probability-hero {
+    text-align: center;
+    padding: 32px 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .probability-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, var(--dinner-glow) 0%, transparent 60%);
+    opacity: 0.5;
+  }
+  .prob-emoji { font-size: 3rem; position: relative; z-index: 1; }
+  .prob-number {
+    font-family: 'Fraunces', serif;
+    font-size: 4.5rem;
+    font-weight: 700;
+    position: relative; z-index: 1;
+    background: linear-gradient(135deg, var(--dinner-warm), var(--accent-pink));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1;
+    margin: 8px 0;
+  }
+  .prob-label {
+    font-size: 1.05rem;
+    color: var(--text-muted);
+    position: relative; z-index: 1;
+    font-weight: 500;
+  }
+  .prob-bar-track {
+    height: 6px;
+    background: var(--surface-raised);
+    border-radius: 3px;
+    margin-top: 20px;
+    position: relative; z-index: 1;
+    overflow: hidden;
+  }
+  .prob-bar-fill {
+    height: 100%;
+    width: 78%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--show-cool), var(--dinner-warm));
+    transition: width 0.4s ease;
+  }
+
+  /* Sliders */
+  .slider-group { margin-bottom: 20px; }
+  .slider-group:last-child { margin-bottom: 0; }
+  .slider-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .slider-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+  .slider-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .slider-value {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    min-width: 32px;
+    text-align: right;
+  }
+  .weight-badge {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+  .weight-badge.positive {
+    background: rgba(232, 148, 74, 0.15);
+    color: var(--dinner-warm);
+  }
+  .weight-badge.negative {
+    background: rgba(107, 138, 237, 0.15);
+    color: var(--show-cool);
+  }
+
+  input[type="range"] {
+    width: 100%;
+    height: 6px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: var(--surface-raised);
+    border-radius: 3px;
+    outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--text);
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  }
+
+  /* Math display */
+  .math-display {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 16px;
+    font-family: 'DM Sans', monospace;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    line-height: 1.8;
+  }
+  .math-display .math-label {
+    color: var(--gold);
+    font-weight: 600;
+  }
+
+  /* Bias slider special */
+  .bias-section {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ─── Panel: Boundary ─── */
+  .panel-boundary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  .heatmap-container {
+    aspect-ratio: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .heatmap-canvas {
+    width: 100%;
+    height: 100%;
+    border-radius: 16px;
+  }
+  /* Fake heatmap with CSS gradient */
+  .heatmap-fake {
+    position: absolute;
+    inset: 40px 16px 40px 40px;
+    border-radius: 8px;
+    background: linear-gradient(135deg,
+      var(--show-cool) 0%,
+      #8b7ec8 25%,
+      #f0ece4 45%,
+      #f0ece4 55%,
+      var(--dinner-warm) 75%,
+      #d4698a 100%
+    );
+    opacity: 0.8;
+  }
+  .heatmap-boundary {
+    position: absolute;
+    top: 30%; left: 10%;
+    width: 90%; height: 2px;
+    background: var(--gold);
+    transform: rotate(-35deg);
+    transform-origin: left center;
+    box-shadow: 0 0 12px var(--gold);
+  }
+  .heatmap-crosshair {
+    position: absolute;
+    top: 45%; left: 55%;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid var(--bg);
+    box-shadow: 0 0 0 2px white, 0 2px 8px rgba(0,0,0,0.4);
+  }
+  .axis-label {
+    position: absolute;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+  .axis-label.x { bottom: 14px; left: 50%; transform: translateX(-50%); }
+  .axis-label.y { left: 8px; top: 50%; transform: translateY(-50%) rotate(-90deg); }
+
+  /* Boundary controls */
+  .boundary-controls .dropdown {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    margin-bottom: 16px;
+  }
+  .legend {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+  }
+
+  /* ─── Panel: Training ─── */
+  .panel-training {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  .scatter-plot {
+    aspect-ratio: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .scatter-area {
+    position: absolute;
+    inset: 40px 16px 40px 40px;
+    border: 1px dashed rgba(255,255,255,0.1);
+    border-radius: 8px;
+    cursor: crosshair;
+  }
+  .scatter-point {
+    position: absolute;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  }
+  .scatter-point.dinner { background: var(--dinner-warm); }
+  .scatter-point.show { background: var(--show-cool); }
+  .scatter-line {
+    position: absolute;
+    top: 25%; left: 5%;
+    width: 95%; height: 2px;
+    background: var(--gold);
+    transform: rotate(-30deg);
+    transform-origin: left center;
+    box-shadow: 0 0 8px var(--gold);
+    transition: transform 0.5s ease;
+  }
+
+  /* Training controls */
+  .label-toggle {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .label-btn {
+    flex: 1;
+    padding: 10px;
+    border-radius: 10px;
+    border: 2px solid var(--border);
+    background: var(--bg);
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+  }
+  .label-btn.active-dinner {
+    border-color: var(--dinner-warm);
+    color: var(--dinner-warm);
+    background: rgba(232, 148, 74, 0.1);
+  }
+  .label-btn.active-show {
+    border-color: var(--show-cool);
+    color: var(--show-cool);
+    background: rgba(107, 138, 237, 0.1);
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .btn {
+    flex: 1;
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-step {
+    background: var(--surface-raised);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-train {
+    background: linear-gradient(135deg, var(--dinner-warm), var(--accent-pink));
+    color: white;
+  }
+  .btn-reset {
+    background: var(--bg);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+
+  /* Stats grid */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .stat-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+  }
+  .stat-value {
+    font-family: 'Fraunces', serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .stat-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* Weight readout */
+  .weights-readout {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+  }
+  .weights-readout h4 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+  .weight-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    font-size: 0.82rem;
+  }
+  .weight-name { color: var(--text-muted); }
+  .weight-val { font-weight: 600; font-family: 'DM Sans', monospace; }
+  .weight-val.pos { color: var(--dinner-warm); }
+  .weight-val.neg { color: var(--show-cool); }
+
+  /* ─── Hidden panels ─── */
+  .panel { display: none; }
+  .panel.active { display: grid; }
+
+  /* ─── Responsive ─── */
+  @media (max-width: 768px) {
+    .panel-calculator,
+    .panel-boundary,
+    .panel-training {
+      grid-template-columns: 1fr;
+    }
+    .header h1 { font-size: 1.6rem; }
+    .prob-number { font-size: 3.5rem; }
+  }
+
+  /* ─── Label for wireframe ─── */
+  .wireframe-note {
+    text-align: center;
+    padding: 16px;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-style: italic;
+    opacity: 0.6;
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <h1>🍽️ Dinner or Show? 📺</h1>
+  <p>A single neuron decides your evening</p>
+</div>
+
+<!-- Scenario Chips (Stretch Feature 1) -->
+<div class="scenario-bar">
+  <div class="scenario-chip active">🍽️ Dinner vs Show</div>
+  <div class="scenario-chip">📚 Study vs Go Out</div>
+  <div class="scenario-chip">🍳 Cook vs Takeout</div>
+  <div class="scenario-chip">＋ Custom</div>
+</div>
+
+<!-- Tabs -->
+<div class="tabs" id="tabs">
+  <div class="tab active" onclick="switchTab('calculator')">⚡ Calculator</div>
+  <div class="tab" onclick="switchTab('boundary')">🗺️ Boundary</div>
+  <div class="tab" onclick="switchTab('training')">🧠 Training</div>
+</div>
+
+<div class="main">
+
+  <!-- ═══ CALCULATOR PANEL ═══ -->
+  <div class="panel panel-calculator active" id="panel-calculator">
+
+    <!-- Left: Sliders -->
+    <div class="card">
+      <div class="slider-group">
+        <div class="slider-header">
+          <span class="slider-label">🍔 Hunger Level</span>
+          <div class="slider-meta">
+            <span class="weight-badge positive">w: +2.0</span>
+            <span class="slider-value">0.65</span>
+          </div>
+        </div>
+        <input type="range" min="0" max="100" value="65">
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-header">
+          <span class="slider-label">👨‍👩‍👧 Family Miss Factor</span>
+          <div class="slider-meta">
+            <span class="weight-badge positive">w: +2.5</span>
+            <span class="slider-value">0.80</span>
+          </div>
+        </div>
+        <input type="range" min="0" max="100" value="80">
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-header">
+          <span class="slider-label">📺 Show Hype</span>
+          <div class="slider-meta">
+            <span class="weight-badge negative">w: −1.8</span>
+            <span class="slider-value">0.30</span>
+          </div>
+        </div>
+        <input type="range" min="0" max="100" value="30">
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-header">
+          <span class="slider-label">😴 Tiredness</span>
+          <div class="slider-meta">
+            <span class="weight-badge negative">w: −1.5</span>
+            <span class="slider-value">0.40</span>
+          </div>
+        </div>
+        <input type="range" min="0" max="100" value="40">
+      </div>
+
+      <div class="bias-section">
+        <div class="slider-header">
+          <span class="slider-label">🏠 Homebody Tendency (bias)</span>
+          <span class="slider-value">−0.5</span>
+        </div>
+        <input type="range" min="0" max="100" value="42">
+      </div>
+
+      <div class="math-display">
+        <span class="math-label">z</span> = (0.65 × 2.0) + (0.80 × 2.5) + (0.30 × −1.8) + (0.40 × −1.5) + (−0.5)<br>
+        <span class="math-label">z</span> = 1.30 + 2.00 − 0.54 − 0.60 − 0.50 = <strong>1.66</strong><br>
+        <span class="math-label">σ(1.66)</span> = <strong style="color: #e8944a;">84.0%</strong> → 🍽️ Definitely going to dinner!
+      </div>
+    </div>
+
+    <!-- Right: Probability Hero -->
+    <div>
+      <div class="probability-hero">
+        <div class="prob-emoji">🍽️</div>
+        <div class="prob-number">84%</div>
+        <div class="prob-label">Definitely going to dinner!</div>
+        <div class="prob-bar-track">
+          <div class="prob-bar-fill" style="width: 84%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ BOUNDARY PANEL ═══ -->
+  <div class="panel panel-boundary" id="panel-boundary">
+
+    <!-- Left: Heatmap -->
+    <div class="heatmap-container">
+      <div class="heatmap-fake"></div>
+      <div class="heatmap-boundary"></div>
+      <div class="heatmap-crosshair"></div>
+      <span class="axis-label x">Hunger Level →</span>
+      <span class="axis-label y">Family Miss →</span>
+    </div>
+
+    <!-- Right: Controls -->
+    <div class="card boundary-controls">
+      <h3 style="font-family: 'Fraunces', serif; margin-bottom: 16px;">Decision Boundary</h3>
+
+      <select class="dropdown">
+        <option>X: Hunger Level &nbsp;×&nbsp; Y: Family Miss</option>
+        <option>X: Show Hype &nbsp;×&nbsp; Y: Tiredness</option>
+        <option>X: Hunger Level &nbsp;×&nbsp; Y: Show Hype</option>
+      </select>
+
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-dot" style="background: var(--dinner-warm)"></div>
+          🍽️ Go to dinner
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background: var(--show-cool)"></div>
+          📺 Watch the show
+        </div>
+      </div>
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-dot" style="background: var(--gold); width: 20px; height: 3px; border-radius: 2px;"></div>
+          Decision boundary (50%)
+        </div>
+      </div>
+
+      <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; margin-top: 12px;">
+        The gold line is where the neuron is exactly 50/50. Move the sliders on the Calculator tab to shift the crosshair. Change bias to shift the entire boundary.
+      </p>
+
+      <div class="math-display" style="margin-top: 16px;">
+        <span class="math-label">Boundary equation:</span><br>
+        2.0x + 2.5y = 0.54 + 0.60 + 0.50<br>
+        2.0x + 2.5y = 1.64
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TRAINING PANEL ═══ -->
+  <div class="panel panel-training" id="panel-training">
+
+    <!-- Left: Scatter Plot -->
+    <div class="scatter-plot">
+      <div class="scatter-area">
+        <!-- Example training points -->
+        <div class="scatter-point dinner" style="top: 20%; left: 75%;"></div>
+        <div class="scatter-point dinner" style="top: 15%; left: 60%;"></div>
+        <div class="scatter-point dinner" style="top: 35%; left: 80%;"></div>
+        <div class="scatter-point show" style="top: 70%; left: 25%;"></div>
+        <div class="scatter-point show" style="top: 80%; left: 35%;"></div>
+        <div class="scatter-point show" style="top: 65%; left: 15%;"></div>
+        <div class="scatter-point show" style="top: 55%; left: 40%;"></div>
+        <div class="scatter-point dinner" style="top: 30%; left: 65%;"></div>
+        <div class="scatter-line"></div>
+      </div>
+      <span class="axis-label x">Hunger Level →</span>
+      <span class="axis-label y">Family Miss →</span>
+    </div>
+
+    <!-- Right: Controls -->
+    <div class="card">
+      <h3 style="font-family: 'Fraunces', serif; margin-bottom: 16px;">🧠 Train the Neuron</h3>
+
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
+        Click the plot to add past decisions. Then watch the neuron learn!
+      </p>
+
+      <!-- Label toggle -->
+      <div class="label-toggle">
+        <div class="label-btn active-dinner">🍽️ Went to dinner</div>
+        <div class="label-btn">📺 Watched show</div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="action-buttons">
+        <button class="btn btn-step">⏭ Step</button>
+        <button class="btn btn-train">▶ Train</button>
+        <button class="btn btn-reset">↺ Reset</button>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value">12</div>
+          <div class="stat-label">Steps</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="color: var(--dinner-warm);">87.5%</div>
+          <div class="stat-label">Accuracy</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">8</div>
+          <div class="stat-label">Points</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">0.1</div>
+          <div class="stat-label">Learn Rate</div>
+        </div>
+      </div>
+
+      <!-- Live weights -->
+      <div class="weights-readout">
+        <h4>Live Weights</h4>
+        <div class="weight-row">
+          <span class="weight-name">🍔 Hunger</span>
+          <span class="weight-val pos">+1.847</span>
+        </div>
+        <div class="weight-row">
+          <span class="weight-name">👨‍👩‍👧 Family Miss</span>
+          <span class="weight-val pos">+2.312</span>
+        </div>
+        <div class="weight-row">
+          <span class="weight-name">📺 Show Hype</span>
+          <span class="weight-val neg">−1.654</span>
+        </div>
+        <div class="weight-row">
+          <span class="weight-name">😴 Tiredness</span>
+          <span class="weight-val neg">−1.203</span>
+        </div>
+        <div class="weight-row" style="border-top: 1px solid var(--border); padding-top: 8px; margin-top: 4px;">
+          <span class="weight-name">🏠 Bias</span>
+          <span class="weight-val neg">−0.412</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="wireframe-note">
+  ↑ Interactive wireframe — click the tabs to preview each panel
+</div>
+
+<script>
+function switchTab(panel) {
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', t.textContent.includes(
+      panel === 'calculator' ? 'Calculator' :
+      panel === 'boundary' ? 'Boundary' : 'Training'
+    ));
+  });
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + panel).classList.add('active');
+}
+</script>
+
+</body>
+</html>
