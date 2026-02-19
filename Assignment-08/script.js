@@ -216,9 +216,9 @@ const teachingText = document.getElementById('teaching-text');
 
 /* Blob base positions (SVG coordinates) */
 const BLOB_BASE = {
-  r: { cx: 220, cy: 190 },
-  g: { cx: 280, cy: 200 },
-  b: { cx: 250, cy: 235 }
+  r: { cx: 220, cy: 162 },
+  g: { cx: 300, cy: 162 },
+  b: { cx: 260, cy: 231 }
 };
 
 const BLOB_MAX_RX = 50, BLOB_MIN_RX = 0;
