@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RGB Color Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- STICKY HEADER -->
+  <header class="app-header">
+    <h1 class="app-title">RGB Color Studio</h1>
+    <p class="app-subtitle">Because red + green light ≠ brown.</p>
+  </header>
+
+  <!-- MAIN LAYOUT -->
+  <main class="main-layout">
+
+    <!-- ===================== LEFT PANEL ===================== -->
+    <section class="panel left-panel" aria-label="Paint Mixer Explorer">
+
+      <!-- Paint Tube Row -->
+      <div class="tube-row">
+        <div class="tube tube-red">
+          <div class="tube-body">
+            <div class="tube-cap"></div>
+            <div class="tube-label">RED</div>
+          </div>
+          <span class="tube-value" id="tube-r">0</span>
+        </div>
+        <div class="tube tube-green">
+          <div class="tube-body">
+            <div class="tube-cap"></div>
+            <div class="tube-label">GREEN</div>
+          </div>
+          <span class="tube-value" id="tube-g">0</span>
+        </div>
+        <div class="tube tube-blue">
+          <div class="tube-body">
+            <div class="tube-cap"></div>
+            <div class="tube-label">BLUE</div>
+          </div>
+          <span class="tube-value" id="tube-b">0</span>
+        </div>
+      </div>
+
+      <!-- Teaching Callout -->
+      <div class="teaching-callout">
+        <div class="scientist-face" aria-hidden="true">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Head -->
+            <circle cx="24" cy="26" r="16" fill="#FDDBB4" stroke="#1A1A2E" stroke-width="2.5"/>
+            <!-- Hair -->
+            <path d="M10 22 Q12 10 24 10 Q36 10 38 22" fill="#4A3728" stroke="#1A1A2E" stroke-width="2"/>
+            <!-- Glasses frames -->
+            <circle cx="18" cy="26" r="5.5" fill="white" fill-opacity="0.7" stroke="#1A1A2E" stroke-width="2.2"/>
+            <circle cx="30" cy="26" r="5.5" fill="white" fill-opacity="0.7" stroke="#1A1A2E" stroke-width="2.2"/>
+            <line x1="23.5" y1="26" x2="24.5" y2="26" stroke="#1A1A2E" stroke-width="2"/>
+            <line x1="12.5" y1="26" x2="11" y2="24" stroke="#1A1A2E" stroke-width="2"/>
+            <line x1="35.5" y1="26" x2="37" y2="24" stroke="#1A1A2E" stroke-width="2"/>
+            <!-- Eyes -->
+            <circle cx="18" cy="26" r="2.5" fill="#1A1A2E"/>
+            <circle cx="30" cy="26" r="2.5" fill="#1A1A2E"/>
+            <circle cx="19" cy="25" r="0.8" fill="white"/>
+            <circle cx="31" cy="25" r="0.8" fill="white"/>
+            <!-- Smile -->
+            <path d="M19 33 Q24 37 29 33" stroke="#1A1A2E" stroke-width="2" fill="none" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="speech-bubble">
+          <p id="teaching-text">Paint artists: red + green = brown. But your screen? Red + green = yellow. You're mixing <em>light</em>, not pigment!</p>
+        </div>
+      </div>
+
+      <!-- SVG Palette Canvas -->
+      <div class="palette-container">
+        <svg id="palette-svg" viewBox="0 0 500 320" xmlns="http://www.w3.org/2000/svg" aria-label="Paint palette">
+          <!-- Palette base shape (kidney/thumbhole) -->
+          <path id="palette-shape"
+            d="M 60 280 Q 20 260 25 200 Q 30 150 70 130 Q 100 115 130 120
+               Q 140 80 160 60 Q 190 30 240 28 Q 310 25 360 60
+               Q 420 100 440 160 Q 460 220 440 270 Q 420 310 370 315
+               Q 280 325 200 315 Q 110 305 60 280 Z"
+            fill="#F5EDD5" stroke="#1A1A2E" stroke-width="4"/>
+
+          <!-- Thumbhole -->
+          <ellipse cx="100" cy="140" rx="28" ry="35" fill="#EDE0C4" stroke="#1A1A2E" stroke-width="3"/>
+
+          <!-- Blob group with screen blend mode -->
+          <g id="blob-group" style="mix-blend-mode: screen;">
+            <!-- Red Blob -->
+            <g id="blob-r-group" style="cursor: grab;">
+              <ellipse id="blob-r" cx="220" cy="190" rx="40" ry="38"
+                fill="rgba(255,0,0,1)" class="paint-blob blob-red"/>
+              <!-- Glossy highlight -->
+              <ellipse id="blob-r-shine" cx="208" cy="178" rx="12" ry="8"
+                fill="rgba(255,255,255,0.5)" transform="rotate(-20,208,178)"/>
+            </g>
+            <!-- Green Blob -->
+            <g id="blob-g-group" style="cursor: grab;">
+              <ellipse id="blob-g" cx="280" cy="200" rx="40" ry="38"
+                fill="rgba(0,255,0,1)" class="paint-blob blob-green"/>
+              <ellipse id="blob-g-shine" cx="268" cy="188" rx="12" ry="8"
+                fill="rgba(255,255,255,0.5)" transform="rotate(-20,268,188)"/>
+            </g>
+            <!-- Blue Blob -->
+            <g id="blob-b-group" style="cursor: grab;">
+              <ellipse id="blob-b" cx="250" cy="235" rx="40" ry="38"
+                fill="rgba(0,0,255,1)" class="paint-blob blob-blue"/>
+              <ellipse id="blob-b-shine" cx="238" cy="223" rx="12" ry="8"
+                fill="rgba(255,255,255,0.5)" transform="rotate(-20,238,223)"/>
+            </g>
+          </g>
+        </svg>
+      </div>
+
+      <!-- Sliders -->
+      <div class="sliders-section">
+        <div class="slider-row">
+          <label class="slider-label label-r" for="slider-r">R</label>
+          <input type="range" id="slider-r" class="color-slider slider-r" min="0" max="255" value="0" aria-label="Red channel"/>
+          <span class="slider-val" id="val-r">0</span>
+        </div>
+        <div class="slider-row">
+          <label class="slider-label label-g" for="slider-g">G</label>
+          <input type="range" id="slider-g" class="color-slider slider-g" min="0" max="255" value="0" aria-label="Green channel"/>
+          <span class="slider-val" id="val-g">0</span>
+        </div>
+        <div class="slider-row">
+          <label class="slider-label label-b" for="slider-b">B</label>
+          <input type="range" id="slider-b" class="color-slider slider-b" min="0" max="255" value="0" aria-label="Blue channel"/>
+          <span class="slider-val" id="val-b">0</span>
+        </div>
+      </div>
+
+      <!-- Mixed Result Display -->
+      <div class="result-display">
+        <div class="result-swatch-wrap">
+          <div class="result-swatch" id="result-swatch" aria-label="Mixed color preview"></div>
+        </div>
+        <div class="result-info">
+          <div class="result-rgb" id="result-rgb">rgb(0, 0, 0)</div>
+          <div class="result-hex-row">
+            <span class="result-hex" id="result-hex">#000000</span>
+            <button class="copy-btn" id="copy-btn" aria-label="Copy hex code">📋 Copy</button>
+          </div>
+          <div class="randomize-row">
+            <button class="randomize-btn" id="randomize-btn" aria-label="Randomize color">🎲 Randomize</button>
+          </div>
+        </div>
+        <!-- Toast -->
+        <div class="toast" id="toast" aria-live="polite">Copied!</div>
+      </div>
+
+    </section>
+
+    <!-- ===================== RIGHT PANEL ===================== -->
+    <section class="panel right-panel" aria-label="Palette Generator and Color Theory Coach">
+
+      <!-- COLOR THEORY COACH -->
+      <div class="coach-card">
+        <h2 class="coach-title">Color Theory Coach</h2>
+
+        <div class="coach-section">
+          <div class="coach-section-header">
+            <span class="coach-icon">🎨</span>
+            <strong>Hue</strong>
+          </div>
+          <div class="mini-wheel-wrap">
+            <svg id="mini-wheel" viewBox="0 0 120 120" width="80" height="80" aria-label="Color wheel position">
+              <!-- Wheel segments will be drawn by JS -->
+              <g id="wheel-segments"></g>
+              <!-- Indicator needle -->
+              <line id="wheel-needle" x1="60" y1="60" x2="60" y2="18"
+                stroke="#1A1A2E" stroke-width="3" stroke-linecap="round"/>
+              <circle cx="60" cy="60" r="5" fill="#1A1A2E"/>
+            </svg>
+          </div>
+          <p id="coach-hue" class="coach-text">Adjust the sliders to see your hue analysis.</p>
+        </div>
+
+        <div class="coach-section">
+          <div class="coach-section-header">
+            <span class="coach-icon">💎</span>
+            <strong>Saturation / Chroma</strong>
+          </div>
+          <p id="coach-sat" class="coach-text">—</p>
+        </div>
+
+        <div class="coach-section">
+          <div class="coach-section-header">
+            <span class="coach-icon">☀️</span>
+            <strong>Value / Lightness</strong>
+          </div>
+          <p id="coach-val" class="coach-text">—</p>
+        </div>
+
+        <!-- Twist Explainer Accordion -->
+        <details class="twist-accordion">
+          <summary class="twist-summary">Wait — isn't red + green = brown?</summary>
+          <div class="twist-content">
+            <p>When painters mix red and green pigments, each absorbs different wavelengths of light — together they absorb <em>most</em> of it, leaving a muddy brown. That's <strong>subtractive</strong> mixing.</p>
+            <p>Your screen works the opposite way: it <em>emits</em> red, green, and blue light. Combine red and green light beams and your eyes perceive <strong>yellow</strong>. That's <strong>additive</strong> mixing — the same principle used in photography, stage lighting, and your phone display.</p>
+            <p>Same colors, completely different rules.</p>
+            <div class="twist-diagram">
+              <div class="twist-circle-group">
+                <div class="twist-circle tc-r"></div>
+                <div class="twist-circle tc-g"></div>
+                <div class="twist-overlap" style="background:#FFFF00;">💡</div>
+                <span class="twist-label">Light</span>
+              </div>
+              <div class="twist-circle-group">
+                <div class="twist-circle tc-rp" style="background:#CC3300;"></div>
+                <div class="twist-circle tc-gp" style="background:#336600;"></div>
+                <div class="twist-overlap" style="background:#5C4000;">🎨</div>
+                <span class="twist-label">Paint</span>
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <!-- PALETTE GENERATOR -->
+      <div class="palette-card">
+        <h2 class="palette-title">Palette Generator</h2>
+
+        <!-- Base Color -->
+        <div class="base-color-row">
+          <div class="base-swatch" id="base-swatch"></div>
+          <span class="base-hex" id="base-hex">#000000</span>
+        </div>
+
+        <!-- Harmony Selector -->
+        <div class="harmony-selector" role="group" aria-label="Color harmony type">
+          <button class="harmony-btn active" data-harmony="complementary">Complementary</button>
+          <button class="harmony-btn" data-harmony="analogous">Analogous</button>
+          <button class="harmony-btn" data-harmony="triadic">Triadic</button>
+          <button class="harmony-btn" data-harmony="split-complementary">Split-Comp</button>
+          <button class="harmony-btn" data-harmony="tetradic">Tetradic</button>
+        </div>
+
+        <!-- Palette Swatches -->
+        <div class="palette-swatches" id="palette-swatches" aria-label="Color palette"></div>
+
+        <!-- Contrast Checker -->
+        <div class="contrast-section">
+          <h3 class="contrast-title">Contrast Checker</h3>
+          <div class="contrast-grid" id="contrast-grid"></div>
+        </div>
+
+        <!-- Color Blindness Simulator -->
+        <div class="cb-section">
+          <h3 class="cb-title">Color Blindness Simulator</h3>
+          <div class="cb-toggle-row" role="group" aria-label="Color blindness simulation mode">
+            <button class="cb-btn active" data-mode="normal">👁️ Normal</button>
+            <button class="cb-btn" data-mode="protanopia">🔴 Protanopia</button>
+            <button class="cb-btn" data-mode="deuteranopia">🟢 Deuteranopia</button>
+            <button class="cb-btn" data-mode="tritanopia">🔵 Tritanopia</button>
+          </div>
+          <p class="cb-label">Seeing your palette through different eyes.</p>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
