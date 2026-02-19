@@ -221,8 +221,8 @@ const BLOB_BASE = {
   b: { cx: 250, cy: 235 }
 };
 
-const BLOB_MAX_RX = 50, BLOB_MIN_RX = 8;
-const BLOB_MAX_RY = 48, BLOB_MIN_RY = 7;
+const BLOB_MAX_RX = 50, BLOB_MIN_RX = 0;
+const BLOB_MAX_RY = 48, BLOB_MIN_RY = 0;
 
 let prevR = 0, prevG = 0, prevB = 0;
 
@@ -235,16 +235,15 @@ function valToRadius(val) {
   };
 }
 
-/** Update a single blob's visual (size + opacity) */
+/** Update a single blob's visual (size only — opacity is always 1) */
 function updateBlob(channel) {
-  const val    = state[channel];
+  const val   = state[channel];
   const { rx, ry } = valToRadius(val);
-  const opacity = 0.15 + (val / 255) * 0.85;
-  const blob    = channel === 'r' ? blobR : channel === 'g' ? blobG : blobB;
-  const shine   = channel === 'r' ? blobRShine : channel === 'g' ? blobGShine : blobBShine;
+  const blob  = channel === 'r' ? blobR : channel === 'g' ? blobG : blobB;
+  const shine = channel === 'r' ? blobRShine : channel === 'g' ? blobGShine : blobBShine;
   blob.setAttribute('rx', rx.toFixed(1));
   blob.setAttribute('ry', ry.toFixed(1));
-  blob.style.fillOpacity = opacity;
+  blob.style.fillOpacity = 1;
   shine.setAttribute('rx', (rx * 0.28).toFixed(1));
   shine.setAttribute('ry', (ry * 0.22).toFixed(1));
 }
