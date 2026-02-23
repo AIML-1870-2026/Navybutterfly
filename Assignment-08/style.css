@@ -141,6 +141,38 @@ body {
   color: var(--ink);
 }
 
+/* ── SVG Tube squeeze animation ── */
+.svg-tube {
+  cursor: pointer;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.tube-squish   { animation: tubeSquish  0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97); }
+.tube-squish-v { animation: tubeSquishV 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97); }
+
+@keyframes tubeSquish {
+  0%   { transform: scaleX(1)    scaleY(1);    }
+  25%  { transform: scaleX(0.78) scaleY(1.18); }
+  55%  { transform: scaleX(1.12) scaleY(0.91); }
+  80%  { transform: scaleX(0.97) scaleY(1.02); }
+  100% { transform: scaleX(1)    scaleY(1);    }
+}
+
+@keyframes tubeSquishV {
+  0%   { transform: scaleX(1)    scaleY(1);    }
+  25%  { transform: scaleX(1.18) scaleY(0.78); }
+  55%  { transform: scaleX(0.91) scaleY(1.12); }
+  80%  { transform: scaleX(1.02) scaleY(0.97); }
+  100% { transform: scaleX(1)    scaleY(1);    }
+}
+
+/* Draggable blob circles — need fill-box so scale animates from circle center */
+#blob-group circle {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
 /* ── Teaching Callout ── */
 .teaching-callout {
   display: flex;

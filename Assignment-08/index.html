@@ -90,31 +90,61 @@
           <!-- Thumbhole -->
           <ellipse cx="100" cy="140" rx="28" ry="35" fill="#111111" stroke="#ffffff" stroke-width="3"/>
 
-          <!-- Blob group with screen blend mode -->
-          <g id="blob-group" style="mix-blend-mode: screen;">
-            <!-- Red Blob -->
-            <g id="blob-r-group" style="cursor: grab;">
-              <ellipse id="blob-r" cx="220" cy="162" rx="40" ry="38"
-                fill="rgba(255,0,0,1)" class="paint-blob blob-red"/>
-              <!-- Glossy highlight -->
-              <ellipse id="blob-r-shine" cx="208" cy="150" rx="12" ry="8"
-                fill="rgba(255,255,255,0.5)" transform="rotate(-20,208,150)"/>
+          <!-- Paint Tube SVGs (clickable) -->
+          <g id="tube-group">
+
+            <!-- Red Tube: left side, nozzle pointing right -->
+            <g id="svg-tube-r" class="svg-tube" data-channel="r" aria-label="Add red paint">
+              <!-- Body -->
+              <rect x="42" y="176" width="58" height="28" rx="9" fill="#FF3333" stroke="#1A1A2E" stroke-width="2.5"/>
+              <!-- Crimp cap (left end) -->
+              <rect x="42" y="180" width="13" height="20" rx="4" fill="#CC0000" stroke="#1A1A2E" stroke-width="2"/>
+              <!-- Nozzle triangle pointing right -->
+              <polygon points="100,178 130,190 100,202" fill="#DD2222" stroke="#1A1A2E" stroke-width="2"/>
+              <!-- Highlight streak -->
+              <rect x="58" y="179" width="34" height="7" rx="3" fill="rgba(255,255,255,0.28)"/>
+              <!-- Label -->
+              <text x="75" y="194" font-size="11" text-anchor="middle" dominant-baseline="central"
+                fill="white" font-weight="900" font-family="Fredoka One,sans-serif">RED</text>
             </g>
-            <!-- Green Blob -->
-            <g id="blob-g-group" style="cursor: grab;">
-              <ellipse id="blob-g" cx="300" cy="162" rx="40" ry="38"
-                fill="rgba(0,255,0,1)" class="paint-blob blob-green"/>
-              <ellipse id="blob-g-shine" cx="288" cy="150" rx="12" ry="8"
-                fill="rgba(255,255,255,0.5)" transform="rotate(-20,288,150)"/>
+
+            <!-- Green Tube: right side, nozzle pointing left -->
+            <g id="svg-tube-g" class="svg-tube" data-channel="g" aria-label="Add green paint">
+              <!-- Body -->
+              <rect x="395" y="176" width="58" height="28" rx="9" fill="#22CC22" stroke="#1A1A2E" stroke-width="2.5"/>
+              <!-- Crimp cap (right end) -->
+              <rect x="440" y="180" width="13" height="20" rx="4" fill="#119911" stroke="#1A1A2E" stroke-width="2"/>
+              <!-- Nozzle triangle pointing left -->
+              <polygon points="395,178 365,190 395,202" fill="#119911" stroke="#1A1A2E" stroke-width="2"/>
+              <!-- Highlight streak -->
+              <rect x="403" y="179" width="34" height="7" rx="3" fill="rgba(255,255,255,0.28)"/>
+              <!-- Label -->
+              <text x="420" y="194" font-size="11" text-anchor="middle" dominant-baseline="central"
+                fill="white" font-weight="900" font-family="Fredoka One,sans-serif">GRN</text>
             </g>
-            <!-- Blue Blob -->
-            <g id="blob-b-group" style="cursor: grab;">
-              <ellipse id="blob-b" cx="260" cy="231" rx="40" ry="38"
-                fill="rgba(0,0,255,1)" class="paint-blob blob-blue"/>
-              <ellipse id="blob-b-shine" cx="248" cy="219" rx="12" ry="8"
-                fill="rgba(255,255,255,0.5)" transform="rotate(-20,248,219)"/>
+
+            <!-- Blue Tube: bottom center, nozzle pointing up -->
+            <g id="svg-tube-b" class="svg-tube" data-channel="b" aria-label="Add blue paint">
+              <!-- Body -->
+              <rect x="238" y="268" width="28" height="46" rx="9" fill="#3355FF" stroke="#1A1A2E" stroke-width="2.5"/>
+              <!-- Crimp cap (bottom end) -->
+              <rect x="242" y="300" width="20" height="14" rx="4" fill="#2233CC" stroke="#1A1A2E" stroke-width="2"/>
+              <!-- Nozzle triangle pointing up -->
+              <polygon points="240,268 252,250 264,268" fill="#2233CC" stroke="#1A1A2E" stroke-width="2"/>
+              <!-- Highlight streak -->
+              <rect x="241" y="276" width="7" height="24" rx="3" fill="rgba(255,255,255,0.28)"/>
+              <!-- Label (rotated to read along tube) -->
+              <text transform="translate(252,291) rotate(-90)" font-size="10" text-anchor="middle"
+                dominant-baseline="central" fill="white" font-weight="900"
+                font-family="Fredoka One,sans-serif">BLU</text>
             </g>
           </g>
+
+          <!-- Draggable paint blobs — rendered below splatters, additive blending -->
+          <g id="blob-group" style="mix-blend-mode: screen;"></g>
+
+          <!-- Splatter container — mix-blend-mode: screen shows additive mixing on dark bg -->
+          <g id="splatter-group" style="mix-blend-mode: screen;"></g>
         </svg>
       </div>
 

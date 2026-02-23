@@ -176,7 +176,7 @@ function generatePalette(r, g, b, harmony) {
 }
 
 /* ============================================================
-   2. BLOB / SLIDER UI INTERACTIONS
+   2. PAINT SPLATTER / SLIDER / TUBE INTERACTIONS
    ============================================================ */
 
 /* -- State -- */
@@ -197,16 +197,6 @@ const tubeR   = document.getElementById('tube-r');
 const tubeG   = document.getElementById('tube-g');
 const tubeB   = document.getElementById('tube-b');
 
-const blobRGroup = document.getElementById('blob-r-group');
-const blobGGroup = document.getElementById('blob-g-group');
-const blobBGroup = document.getElementById('blob-b-group');
-const blobR      = document.getElementById('blob-r');
-const blobG      = document.getElementById('blob-g');
-const blobB      = document.getElementById('blob-b');
-const blobRShine = document.getElementById('blob-r-shine');
-const blobGShine = document.getElementById('blob-g-shine');
-const blobBShine = document.getElementById('blob-b-shine');
-
 const resultSwatch = document.getElementById('result-swatch');
 const resultRgb    = document.getElementById('result-rgb');
 const resultHex    = document.getElementById('result-hex');
@@ -214,48 +204,204 @@ const baseSwatch   = document.getElementById('base-swatch');
 const baseHex      = document.getElementById('base-hex');
 const teachingText = document.getElementById('teaching-text');
 
-/* Blob base positions (SVG coordinates) */
-const BLOB_BASE = {
-  r: { cx: 220, cy: 162 },
-  g: { cx: 300, cy: 162 },
-  b: { cx: 260, cy: 231 }
-};
+/* ── Splatter path shapes (paths centered at 0,0, ~42px radius) ── */
+const SPLATTER_PATHS = [
+  // Classic 7-point star splat
+  "M0,-42 L10,-18 L38,-25 L22,-3 L48,12 L22,16 L30,44 L6,26 L-10,50 L-14,24 L-42,36 L-26,10 L-50,0 L-24,-14 L-35,-38 L-10,-20 Z",
+  // Organic drip blob
+  "M-8,-40 L8,-44 L28,-34 L38,-12 L44,8 L36,26 L40,48 L22,42 L20,26 L8,44 L-10,48 L-24,36 L-40,22 L-44,4 L-40,-18 L-28,-34 Z",
+  // Spiky asymmetric splat
+  "M0,-36 L6,-22 L20,-40 L16,-14 L38,-20 L22,-2 L44,4 L24,14 L40,32 L20,20 L16,46 L4,26 L-8,48 L-10,26 L-30,44 L-20,18 L-46,28 L-28,8 L-48,-6 L-26,-18 L-36,-38 L-14,-20 Z",
+  // Chunky irregular blob
+  "M4,-38 L20,-28 L34,-14 L42,6 L38,26 L26,40 L6,46 L-16,44 L-32,30 L-42,10 L-38,-12 L-26,-30 L-10,-42 Z",
+  // Asymmetric drip splat
+  "M-4,-36 L10,-42 L24,-28 L36,-8 L44,16 L38,32 L44,52 L28,46 L20,28 L10,46 L-4,50 L-18,40 L-32,22 L-44,4 L-42,-18 L-30,-32 Z",
+  // Star with tails
+  "M0,-44 L8,-20 L28,-36 L20,-10 L44,-18 L28,2 L50,10 L28,18 L42,34 L18,22 L20,48 L6,28 L-8,50 L-10,28 L-28,44 L-18,22 L-44,32 L-26,12 L-50,6 L-28,-4 L-40,-20 L-16,-12 L-26,-38 L-6,-18 Z"
+];
 
-const BLOB_MAX_RX = 50, BLOB_MIN_RX = 0;
-const BLOB_MAX_RY = 48, BLOB_MIN_RY = 0;
+/* ── Splatter storage ── */
+const MAX_SPLATTERS = 15;
+const splatters     = { r: [], g: [], b: [] };
+const SPLAT_CX      = 260;   // horizontal center of palette (avoids thumbhole)
+const SPLAT_CY      = 190;   // vertical center of palette
+const CHANNEL_COLOR = { r: '#FF0000', g: '#00FF00', b: '#0000FF' };
 
-let prevR = 0, prevG = 0, prevB = 0;
+/**
+ * Spawn `count` new splatters for a channel into the SVG.
+ * Positions are randomly offset from the palette center.
+ */
+function addSplatters(channel, count) {
+  const arr   = splatters[channel];
+  const group = document.getElementById('splatter-group');
+  const t     = state[channel] / 255;
 
-/** Map 0-255 value to blob radii */
-function valToRadius(val) {
-  const t = val / 255;
-  return {
-    rx: BLOB_MIN_RX + t * (BLOB_MAX_RX - BLOB_MIN_RX),
-    ry: BLOB_MIN_RY + t * (BLOB_MAX_RY - BLOB_MIN_RY)
+  // Evict oldest when at capacity
+  while (arr.length >= MAX_SPLATTERS) {
+    arr.shift().el.remove();
+  }
+
+  for (let i = 0; i < count; i++) {
+    const pathData = SPLATTER_PATHS[Math.floor(Math.random() * SPLATTER_PATHS.length)];
+    const ox   = (Math.random() - 0.5) * 100;   // ±50 px horizontal spread
+    const oy   = (Math.random() - 0.5) *  70;   // ±35 px vertical spread
+    const rot  = Math.random() * 360;
+    const size = 0.65 + Math.random() * 0.7;    // 0.65–1.35 per-splatter size variation
+    const tx   = SPLAT_CX + ox;
+    const ty   = SPLAT_CY + oy;
+
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.setAttribute('transform',
+      `translate(${tx.toFixed(1)},${ty.toFixed(1)}) rotate(${rot.toFixed(1)}) scale(${(t * size).toFixed(3)})`);
+    g.dataset.tx   = tx;
+    g.dataset.ty   = ty;
+    g.dataset.rot  = rot;
+    g.dataset.size = size;
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d',       pathData);
+    path.setAttribute('fill',    CHANNEL_COLOR[channel]);
+    path.setAttribute('opacity', '0.6');
+
+    g.appendChild(path);
+    group.appendChild(g);
+    arr.push({ el: g, size });
+  }
+}
+
+/**
+ * Rescale all existing splatters for a channel to the current slider value.
+ * Auto-seeds 5 splatters on first non-zero slider move if none exist yet.
+ */
+function scaleSplatters(channel) {
+  const t = state[channel] / 255;
+  if (splatters[channel].length === 0 && t > 0) {
+    addSplatters(channel, 5);
+    return; // addSplatters already wrote the correct scale
+  }
+  splatters[channel].forEach(sp => {
+    sp.el.setAttribute('transform',
+      `translate(${parseFloat(sp.el.dataset.tx).toFixed(1)},${parseFloat(sp.el.dataset.ty).toFixed(1)})` +
+      ` rotate(${parseFloat(sp.el.dataset.rot).toFixed(1)})` +
+      ` scale(${(t * parseFloat(sp.el.dataset.size)).toFixed(3)})`);
+  });
+}
+
+/* ============================================================
+   2b. DRAGGABLE PAINT BLOBS
+   ============================================================ */
+
+const paletteSvg    = document.getElementById('palette-svg');
+const blobPositions = { r: { x: 185, y: 190 }, g: { x: 325, y: 190 }, b: { x: 255, y: 155 } };
+const blobEls       = {};
+let   dragState     = null;   // { channel, offsetX, offsetY }
+
+/** Convert a mouse/touch ClientX/Y to SVG coordinate space */
+function getSVGPoint(e) {
+  const pt = paletteSvg.createSVGPoint();
+  if (e.touches) { pt.x = e.touches[0].clientX; pt.y = e.touches[0].clientY; }
+  else           { pt.x = e.clientX;             pt.y = e.clientY; }
+  return pt.matrixTransform(paletteSvg.getScreenCTM().inverse());
+}
+
+/** Build the three draggable blobs and add them to #blob-group */
+function createBlobEls() {
+  const group  = document.getElementById('blob-group');
+  const colors = { r: '#FF0000', g: '#00FF00', b: '#0000FF' };
+
+  ['r', 'g', 'b'].forEach(ch => {
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.id = `blob-${ch}`;
+    g.style.cursor = 'grab';
+
+    // Main blob circle (cx/cy = 0 because the <g> handles translation)
+    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    circle.setAttribute('cx', '0');
+    circle.setAttribute('cy', '0');
+    circle.setAttribute('r',  '8');
+    circle.setAttribute('fill', colors[ch]);
+
+    // Glossy highlight — scales with blob radius in updateBlobAppearance
+    const shine = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+    shine.setAttribute('cx', '-5');
+    shine.setAttribute('cy', '-7');
+    shine.setAttribute('rx', '8');
+    shine.setAttribute('ry', '5');
+    shine.setAttribute('fill', 'rgba(255,255,255,0.38)');
+    shine.setAttribute('pointer-events', 'none');
+
+    g.appendChild(circle);
+    g.appendChild(shine);
+    group.appendChild(g);
+    blobEls[ch] = { g, circle, shine };
+
+    setupBlobDrag(g, ch);
+  });
+}
+
+/** Sync a blob's position, radius, and opacity to the current state */
+function updateBlobAppearance(ch) {
+  if (!blobEls[ch]) return;
+  const t  = state[ch] / 255;
+  const r  = 8 + t * 44;            // radius 8 → 52
+  const op = 0.08 + t * 0.77;       // opacity 0.08 → 0.85
+  const { g, circle, shine } = blobEls[ch];
+  const { x, y } = blobPositions[ch];
+
+  g.setAttribute('transform', `translate(${x},${y})`);
+  g.setAttribute('opacity', op.toFixed(3));
+  circle.setAttribute('r', r.toFixed(1));
+
+  // Keep highlight proportional to blob size
+  shine.setAttribute('cx', (-r * 0.28).toFixed(1));
+  shine.setAttribute('cy', (-r * 0.30).toFixed(1));
+  shine.setAttribute('rx', (r * 0.38).toFixed(1));
+  shine.setAttribute('ry', (r * 0.26).toFixed(1));
+}
+
+/** Wire mouse + touch drag to a blob <g> element */
+function setupBlobDrag(el, ch) {
+  el.addEventListener('mousedown',  e => startBlobDrag(e, ch));
+  el.addEventListener('touchstart', e => startBlobDrag(e, ch), { passive: false });
+}
+
+function startBlobDrag(e, ch) {
+  e.preventDefault();
+  const pt = getSVGPoint(e);
+  dragState = {
+    channel: ch,
+    offsetX: pt.x - blobPositions[ch].x,
+    offsetY: pt.y - blobPositions[ch].y
   };
+  blobEls[ch].g.style.cursor = 'grabbing';
 }
 
-/** Update a single blob's visual (size only — opacity is always 1) */
-function updateBlob(channel) {
-  const val   = state[channel];
-  const { rx, ry } = valToRadius(val);
-  const blob  = channel === 'r' ? blobR : channel === 'g' ? blobG : blobB;
-  const shine = channel === 'r' ? blobRShine : channel === 'g' ? blobGShine : blobBShine;
-  blob.setAttribute('rx', rx.toFixed(1));
-  blob.setAttribute('ry', ry.toFixed(1));
-  blob.style.fillOpacity = 1;
-  shine.setAttribute('rx', (rx * 0.28).toFixed(1));
-  shine.setAttribute('ry', (ry * 0.22).toFixed(1));
+function onBlobMouseMove(e) {
+  if (!dragState) return;
+  const pt = getSVGPoint(e);
+  const ch = dragState.channel;
+  // Clamp to rough palette interior (avoids thumbhole region and edges)
+  blobPositions[ch].x = Math.max(80,  Math.min(435, pt.x - dragState.offsetX));
+  blobPositions[ch].y = Math.max(65,  Math.min(305, pt.y - dragState.offsetY));
+  updateBlobAppearance(ch);
 }
 
-/** Trigger a CSS animation class on a blob group */
-function blobAnimate(channel, cls) {
-  const group = channel === 'r' ? blobRGroup : channel === 'g' ? blobGGroup : blobBGroup;
-  group.classList.remove('blob-deflate', 'blob-pop', 'blob-jiggle');
-  void group.offsetWidth; // reflow to restart
-  group.classList.add(cls);
-  group.addEventListener('animationend', () => group.classList.remove(cls), { once: true });
+function onBlobMouseUp() {
+  if (!dragState) return;
+  const ch = dragState.channel;
+  blobEls[ch].g.style.cursor = 'grab';
+  // Jiggle on release
+  triggerBlobAnim(blobEls[ch].circle, 'blob-jiggle');
+  dragState = null;
 }
+
+document.addEventListener('mousemove', onBlobMouseMove);
+document.addEventListener('mouseup',   onBlobMouseUp);
+document.addEventListener('touchmove',
+  e => { if (dragState) { e.preventDefault(); onBlobMouseMove(e); } },
+  { passive: false }
+);
+document.addEventListener('touchend', onBlobMouseUp);
 
 /** Master update — runs every time r/g/b changes */
 function updateAll() {
@@ -263,9 +409,9 @@ function updateAll() {
   const hex = rgbToHex(r, g, b);
 
   // Slider labels
-  valR.textContent  = r; tubeR.textContent = r;
-  valG.textContent  = g; tubeG.textContent = g;
-  valB.textContent  = b; tubeB.textContent = b;
+  valR.textContent = r; tubeR.textContent = r;
+  valG.textContent = g; tubeG.textContent = g;
+  valB.textContent = b; tubeB.textContent = b;
 
   // Result swatch + info
   const colorStr = `rgb(${r},${g},${b})`;
@@ -278,17 +424,11 @@ function updateAll() {
   baseSwatch.style.backgroundColor = colorStr;
   baseHex.textContent = hex;
 
-  // Blobs
-  ['r','g','b'].forEach(ch => updateBlob(ch));
+  // Scale splatters to match slider values
+  ['r', 'g', 'b'].forEach(ch => scaleSplatters(ch));
 
-  // Boundary animations
-  ['r','g','b'].forEach(ch => {
-    const val = state[ch];
-    const prev = ch === 'r' ? prevR : ch === 'g' ? prevG : prevB;
-    if (val === 0 && prev > 0)   blobAnimate(ch, 'blob-deflate');
-    if (val === 255 && prev < 255) blobAnimate(ch, 'blob-pop');
-  });
-  prevR = r; prevG = g; prevB = b;
+  // Sync draggable blob sizes/opacities
+  ['r', 'g', 'b'].forEach(ch => updateBlobAppearance(ch));
 
   // Teaching callout
   updateTeaching(r, g, b);
@@ -300,9 +440,26 @@ function updateAll() {
   renderPalette();
 }
 
+/** Restart a CSS animation class on an SVG element */
+function triggerBlobAnim(el, cls) {
+  el.classList.remove('blob-deflate', 'blob-pop', 'blob-jiggle');
+  void el.getBoundingClientRect(); // force reflow so animation restarts
+  el.classList.add(cls);
+  el.addEventListener('animationend', () => el.classList.remove(cls), { once: true });
+}
+
 /** Sync sliders → state */
 function onSliderInput(channel, val) {
+  const prev = state[channel];
   state[channel] = parseInt(val, 10);
+  const cur = state[channel];
+
+  // Blob extreme animations
+  if (blobEls[channel]) {
+    if      (cur === 0   && prev !== 0)   triggerBlobAnim(blobEls[channel].circle, 'blob-deflate');
+    else if (cur === 255 && prev !== 255) triggerBlobAnim(blobEls[channel].circle, 'blob-pop');
+  }
+
   updateAll();
 }
 
@@ -310,90 +467,30 @@ sliderR.addEventListener('input', () => onSliderInput('r', sliderR.value));
 sliderG.addEventListener('input', () => onSliderInput('g', sliderG.value));
 sliderB.addEventListener('input', () => onSliderInput('b', sliderB.value));
 
-/* ---- Blob Drag ---- */
-(function initBlobDrag() {
-  const svg = document.getElementById('palette-svg');
-  const bounds = () => svg.getBoundingClientRect();
-  const vb = { x: 0, y: 0, w: 500, h: 320 };
+/* ── Tube click handlers ── */
+function onTubeClick(channel) {
+  // Bump slider +30, capped at 255
+  state[channel] = Math.min(255, state[channel] + 30);
+  const slider = channel === 'r' ? sliderR : channel === 'g' ? sliderG : sliderB;
+  slider.value = state[channel];
 
-  function clientToSvg(clientX, clientY) {
-    const b = bounds();
-    return {
-      x: vb.x + (clientX - b.left) / b.width  * vb.w,
-      y: vb.y + (clientY - b.top)  / b.height * vb.h
-    };
-  }
+  // Spawn 5 new splatters at the current (post-bump) scale
+  addSplatters(channel, 5);
 
-  let dragging = null;
-  let dragOffset = { x: 0, y: 0 };
+  // Squeeze animation on the tube SVG group
+  const animCls = channel === 'b' ? 'tube-squish-v' : 'tube-squish';
+  const tubeEl  = document.getElementById(`svg-tube-${channel}`);
+  tubeEl.classList.remove('tube-squish', 'tube-squish-v');
+  void tubeEl.getBoundingClientRect(); // force reflow to restart animation
+  tubeEl.classList.add(animCls);
+  tubeEl.addEventListener('animationend', () => tubeEl.classList.remove(animCls), { once: true });
 
-  function getGroup(channel) {
-    return channel === 'r' ? blobRGroup : channel === 'g' ? blobGGroup : blobBGroup;
-  }
-  function getBlob(channel) {
-    return channel === 'r' ? blobR : channel === 'g' ? blobG : blobB;
-  }
+  updateAll();
+}
 
-  function startDrag(channel, clientX, clientY) {
-    dragging = channel;
-    const svgPt = clientToSvg(clientX, clientY);
-    const blob  = getBlob(channel);
-    dragOffset = {
-      x: svgPt.x - parseFloat(blob.getAttribute('cx')),
-      y: svgPt.y - parseFloat(blob.getAttribute('cy'))
-    };
-    getGroup(channel).style.cursor = 'grabbing';
-  }
-
-  function moveDrag(clientX, clientY) {
-    if (!dragging) return;
-    const svgPt = clientToSvg(clientX, clientY);
-    const newX = svgPt.x - dragOffset.x;
-    const newY = svgPt.y - dragOffset.y;
-
-    const blob  = getBlob(dragging);
-    const shine = dragging === 'r' ? blobRShine : dragging === 'g' ? blobGShine : blobBShine;
-    blob.setAttribute('cx', newX);
-    blob.setAttribute('cy', newY);
-    shine.setAttribute('cx', newX - 12);
-    shine.setAttribute('cy', newY - 12);
-
-    // Map Y position to channel value (top of palette ≈ high, near thumb ≈ low)
-    const base = BLOB_BASE[dragging];
-    const dist  = Math.hypot(newX - base.cx, newY - base.cy);
-    const maxD  = 80;
-    const factor = Math.min(dist / maxD, 1);
-
-    // Distance from center → lower value (pulling away = less paint)
-    const newVal = Math.round((1 - factor) * 255);
-    state[dragging] = Math.max(0, Math.min(255, newVal));
-
-    // Sync slider
-    const slider = dragging === 'r' ? sliderR : dragging === 'g' ? sliderG : sliderB;
-    slider.value = state[dragging];
-
-    updateAll();
-  }
-
-  function endDrag() {
-    if (!dragging) return;
-    getGroup(dragging).style.cursor = 'grab';
-    blobAnimate(dragging, 'blob-jiggle');
-    dragging = null;
-  }
-
-  // Mouse events
-  [blobRGroup, blobGGroup, blobBGroup].forEach((grp, i) => {
-    const ch = ['r','g','b'][i];
-    grp.addEventListener('mousedown',  e => { e.preventDefault(); startDrag(ch, e.clientX, e.clientY); });
-    grp.addEventListener('touchstart', e => { e.preventDefault(); startDrag(ch, e.touches[0].clientX, e.touches[0].clientY); }, { passive: false });
-  });
-
-  window.addEventListener('mousemove',  e => moveDrag(e.clientX, e.clientY));
-  window.addEventListener('touchmove',  e => { if (dragging) { e.preventDefault(); moveDrag(e.touches[0].clientX, e.touches[0].clientY); } }, { passive: false });
-  window.addEventListener('mouseup',   endDrag);
-  window.addEventListener('touchend',  endDrag);
-})();
+document.getElementById('svg-tube-r').addEventListener('click', () => onTubeClick('r'));
+document.getElementById('svg-tube-g').addEventListener('click', () => onTubeClick('g'));
+document.getElementById('svg-tube-b').addEventListener('click', () => onTubeClick('b'));
 
 /* ============================================================
    3. PALETTE GENERATOR
@@ -723,4 +820,5 @@ document.getElementById('randomize-btn').addEventListener('click', () => {
    ============================================================ */
 
 buildMiniWheel();
+createBlobEls();
 updateAll();
