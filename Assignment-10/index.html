@@ -1467,8 +1467,8 @@
      ENTRY SCREEN LOGIC
   ============================================================ */
   function tryPassword() {
-    const val = passwordInput.value.trim().toLowerCase();
-    if (val === 'swordfish') {
+    const val = passwordInput.value.trim();
+    if (val.length > 0) {
       entryScreen.classList.add('fade-out');
       setTimeout(() => {
         entryScreen.style.display = 'none';
@@ -1479,7 +1479,6 @@
       passwordInput.classList.remove('shake');
       void passwordInput.offsetWidth; // reflow to restart animation
       passwordInput.classList.add('shake');
-      passwordInput.value = '';
       passwordInput.placeholder = '…That\'s not it, friend.';
       setTimeout(() => { passwordInput.classList.remove('shake'); }, 500);
     }
