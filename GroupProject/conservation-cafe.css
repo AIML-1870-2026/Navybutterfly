@@ -188,7 +188,7 @@ body{font-family:'Nunito',sans-serif;background:#1a1008;overflow:hidden;width:10
   display:none;align-items:center;padding:0 14px;gap:10px;
   box-shadow:0 3px 16px rgba(0,0,0,.5);
 }
-.hud-name{font-family:'Fredoka One',cursive;color:var(--gold);font-size:17px;white-space:nowrap;}
+.hud-name{font-family:'Fredoka One',cursive;color:var(--gold);font-size:17px;white-space:nowrap;background:none;border:none;padding:0;cursor:pointer;}
 .hdiv{width:1px;height:24px;background:rgba(245,233,211,.15);}
 .hstat{display:flex;align-items:center;gap:4px;background:rgba(0,0,0,.22);padding:4px 10px;border-radius:18px;}
 .hstat .hi{font-size:14px;}
