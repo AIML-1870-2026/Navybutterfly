@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conservation Café</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&family=Patrick+Hand&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="conservation-cafe.css">
+</head>
+<body>
+
+
+<div id="hud">
+  <div class="hud-name" id="hudCafeName">Conservation Café</div>
+  <div class="hdiv"></div>
+  <div class="hstat"><span class="hi" style="font-size:11px;font-weight:800;color:var(--gold)">$</span><div><div class="hv" id="hudMoney">$0</div><div class="hl">FUNDS</div></div></div>
+  <div class="hstat"><span class="hi" style="font-size:11px;font-weight:800;color:var(--gold)">LV</span><div><div class="hv" id="hudLv">Lv.1</div><div class="hl">LEVEL</div></div></div>
+  <div class="xpw"><div class="xpb"><div class="xpf" id="xpFill" style="width:0%"></div></div><div class="xpl" id="xpLbl">0/100 XP</div></div>
+  <div class="hstat"><span class="hi" style="font-size:11px;font-weight:800;color:var(--gold)">PAW</span><div><div class="hv" id="hudAnimals">0</div><div class="hl">SAVED</div></div></div>
+  <div class="hud-right">
+    <button class="nav-btn active" onclick="Game.nav('cafe')">Café</button>
+    <button class="nav-btn" onclick="Game.nav('store')">Store</button>
+    <button class="nav-btn" onclick="Game.nav('conservation')">Conservation</button>
+    <button class="nav-btn" onclick="Game.nav('avatar')">Avatar</button>
+  </div>
+</div>
+
+<div class="rush-bar hidden" id="rushBar">RUSH HOUR — Bigger tips! Serve fast!</div>
+<div id="notifs"></div>
+
+<div class="screen active" id="startScreen">
+
+
+  <div class="start-blob" style="width:320px;height:320px;background:#ffb3cc;top:-80px;left:-80px;animation-delay:0s;"></div>
+  <div class="start-blob" style="width:260px;height:260px;background:#ffd699;bottom:-60px;right:-60px;animation-delay:2.5s;"></div>
+  <div class="start-blob" style="width:200px;height:200px;background:#b8e8b8;bottom:20%;left:5%;animation-delay:1.2s;"></div>
+  <div class="start-blob" style="width:180px;height:180px;background:#ffe0b0;top:20%;right:8%;animation-delay:3.8s;"></div>
+
+
+
+  <div class="start-card">
+
+
+    <div class="start-logo-wrap">
+      <div class="start-logo-top">Welcome to</div>
+      <div class="start-logo">Conservation<br>Café <span class="start-logo-heart">♥</span></div>
+      <div class="start-tagline" style="margin-top:12px;">Brew drinks · Save wildlife · Change the world</div>
+    </div>
+
+
+    <div class="start-divider">
+      <div class="start-divider-line"></div>
+      <div class="start-divider-icon">☕</div>
+      <div class="start-divider-line"></div>
+    </div>
+
+    <div class="field-group">
+      <div class="field-label">🏡 Name Your Café</div>
+      <input class="field-input" id="cafeIn" placeholder="e.g. Wildbrewed Café…" maxlength="30">
+    </div>
+    <div class="field-group">
+      <div class="field-label">👤 Your Barista Name</div>
+      <input class="field-input" id="nameIn" placeholder="e.g. Mia…" maxlength="20">
+    </div>
+
+    <button class="continue-btn" id="continueBtn" style="display:none;" onclick="Game.continue()">Continue My Café →</button>
+    <button class="start-btn" onclick="Game.start()">New Game ☕</button>
+    <button class="demo-btn" onclick="Game.startDemo()">Try Demo — Everything Unlocked ✨</button>
+    <div class="start-hint">🔒 Progress saves automatically</div>
+  </div>
+</div>
+
+<div class="screen" id="cafeScreen">
+  <div class="cafe-wrap" id="cafeWrap">
+
+    <div class="cafe-world" id="cafeWorld">
+
+      <div class="cafe-section" id="mainSection" style="width:100vw;">
+        <div class="cafe-bg-image"></div>
+
+        <div id="pendants"></div>
+
+        <div class="chalkboard" id="chalkboard" style="left:3%;top:5%;"></div>
+
+        <div id="counterArea"></div>
+
+        <div class="display-case" id="displayCase"></div>
+
+        <div id="furnitureArea"></div>
+
+        <div class="player-behind-counter" id="playerAvatar"></div>
+
+        <div id="counterOverlay" style="position:absolute;bottom:3%;left:50%;transform:translateX(-50%);width:74%;z-index:20;pointer-events:none;display:flex;justify-content:center;align-items:flex-end;">
+          <img id="counterOverlayImg" src="" style="width:100%;height:auto;display:block;">
+        </div>
+
+        <div id="customersArea"></div>
+
+        <div class="empty-msg hidden" id="emptyMsg">
+          <div style="width:44px;height:44px;background:rgba(120,80,40,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:Fredoka One,cursive;color:rgba(120,80,40,.6);font-size:18px;">...</div>
+          <div style="font-family:'Fredoka One',cursive;color:#7a5a3a;font-size:18px;opacity:.5">Waiting for customers…</div>
+        </div>
+      </div>
+
+    </div>
+
+    <button class="scroll-hint hidden" id="scrollLeft" onclick="CafeScroll.go(-1)">&#8592;</button>
+    <button class="scroll-hint hidden" id="scrollRight" onclick="CafeScroll.go(1)">&#8594;</button>
+    <div class="scroll-dots" id="scrollDots" style="display:none;"></div>
+  </div>
+  <div class="tip-toast" id="tipToast">
+    <div class="tip-toast-lbl">Last Order</div>
+    <div class="tip-toast-stars" id="tipStars">★★★</div>
+    <div class="tip-toast-amt" id="tipAmt">+$0.00</div>
+  </div>
+</div>
+
+<div class="screen" id="drinkScreen">
+  <div class="ticket-panel">
+    <div class="ticket-header">
+      <div class="tkt-cafe" id="tktCafe">Conservation Café</div>
+      <hr class="tkt-hr">
+      <div class="tkt-cust-row">
+        <div class="tkt-cust-icon" id="tktIcon">🧑</div>
+        <div>
+          <div class="tkt-cust-name" id="tktName">Customer</div>
+          <div class="tkt-order-num">Order #<span id="tktNum">1</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="tkt-drink-block">
+      <div class="tkt-drink-name" id="tktDrinkName">☕ Drink</div>
+      <div id="tktRows"></div>
+    </div>
+    <div class="tkt-food-block">
+      <div class="tkt-food-lbl">Food Item</div>
+      <div class="tkt-food-name" id="tktFood">Croissant</div>
+    </div>
+    <div class="tkt-pricing">
+      <div class="tkt-price-row"><span>Drink</span><span class="pr" id="tpDrink">$0.00</span></div>
+      <div class="tkt-price-row"><span>Food</span><span class="pr" id="tpFood">$0.00</span></div>
+      <div class="tkt-price-row total-row"><span>Subtotal</span><span class="pr" id="tpSub">$0.00</span></div>
+      <div class="tkt-price-row" style="color:var(--gold)"><span>Tip</span><span class="pr" id="tpTip">TBD</span></div>
+    </div>
+  </div>
+  <div class="drink-canvas-area">
+    <div class="dc-title" id="dcTitle">Build the Drink</div>
+    <div class="dc-step" id="dcStep">Step 1 of 6</div>
+    <div style="display:flex;align-items:flex-end;gap:24px;justify-content:center;">
+      <canvas id="cupCanvas" width="180" height="340"></canvas>
+      <div id="foodDisplay" style="display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:18px;min-width:180px;opacity:0;transition:opacity .4s ease;transform:translateY(10px);transition:opacity .4s ease,transform .4s ease;">
+        <div id="foodDisplaySvg" style="width:180px;height:160px;display:flex;align-items:flex-end;justify-content:center;"></div>
+        <div id="foodDisplayLabel" style="font-size:11px;font-weight:800;color:var(--light-text);text-align:center;margin-top:6px;max-width:110px;line-height:1.2;background:rgba(245,233,211,0.15);padding:3px 7px;border-radius:8px;"></div>
+      </div>
+    </div>
+  </div>
+  <div class="options-panel">
+    <div class="op-title" id="opTitle">Choose</div>
+    <div class="op-pour-hint" id="pourHint">✨ Watch it pour!</div>
+    <div class="opt-grid" id="optGrid"></div>
+    <div class="step-btns">
+      <button class="sbtn back" onclick="DB.prev()">← Back</button>
+      <button class="sbtn next" id="nextBtn" onclick="DB.next()">Next →</button>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="storeScreen">
+  <div class="store-h">Expansion Store</div>
+  <div class="store-sub">Unlock biomes to protect more animals!</div>
+  <div class="store-menu-wrap">
+    <div class="smw-title" id="smwTitle">Menu</div>
+    <div class="smw-grid" id="smwGrid"></div>
+  </div>
+  <div class="store-sub" style="width:90%;max-width:860px;margin-bottom:8px;font-family:'Fredoka One',cursive;color:rgba(245,233,211,.6);font-size:18px;">Biome Expansions</div>
+  <div class="biome-grid" id="biomeGrid"></div>
+</div>
+
+<div class="screen" id="conservationScreen">
+  <div class="cons-h">Conservation Progress</div>
+  <div style="color:rgba(245,233,211,.45);font-size:11px;margin-bottom:6px;">Click a saved animal to read their story • Name them on the café screen!</div>
+  <div class="cprogwrap"><div class="cprogbg"><div class="cprogfill" id="cprogFill" style="width:0%"><span class="cprogtext" id="cprogText">0%</span></div></div></div>
+  <div id="consContent" style="width:90%;max-width:780px;padding-bottom:40px;"></div>
+</div>
+
+<div class="screen" id="avatarScreen">
+  <div class="av-h">Avatar Builder</div>
+  <div class="av-step-tabs">
+    <div class="av-step-tab active" id="avTab1" onclick="AV.goStep(1)">1. Gender</div>
+    <div class="av-step-tab" id="avTab2" onclick="AV.goStep(2)">2. Character</div>
+    <div class="av-step-tab" id="avTab3" onclick="AV.goStep(3)">3. Hair</div>
+  </div>
+  <div class="av-preview-wrap">
+    <img id="avPreviewImg" src="" class="av-preview-img" alt="Avatar preview">
+    <div class="av-platform"></div>
+    <div class="av-name-disp" id="avNameDisp" style="margin-top:8px;">Barista</div>
+  </div>
+  <div class="av-step-content">
+    <div id="avStep1" class="av-step active">
+      <div class="av-step-title">Who are you?</div>
+      <div class="av-gender-row">
+        <div class="av-gender-card" id="avGenderF" onclick="AV.setGender('female')">
+          <div class="av-gender-icon">👩</div>
+          <div class="av-gender-lbl">Girls</div>
+        </div>
+        <div class="av-gender-card" id="avGenderM" onclick="AV.setGender('male')">
+          <div class="av-gender-icon">👨</div>
+          <div class="av-gender-lbl">Boys</div>
+        </div>
+      </div>
+      <button class="av-wizard-btn av-wizard-next" onclick="AV.goStep(2)">Next →</button>
+    </div>
+    <div id="avStep2" class="av-step">
+      <div class="av-step-title">Choose your character</div>
+      <div class="av-pick-row" id="avPickRow"></div>
+      <div class="av-wizard-nav">
+        <button class="av-wizard-btn av-wizard-back" onclick="AV.goStep(1)">← Back</button>
+        <button class="av-wizard-btn av-wizard-next" onclick="AV.goStep(3)">Next →</button>
+      </div>
+    </div>
+    <div id="avStep3" class="av-step">
+      <div class="av-step-title">Choose hair color</div>
+      <div class="av-hair-row" id="avHairRow"></div>
+      <div style="display:flex;flex-direction:column;gap:5px;width:100%;max-width:320px;margin-top:8px;">
+        <div class="av-label">Your Name</div>
+        <input class="av-nameinput" id="avNameIn" placeholder="Your name…" maxlength="20" oninput="AV.setName(this.value)">
+      </div>
+      <div class="av-wizard-nav">
+        <button class="av-wizard-btn av-wizard-back" onclick="AV.goStep(2)">← Back</button>
+        <button class="av-savebtn" onclick="AV.save()">Save & Return ☕</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg hidden" id="modal">
+  <div class="modal-box">
+    <div class="modal-emoji" id="mEmoji">🎉</div>
+    <div class="modal-title" id="mTitle"></div>
+    <div class="modal-body" id="mBody"></div>
+    <div class="modal-fact hidden" id="mFact"></div>
+    <input class="modal-input hidden" id="mInput" placeholder="">
+    <div class="modal-btns" id="mBtns"></div>
+  </div>
+</div>
+
+<!-- Avatar Builder Popup (shown on first cafe creation) -->
+<div id="avatarPopup" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(20,12,4,0.72);backdrop-filter:blur(6px);align-items:center;justify-content:center;overflow-y:auto;padding:20px;">
+  <div class="avp-card">
+    <div class="avp-header">
+      <div class="avp-title">Avatar Builder ✨</div>
+      <div class="avp-subtitle">Customize how you'll look behind the counter!</div>
+      <div class="avp-step-dots">
+        <div class="avp-step-dot active" id="avpDot1"></div>
+        <div class="avp-step-dot" id="avpDot2"></div>
+        <div class="avp-step-dot" id="avpDot3"></div>
+        <span class="avp-step-lbl" id="avpStepLbl">Step 1 of 3</span>
+      </div>
+    </div>
+    <div class="avp-preview-wrap">
+      <img id="avpPreviewImg" src="" class="avp-preview-img" alt="Avatar preview">
+      <div class="av-platform"></div>
+    </div>
+    <div id="avpStep1" class="avp-step active">
+      <div class="avp-step-title">Who are you?</div>
+      <div class="av-gender-row">
+        <div class="av-gender-card" id="avpGenderF" onclick="AVP.setGender('female')">
+          <div class="av-gender-icon">👩</div>
+          <div class="av-gender-lbl">Girls</div>
+        </div>
+        <div class="av-gender-card" id="avpGenderM" onclick="AVP.setGender('male')">
+          <div class="av-gender-icon">👨</div>
+          <div class="av-gender-lbl">Boys</div>
+        </div>
+      </div>
+    </div>
+    <div id="avpStep2" class="avp-step">
+      <div class="avp-step-title">Choose your character</div>
+      <div class="av-pick-row" id="avpPickRow"></div>
+    </div>
+    <div id="avpStep3" class="avp-step">
+      <div class="avp-step-title">Choose hair color</div>
+      <div class="av-hair-row" id="avpHairRow"></div>
+    </div>
+    <div class="avp-nav">
+      <button class="av-wizard-btn av-wizard-back" id="avpBtnBack" onclick="AVP.back()" style="visibility:hidden">← Back</button>
+      <button class="av-wizard-btn av-wizard-next" id="avpBtnNext" onclick="AVP.next()">Next →</button>
+    </div>
+  </div>
+</div>
+
+<div class="score-bg hidden" id="scoreScreen">
+  <div class="score-box">
+    <div class="score-drink" id="sDrink">☕</div>
+    <div class="score-ttl" id="sTitle">Order Complete!</div>
+    <div class="score-stars" id="sStars">⭐⭐⭐</div>
+    <div class="score-receipt" id="sReceipt"></div>
+    <button class="score-nextbtn" onclick="Scoring.next()">Next Customer →</button>
+  </div>
+</div>
+
+
+<script src="conservation-cafe.js"></script>
+</body>
+</html>
