@@ -147,9 +147,9 @@
     <div class="dc-step" id="dcStep">Step 1 of 6</div>
     <div style="display:flex;align-items:flex-end;gap:24px;justify-content:center;">
       <canvas id="cupCanvas" width="180" height="340"></canvas>
-      <div id="foodDisplay" style="display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:0;min-width:180px;opacity:0;transition:opacity .4s ease;transform:translateY(10px);transition:opacity .4s ease,transform .4s ease;">
+      <div id="foodDisplay" style="position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:18px;min-width:180px;opacity:0;transition:opacity .4s ease,transform .4s ease;transform:translateY(10px);">
         <div id="foodDisplaySvg" style="width:180px;height:160px;display:flex;align-items:flex-end;justify-content:center;"></div>
-        <div id="foodDisplayLabel" style="font-size:11px;font-weight:800;color:var(--light-text);text-align:center;margin-top:4px;max-width:110px;line-height:1.2;background:rgba(245,233,211,0.15);padding:3px 7px;border-radius:8px;"></div>
+        <div id="foodDisplayLabel" style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);font-size:11px;font-weight:800;color:var(--light-text);text-align:center;white-space:nowrap;line-height:1.2;background:rgba(245,233,211,0.15);padding:3px 7px;border-radius:8px;pointer-events:none;"></div>
       </div>
     </div>
   </div>
