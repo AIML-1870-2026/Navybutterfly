@@ -120,7 +120,7 @@ function renderAll() {
 // 4a. RENDER — Current Conditions
 // ============================================================
 function renderCurrent(data) {
-  const el = document.getElementById('currentContent');
+  const el = document.getElementById('current-content');
   if (!data) { el.innerHTML = '<div class="error-msg">No current data.</div>'; return; }
 
   const windDir   = getWindDir(data.wind.deg);
@@ -182,7 +182,7 @@ function renderCurrent(data) {
 // 4b. RENDER — 5-Day Forecast
 // ============================================================
 function renderForecast(data) {
-  const el = document.getElementById('forecastGrid');
+  const el = document.getElementById('forecast-strip');
   if (!data || !data.list) {
     el.innerHTML = '<div class="loading-msg" style="grid-column:1/-1">No forecast data.</div>';
     return;
@@ -201,7 +201,6 @@ function renderForecast(data) {
     const items  = byDay[key];
     const high   = Math.max(...items.map(i => i.main.temp_max));
     const low    = Math.min(...items.map(i => i.main.temp_min));
-    // pick midday reading for icon
     const mid    = items[Math.floor(items.length / 2)];
     const icon   = weatherEmoji(mid.weather[0].id);
     const label  = new Date(key).toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
@@ -220,7 +219,7 @@ function renderForecast(data) {
 // 4c. RENDER — Air Quality Index
 // ============================================================
 function renderAQI(data) {
-  const el = document.getElementById('aqiContent');
+  const el = document.getElementById('aqi-content');
   if (!data || !data.list || !data.list[0]) {
     el.innerHTML = '<div class="loading-msg">No AQI data available.</div>';
     return;
@@ -268,7 +267,7 @@ function renderAQI(data) {
 // 4d. RENDER — UV Index
 // ============================================================
 function renderUV(uvIndex) {
-  const el = document.getElementById('uvContent');
+  const el = document.getElementById('uv-content');
   if (uvIndex == null) {
     el.innerHTML = '<div class="loading-msg">No UV data available.</div>';
     return;
@@ -297,14 +296,14 @@ function renderUV(uvIndex) {
 // 5. SKY BACKGROUND
 // ============================================================
 function updateSkyBackground(code) {
-  const el = document.getElementById('skyBg');
+  const el = document.querySelector('.sky-bg');
   let gradient;
-  if      (code >= 200 && code < 300) gradient = 'linear-gradient(160deg,#2d2540 0%,#4a3d6b 100%)'; // thunderstorm
-  else if (code >= 300 && code < 600) gradient = 'linear-gradient(160deg,#1c3a5e 0%,#3a5c7e 100%)'; // rain/drizzle
-  else if (code >= 600 && code < 700) gradient = 'linear-gradient(160deg,#a8c4d8 0%,#dce8f0 100%)'; // snow
-  else if (code >= 700 && code < 800) gradient = 'linear-gradient(160deg,#8a7e6e 0%,#b0a898 100%)'; // mist/fog
-  else if (code === 800)              gradient = 'linear-gradient(160deg,#e8a020 0%,#4a90d0 100%)'; // clear/sunny
-  else                                gradient = 'linear-gradient(160deg,#6a7e8a 0%,#9ab0be 100%)'; // cloudy
+  if      (code >= 200 && code < 300) gradient = 'linear-gradient(160deg,#2d2540 0%,#4a3d6b 100%)';
+  else if (code >= 300 && code < 600) gradient = 'linear-gradient(160deg,#1c3a5e 0%,#3a5c7e 100%)';
+  else if (code >= 600 && code < 700) gradient = 'linear-gradient(160deg,#a8c4d8 0%,#dce8f0 100%)';
+  else if (code >= 700 && code < 800) gradient = 'linear-gradient(160deg,#8a7e6e 0%,#b0a898 100%)';
+  else if (code === 800)              gradient = 'linear-gradient(160deg,#e8a020 0%,#4a90d0 100%)';
+  else                                gradient = 'linear-gradient(160deg,#6a7e8a 0%,#9ab0be 100%)';
   el.style.background = gradient;
 }
 
@@ -313,12 +312,11 @@ function updateSkyBackground(code) {
 // ============================================================
 function toggleUnits(unit) {
   state.unit = unit;
-  document.getElementById('btnF').classList.toggle('active', unit === 'F');
-  document.getElementById('btnC').classList.toggle('active', unit === 'C');
+  document.getElementById('btn-f').classList.toggle('active', unit === 'F');
+  document.getElementById('btn-c').classList.toggle('active', unit === 'C');
   if (state.weatherData) {
     renderCurrent(state.weatherData);
     renderForecast(state.forecastData);
-    // UV and AQI have no temps — no re-render needed
   }
 }
 
@@ -396,15 +394,15 @@ function fmtTime(unix) {
 // ============================================================
 function showLoading() {
   const msg = '<div class="loading-msg">Receiving transmission&hellip;</div>';
-  document.getElementById('currentContent').innerHTML = msg;
-  document.getElementById('aqiContent').innerHTML     = msg;
-  document.getElementById('uvContent').innerHTML      = msg;
-  document.getElementById('forecastGrid').innerHTML   =
+  document.getElementById('current-content').innerHTML = msg;
+  document.getElementById('aqi-content').innerHTML     = msg;
+  document.getElementById('uv-content').innerHTML      = msg;
+  document.getElementById('forecast-strip').innerHTML  =
     '<div class="loading-msg" style="grid-column:1/-1">Receiving forecast data&hellip;</div>';
 }
 
 function showError(msg) {
-  document.getElementById('currentContent').innerHTML =
+  document.getElementById('current-content').innerHTML =
     `<div class="error-msg">${msg}</div>`;
 }
 
@@ -413,7 +411,7 @@ function updateTeletypeFooter() {
   const now    = new Date();
   const next   = new Date(now.getTime() + 3 * 60 * 60 * 1000);
   const fmt    = d => d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-  document.getElementById('teletypeFooter').textContent =
+  document.getElementById('footer-text').textContent =
     `Teletype transmission · ${state.city} · Report issued ${fmt(now)} · Next bulletin ${fmt(next)}`;
 }
 
@@ -422,28 +420,28 @@ function setMastheadDate() {
   const formatted = now.toLocaleDateString('en-US', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
   });
-  document.getElementById('mastheadDate').textContent = formatted;
+  document.getElementById('masthead-date').textContent = formatted;
 }
 
 // ============================================================
 // 7. EVENT LISTENERS
 // ============================================================
-document.getElementById('cityInput').addEventListener('keydown', e => {
+document.getElementById('city-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') {
     const city = e.target.value.trim();
     if (city) loadWeather(city);
   }
 });
 
-document.getElementById('dispatchBtn').addEventListener('click', () => {
-  const city = document.getElementById('cityInput').value.trim();
+document.getElementById('dispatch-btn').addEventListener('click', () => {
+  const city = document.getElementById('city-input').value.trim();
   if (city) loadWeather(city);
 });
 
-document.getElementById('locateBtn').addEventListener('click', handleLocate);
+document.getElementById('locate-btn').addEventListener('click', handleLocate);
 
-document.getElementById('btnF').addEventListener('click', () => toggleUnits('F'));
-document.getElementById('btnC').addEventListener('click', () => toggleUnits('C'));
+document.getElementById('btn-f').addEventListener('click', () => toggleUnits('F'));
+document.getElementById('btn-c').addEventListener('click', () => toggleUnits('C'));
 
 // ============================================================
 // 8. INIT

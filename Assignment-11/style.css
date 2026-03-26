@@ -1,7 +1,3 @@
-/* ============================================================
-   WEATHER REPORT — NEWSPRINT THEME
-   ============================================================ */
-
 :root {
   --paper:     #f2ead8;
   --ink:       #1a1208;
@@ -11,140 +7,117 @@
   --paper-mid: #ddd4b0;
   --aqi-good:  #2a6a1a;
   --uv-orange: #c25a00;
+  --font-display: "Special Elite", serif;
+  --font-mono: "IBM Plex Mono", monospace;
 }
 
-/* ============================================================
-   RESET & BASE
-   ============================================================ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  background: var(--ink-mid);
+  background: #b0a888;
   min-height: 100vh;
-  font-family: 'IBM Plex Mono', monospace;
-  position: relative;
+  font-family: var(--font-mono);
+  color: var(--ink);
 }
 
-/* ============================================================
-   SKY REACTIVE BACKGROUND
-   ============================================================ */
+.wb-root {
+  position: relative;
+  min-height: 100vh;
+}
+
+.wb-root::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.35;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+}
+
 .sky-bg {
   position: fixed;
   inset: 0;
   z-index: 0;
-  opacity: 0.18;
-  background: linear-gradient(160deg, #e8a020 0%, #4a90d0 100%);
-  transition: background 1.2s ease;
+  opacity: 0.17;
+  background: linear-gradient(160deg, #87ceeb 0%, #f2d96a 100%);
+  transition: background 1s ease;
   pointer-events: none;
 }
 
-/* ============================================================
-   MAIN WRAPPER
-   ============================================================ */
-.wb-root {
+.newspaper {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   max-width: 820px;
-  margin: 20px auto;
+  margin: 24px auto;
   background: var(--paper);
   border: 1px solid #b8a880;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.35);
-  /* Paper noise via pseudo-element */
-  isolation: isolate;
+  box-shadow: 0 6px 32px rgba(0,0,0,0.40);
 }
 
-/* Paper grain texture overlay */
-.wb-root::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
-  opacity: 0.35;
-  pointer-events: none;
-  z-index: 100;
-}
-
-/* ============================================================
-   MASTHEAD
-   ============================================================ */
 .masthead {
   border-top: 4px solid var(--ink);
   border-bottom: 4px double var(--ink);
-  padding: 10px 12px 6px;
-}
-
-.masthead-ears {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.ear-left, .ear-right {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.6rem;
-  color: var(--ink-mid);
-  line-height: 1.4;
-  flex-shrink: 0;
-  width: 90px;
-  border: 1px solid var(--rule);
-  padding: 4px 6px;
+  padding: 10px 16px 8px;
   text-align: center;
 }
 
-.ear-right { text-align: center; }
-
-.masthead-title-block {
-  flex: 1;
-  text-align: center;
+.masthead-kicker {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--ink-faint);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
 }
 
 .masthead-title {
-  font-family: 'Special Elite', serif;
-  font-size: clamp(1.6rem, 4vw, 2.8rem);
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 5vw, 3.2rem);
   color: var(--ink);
-  letter-spacing: 0.06em;
   text-transform: uppercase;
-  line-height: 1.1;
+  letter-spacing: 0.08em;
+  line-height: 1.05;
+  margin-bottom: 6px;
 }
 
 .masthead-dateline {
-  display: flex;
-  justify-content: space-between;
+  font-family: var(--font-mono);
   font-size: 0.68rem;
   color: var(--ink-mid);
-  margin-top: 5px;
-  padding-top: 4px;
-  border-top: 1px solid var(--rule);
   letter-spacing: 0.03em;
+  padding-top: 5px;
+  border-top: 1px solid var(--rule);
 }
 
-/* ============================================================
-   SEARCH BAR
-   ============================================================ */
-.search-bar {
+.controls-bar {
+  background: var(--paper-mid);
+  border-bottom: 2px solid var(--ink);
+  padding: 7px 14px;
+}
+
+.controls-inner {
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 7px 12px;
-  border-bottom: 2px solid var(--ink);
-  background: var(--paper-mid);
+  gap: 8px;
   flex-wrap: wrap;
 }
 
-.search-label {
+.controls-label {
+  font-family: var(--font-mono);
   font-size: 0.72rem;
   color: var(--ink-mid);
-  white-space: nowrap;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  white-space: nowrap;
 }
 
-#cityInput {
+.city-input {
   flex: 1;
-  min-width: 120px;
-  font-family: 'IBM Plex Mono', monospace;
+  min-width: 130px;
+  font-family: var(--font-mono);
   font-size: 0.82rem;
-  padding: 4px 7px;
+  padding: 4px 8px;
   border: 1px solid var(--rule);
   border-radius: 0;
   background: var(--paper);
@@ -152,7 +125,7 @@ body {
   outline: none;
 }
 
-#cityInput:focus { border-color: var(--ink); }
+.city-input:focus { border-color: var(--ink); }
 
 .unit-toggle {
   display: flex;
@@ -161,10 +134,10 @@ body {
 }
 
 .unit-btn {
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 0.78rem;
   font-weight: 500;
-  padding: 3px 11px;
+  padding: 3px 12px;
   border: none;
   border-radius: 0;
   cursor: pointer;
@@ -178,109 +151,104 @@ body {
   color: var(--paper);
 }
 
+.unit-btn:not(.active):hover { background: var(--paper-mid); }
+
 .btn-primary, .btn-secondary {
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 0.78rem;
   font-weight: 500;
-  padding: 4px 13px;
+  padding: 4px 14px;
   border-radius: 0;
   cursor: pointer;
   border: 1px solid var(--ink);
-  transition: background 0.15s, color 0.15s;
   white-space: nowrap;
   flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
 }
 
 .btn-primary { background: var(--ink); color: var(--paper); }
+
 .btn-primary:hover { background: var(--ink-mid); }
 
 .btn-secondary { background: var(--paper); color: var(--ink); }
+
 .btn-secondary:hover { background: var(--paper-mid); }
 
-/* ============================================================
-   THREE-COLUMN MAIN GRID
-   ============================================================ */
-.main-grid {
+.content-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1.3fr 1fr 1fr;
   border-top: 2px solid var(--ink);
   min-height: 260px;
 }
 
-.col-current {
-  padding: 12px 14px;
-  border-right: 1px solid var(--rule);
-}
+.col-current { border-right: 1px solid var(--rule); }
 
-.col-aqi {
-  padding: 12px 14px;
-}
+.col-aqi { border-right: 1px solid var(--rule); }
 
-.col-uv {
-  padding: 0 14px 12px;
-  border-left: 3px solid var(--ink);
-}
+.col-uv { border-left: 3px solid var(--ink); }
 
-/* ============================================================
-   SECTION HEADERS
-   ============================================================ */
 .section-header {
-  font-family: 'Special Elite', serif;
-  font-size: 0.82rem;
+  border-bottom: 2px solid var(--ink);
+  padding: 5px 14px;
+}
+
+.section-header-text {
+  font-family: var(--font-display);
+  font-size: 0.80rem;
   color: var(--ink);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  border-bottom: 1px solid var(--rule);
-  padding-bottom: 5px;
-  margin-bottom: 10px;
 }
 
-.uv-header {
+.section-header-inverted {
   background: var(--ink);
-  color: var(--paper);
-  text-align: center;
-  padding: 5px 8px;
-  margin: 0 -14px 12px;
   border-bottom: none;
+  text-align: center;
+  padding: 6px 14px;
+}
+
+.section-header-inverted .section-header-text {
+  color: var(--paper);
   letter-spacing: 0.12em;
 }
 
-/* ============================================================
-   CURRENT CONDITIONS
-   ============================================================ */
+.section-body { padding: 12px 14px; }
+
 .current-city {
-  font-size: 0.78rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
   color: var(--ink-faint);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   margin-bottom: 2px;
 }
 
+.current-icon { display: block; width: 56px; height: 56px; margin: -4px 0 -4px -6px; }
+
 .big-temp {
-  font-family: 'Special Elite', serif;
+  font-family: var(--font-display);
   font-size: 3.4rem;
   color: var(--ink);
   line-height: 1;
-  margin: 2px 0 3px;
+  margin: 2px 0 4px;
 }
 
 .condition-desc {
-  font-size: 0.85rem;
+  font-family: var(--font-mono);
+  font-size: 0.84rem;
   color: var(--ink-mid);
   text-transform: capitalize;
   margin-bottom: 2px;
 }
 
 .feels-like {
-  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  font-size: 0.70rem;
   color: var(--ink-faint);
-  margin-bottom: 10px;
   font-style: italic;
+  margin-bottom: 10px;
 }
 
-/* ============================================================
-   STAT GRID (hairline rule cells)
-   ============================================================ */
 .stat-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -290,41 +258,38 @@ body {
   margin-top: 8px;
 }
 
-.stat-cell {
-  background: var(--paper);
-  padding: 4px 6px;
-}
+.stat-cell { background: var(--paper); padding: 4px 7px; }
 
 .stat-label {
-  font-size: 0.58rem;
+  font-family: var(--font-mono);
+  font-size: 0.56rem;
   color: var(--ink-faint);
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  line-height: 1.2;
+  line-height: 1.3;
 }
 
 .stat-value {
-  font-size: 0.78rem;
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
   color: var(--ink);
   line-height: 1.3;
 }
 
-/* ============================================================
-   AQI COLUMN
-   ============================================================ */
 .aqi-number {
-  font-family: 'Special Elite', serif;
+  font-family: var(--font-display);
   font-size: 3rem;
   line-height: 1;
   margin-bottom: 3px;
 }
 
 .aqi-label {
-  font-size: 0.88rem;
-  font-weight: 700;
-  margin-bottom: 10px;
+  font-family: var(--font-mono);
+  font-size: 0.84rem;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  margin-bottom: 10px;
 }
 
 .aqi-bar-track {
@@ -341,30 +306,23 @@ body {
   transition: width 0.6s ease;
 }
 
-/* ============================================================
-   UV INDEX COLUMN
-   ============================================================ */
 .uv-number {
-  font-family: 'Special Elite', serif;
+  font-family: var(--font-display);
   font-size: 3.4rem;
-  color: var(--uv-orange);
   line-height: 1;
-  margin-bottom: 2px;
+  margin-bottom: 3px;
 }
 
 .uv-label-badge {
-  font-size: 0.85rem;
-  font-weight: 700;
+  font-family: var(--font-mono);
+  font-size: 0.84rem;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  margin-bottom: 10px;
-}
-
-.uv-pips {
-  display: flex;
-  gap: 5px;
   margin-bottom: 12px;
 }
+
+.uv-pips { display: flex; gap: 5px; margin-bottom: 14px; }
 
 .uv-pip {
   flex: 1;
@@ -373,124 +331,92 @@ body {
   border: 1px solid var(--rule);
 }
 
-.uv-pip.active {
-  border-color: transparent;
-}
+.uv-pip.active { border-color: transparent; }
 
 .uv-tips {
-  font-size: 0.7rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
   color: var(--ink-mid);
-  line-height: 1.6;
+  line-height: 1.65;
 }
 
-.uv-tip-line::before {
-  content: '· ';
-  color: var(--rule);
-}
+.uv-tip-line::before { content: '· '; color: var(--rule); }
 
-/* ============================================================
-   FIVE-DAY FORECAST STRIP
-   ============================================================ */
+.forecast-section { border-top: 2px solid var(--ink); }
+
 .forecast-strip {
-  border-top: 2px solid var(--ink);
-  padding: 10px 12px;
-}
-
-.forecast-strip-header {
-  font-family: 'Special Elite', serif;
-  font-size: 0.82rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--ink);
-  border-bottom: 1px solid var(--rule);
-  padding-bottom: 4px;
-  margin-bottom: 8px;
-}
-
-.forecast-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 1px;
   background: var(--rule);
   border: 1px solid var(--rule);
+  margin: 10px 14px 12px;
+}
+
+.forecast-strip .loading-msg,
+.forecast-strip .error-msg {
+  grid-column: 1 / -1;
+  padding: 12px;
+  background: var(--paper);
 }
 
 .forecast-day {
   background: var(--paper);
-  padding: 8px 4px;
+  padding: 10px 6px;
   text-align: center;
 }
 
 .forecast-day-name {
-  font-family: 'Special Elite', serif;
-  font-size: 0.82rem;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
   color: var(--ink);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  margin-bottom: 4px;
 }
 
-.forecast-icon {
-  font-size: 1.3rem;
-  margin: 5px 0 3px;
-  line-height: 1;
-}
+.forecast-icon { width: 48px; height: 48px; display: block; margin: 0 auto 4px; }
 
-.forecast-high {
-  font-family: 'Special Elite', serif;
-  font-size: 0.95rem;
-  color: var(--ink);
-}
+.forecast-high { font-family: var(--font-display); font-size: 0.94rem; color: var(--ink); }
 
-.forecast-low {
-  font-size: 0.72rem;
-  color: var(--ink-faint);
-  margin-top: 1px;
-}
+.forecast-low { font-family: var(--font-mono); font-size: 0.70rem; color: var(--ink-faint); margin-top: 1px; }
 
-/* ============================================================
-   TELETYPE FOOTER
-   ============================================================ */
 .teletype-footer {
   border-top: 2px solid var(--ink);
-  padding: 7px 12px;
-  font-size: 0.67rem;
-  color: var(--ink-faint);
+  padding: 7px 16px;
   text-align: center;
+}
+
+.footer-rule { height: 1px; background: var(--rule); margin-bottom: 5px; }
+
+.footer-text {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--ink-faint);
   letter-spacing: 0.04em;
 }
 
-/* ============================================================
-   STATUS MESSAGES
-   ============================================================ */
 .loading-msg {
-  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
   color: var(--ink-faint);
   font-style: italic;
   padding: 8px 0;
 }
 
 .error-msg {
-  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
   color: #8b1a1a;
   padding: 8px 0;
-  line-height: 1.5;
+  line-height: 1.55;
 }
 
-/* ============================================================
-   RESPONSIVE — narrow screens
-   ============================================================ */
-@media (max-width: 600px) {
-  .main-grid {
-    grid-template-columns: 1fr;
-  }
+@media (max-width: 620px) {
+  .content-grid { grid-template-columns: 1fr; }
   .col-current { border-right: none; border-bottom: 1px solid var(--rule); }
-  .col-aqi     { border-bottom: 1px solid var(--rule); }
-  .col-uv      { border-left: none; border-top: 3px solid var(--ink); }
-
-  .forecast-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .masthead-ears { display: none; }
-  .masthead-title-block { text-align: center; }
+  .col-aqi { border-right: none; border-bottom: 1px solid var(--rule); }
+  .col-uv { border-left: none; border-top: 3px solid var(--ink); }
+  .forecast-strip { grid-template-columns: repeat(3, 1fr); }
+  .newspaper { margin: 0; }
 }
