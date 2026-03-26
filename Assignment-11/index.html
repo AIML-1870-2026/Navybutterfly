@@ -1,100 +1,62 @@
-line 0
-line 1
-line 2
-line 3
-line 4
-line 5
-line 6
-line 7
-line 8
-line 9
-line 10
-line 11
-line 12
-line 13
-line 14
-line 15
-line 16
-line 17
-line 18
-line 19
-line 20
-line 21
-line 22
-line 23
-line 24
-line 25
-line 26
-line 27
-line 28
-line 29
-line 30
-line 31
-line 32
-line 33
-line 34
-line 35
-line 36
-line 37
-line 38
-line 39
-line 40
-line 41
-line 42
-line 43
-line 44
-line 45
-line 46
-line 47
-line 48
-line 49
-line 50
-line 51
-line 52
-line 53
-line 54
-line 55
-line 56
-line 57
-line 58
-line 59
-line 60
-line 61
-line 62
-line 63
-line 64
-line 65
-line 66
-line 67
-line 68
-line 69
-line 70
-line 71
-line 72
-line 73
-line 74
-line 75
-line 76
-line 77
-line 78
-line 79
-line 80
-line 81
-line 82
-line 83
-line 84
-line 85
-line 86
-line 87
-line 88
-line 89
-line 90
-line 91
-line 92
-line 93
-line 94
-line 95
-line 96
-line 97
-line 98
-line 99
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Weather Report</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="wb-root">
+    <div class="sky-bg"></div>
+    <div class="newspaper">
+      <header class="masthead">
+        <div class="masthead-kicker">Established 1887 &bull; All The Weather Fit To Print &bull; Five Cents</div>
+        <h1 class="masthead-title">The Weather Report</h1>
+        <div class="masthead-dateline">
+          Vol.&nbsp;LXXXIII &middot; No.&nbsp;85 &nbsp;&nbsp;&nbsp;
+          <span id="masthead-date"></span>
+        </div>
+      </header>
+      <div class="controls-bar">
+        <div class="controls-inner">
+          <label class="controls-label" for="city-input">Station:</label>
+          <input type="text" id="city-input" class="city-input" placeholder="City, State, Country" autocomplete="off" />
+          <div id="unit-toggle" class="unit-toggle">
+            <button id="btn-f" class="unit-btn active">&#176;F</button>
+            <button id="btn-c" class="unit-btn">&#176;C</button>
+          </div>
+          <button id="locate-btn" class="btn-secondary">Locate</button>
+          <button id="dispatch-btn" class="btn-primary">Dispatch</button>
+        </div>
+      </div>
+      <div class="content-grid">
+        <section class="col-current">
+          <div class="section-header"><span class="section-header-text">Current Conditions</span></div>
+          <div id="current-content" class="section-body"><div class="loading-msg">Awaiting transmission&#8230;</div></div>
+        </section>
+        <section class="col-aqi">
+          <div class="section-header"><span class="section-header-text">Air Quality Index</span></div>
+          <div id="aqi-content" class="section-body"><div class="loading-msg">Awaiting transmission&#8230;</div></div>
+        </section>
+        <section class="col-uv">
+          <div class="section-header section-header-inverted"><span class="section-header-text">&#9733; UV Index Report &#9733;</span></div>
+          <div id="uv-content" class="section-body"><div class="loading-msg">Awaiting transmission&#8230;</div></div>
+        </section>
+      </div>
+      <div class="forecast-section">
+        <div class="section-header"><span class="section-header-text">Five-Day Forecast</span></div>
+        <div id="forecast-strip" class="forecast-strip"><div class="loading-msg">Awaiting transmission&#8230;</div></div>
+      </div>
+      <footer class="teletype-footer">
+        <div class="footer-rule"></div>
+        <span id="footer-text" class="footer-text">Teletype transmission &#x2022; Initializing&#8230;</span>
+      </footer>
+    </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
