@@ -1,450 +1,345 @@
 // ============================================================
-// 1. CONSTANTS
+// THE WEATHER REPORT - script.js
+// AIML 1870 - Assignment 11
 // ============================================================
-const API_KEY = "df8b21052db7c9ce0d56690d3782cacd";
 
-// ============================================================
-// 2. STATE
-// ============================================================
+const API_KEY = "YOUR_KEY_HERE";
+
+// State
 const state = {
-  city:        'Omaha',
-  lat:         null,
-  lon:         null,
-  unit:        'F',   // 'F' | 'C'
-  weatherData: null,
-  forecastData:null,
-  aqiData:     null,
-  uvValue:     null,
+  city:         'Omaha, NE, US',
+  lat:          null,
+  lon:          null,
+  unit:         'imperial',
+  weatherData:  null,
+  forecastData: null,
+  aqiData:      null,
+  uviData:      null,
 };
 
-// Temperature conversion helpers (all API temps are Kelvin)
+// Temperature helpers — all API temps are Kelvin
 const toF = k => Math.round((k - 273.15) * 9 / 5 + 32);
 const toC = k => Math.round(k - 273.15);
-const disp = k => state.unit === 'F' ? `${toF(k)}°F` : `${toC(k)}°C`;
+function tempValue(k) { return state.unit === 'imperial' ? toF(k) : toC(k); }
+function unitLabel()   { return state.unit === 'imperial' ? '°F' : '°C'; }
+function formatTemp(k) { return tempValue(k) + unitLabel(); }
 
-// ============================================================
-// 2. FETCH HELPERS
-// ============================================================
-async function apiFetch(url) {
-  const res = await fetch(url);
-  if (!res.ok) {
-    const err = new Error(res.status === 404 ? 'not_found' : 'api_error');
-    err.status = res.status;
-    throw err;
+// ---- FETCH HELPERS ----
+
+async function fetchWeather(query) {
+  const base = 'https://api.openweathermap.org/data/2.5/weather';
+  const key = '&appid=' + API_KEY;
+  let url;
+  if (query.city) {
+    url = base + '?q=' + encodeURIComponent(query.city) + key;
+  } else {
+    url = base + '?lat=' + query.lat + '&lon=' + query.lon + key;
   }
+  const res = await fetch(url);
+  if (res.status === 404) throw new Error('city_not_found');
+  if (!res.ok) throw new Error('api_error');
   return res.json();
 }
 
-function fetchCurrentByCity(city) {
-  return apiFetch(
-    `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${API_KEY}`
-  );
-}
-
-function fetchCurrentByCoords(lat, lon) {
-  return apiFetch(
-    `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}`
-  );
-}
-
 function fetchForecast(lat, lon) {
-  return apiFetch(
-    `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}`
-  );
+  const url = 'https://api.openweathermap.org/data/2.5/forecast?lat=' + lat + '&lon=' + lon + '&appid=' + API_KEY;
+  return fetch(url).then(r => r.ok ? r.json() : Promise.reject(new Error('api_error')));
 }
 
 function fetchAQI(lat, lon) {
-  return apiFetch(
-    `https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${API_KEY}`
-  );
+  const url = 'https://api.openweathermap.org/data/2.5/air_pollution?lat=' + lat + '&lon=' + lon + '&appid=' + API_KEY;
+  return fetch(url).then(r => r.ok ? r.json() : Promise.reject(new Error('api_error')));
 }
 
-function fetchUV(lat, lon) {
-  return apiFetch(
-    `https://api.openweathermap.org/data/2.5/uvi?lat=${lat}&lon=${lon}&appid=${API_KEY}`
-  );
+function fetchUVI(lat, lon) {
+  const url = 'https://api.openweathermap.org/data/2.5/uvi?lat=' + lat + '&lon=' + lon + '&appid=' + API_KEY;
+  return fetch(url).then(r => r.ok ? r.json() : Promise.reject(new Error('api_error')));
 }
 
-// ============================================================
-// 3. MAIN DATA LOADER
-// ============================================================
+// ---- MAIN LOADER ----
+
 async function loadWeather(query) {
-  showLoading();
+  setLoading();
   try {
-    // Step 1: get current weather (city string or {lat, lon})
-    const weather = typeof query === 'string'
-      ? await fetchCurrentByCity(query)
-      : await fetchCurrentByCoords(query.lat, query.lon);
-
+    const weather = await fetchWeather(query);
     state.weatherData = weather;
     state.lat = weather.coord.lat;
     state.lon = weather.coord.lon;
     state.city = weather.name;
-
-    // Step 2: parallel fetches for the rest
-    const [forecast, aqi, uvResp] = await Promise.allSettled([
+    const [fcast, aqi, uvi] = await Promise.allSettled([
       fetchForecast(state.lat, state.lon),
       fetchAQI(state.lat, state.lon),
-      fetchUV(state.lat, state.lon),
+      fetchUVI(state.lat, state.lon),
     ]);
-
-    state.forecastData = forecast.status === 'fulfilled' ? forecast.value : null;
-    state.aqiData      = aqi.status     === 'fulfilled' ? aqi.value      : null;
-    state.uvValue      = uvResp.status  === 'fulfilled' ? uvResp.value.value : null;
-
-    renderAll();
-    updateTeletypeFooter();
-
+    state.forecastData = fcast.status === 'fulfilled' ? fcast.value : null;
+    state.aqiData = aqi.status === 'fulfilled' ? aqi.value : null;
+    state.uviData = uvi.status === 'fulfilled' ? uvi.value : null;
+    renderCurrent(state.weatherData);
+    renderForecast(state.forecastData);
+    renderAQI(state.aqiData);
+    renderUV(state.uviData);
+    updateSkyBackground(state.weatherData.weather[0].id);
+    updateFooter(state.city);
   } catch (err) {
-    if (err.message === 'not_found') {
-      const q = typeof query === 'string' ? query : 'that location';
-      showError(`No station data found for "${q}". Check spelling and try again.`);
-    } else {
-      showError('Transmission error. Please try again.');
-    }
+    showCurrentError(err.message, query);
   }
 }
 
-// ============================================================
-// 4. RENDER — orchestrator
-// ============================================================
-function renderAll() {
-  renderCurrent(state.weatherData);
-  renderForecast(state.forecastData);
-  renderAQI(state.aqiData);
-  renderUV(state.uvValue);
-  updateSkyBackground(state.weatherData.weather[0].id);
+function showCurrentError(msg, query) {
+  const el = document.getElementById('current-content');
+  if (msg === 'city_not_found') {
+    const name = query.city || 'that location';
+    el.innerHTML = ' <div class="error-msg">No station data found for &ldquo;' + name + '&rdquo;. Check spelling and try again.</div>';
+  } else {
+    el.innerHTML = '<div class="error-msg">Transmission error. Please try again.</div>';
+  }
 }
 
-// ============================================================
-// 4a. RENDER — Current Conditions
-// ============================================================
+// ---- RENDER: CURRENT CONDITIONS ----
+
 function renderCurrent(data) {
   const el = document.getElementById('current-content');
   if (!data) { el.innerHTML = '<div class="error-msg">No current data.</div>'; return; }
 
-  const windDir   = getWindDir(data.wind.deg);
-  const windSpeed = data.wind ? (state.unit === 'F'
-    ? `${Math.round(data.wind.speed * 2.237)} mph`
-    : `${Math.round(data.wind.speed)} m/s`) : 'N/A';
+  const windSpeed = state.unit === 'imperial'
+    ? Math.round(data.wind.speed * 2.237) + ' mph'
+    : Math.round(data.wind.speed) + ' m/s';
+  const windDir = degToCardinal(data.wind ? data.wind.deg : 0);
   const vis = data.visibility != null
-    ? (state.unit === 'F'
-        ? `${(data.visibility / 1609).toFixed(1)} mi`
-        : `${(data.visibility / 1000).toFixed(1)} km`)
+    ? (state.unit === 'imperial' ? (data.visibility / 1609).toFixed(1) + ' mi' : (data.visibility / 1000).toFixed(1) + ' km')
     : 'N/A';
-  const dewK     = calcDewPointK(data.main.temp, data.main.humidity);
-  const sunrise  = fmtTime(data.sys.sunrise);
-  const sunset   = fmtTime(data.sys.sunset);
+  const tempC = data.main.temp - 273.15;
+  const dewC = tempC - (100 - data.main.humidity) / 5;
+  const dewK = dewC + 273.15;
+  const icon = 'https://openweathermap.org/img/wn/' + data.weather[0].icon + '@2x.png';
 
-  el.innerHTML = `
-    <div class="current-city">${data.name}, ${data.sys.country}</div>
-    <div class="big-temp">${disp(data.main.temp)}</div>
-    <div class="condition-desc">${data.weather[0].description}</div>
-    <div class="feels-like">Feels like ${disp(data.main.feels_like)}</div>
-    <div class="stat-grid">
-      <div class="stat-cell">
-        <div class="stat-label">Wind</div>
-        <div class="stat-value">${windSpeed} ${windDir}</div>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-label">Pressure</div>
-        <div class="stat-value">${data.main.pressure} hPa</div>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-label">Humidity</div>
-        <div class="stat-value">${data.main.humidity}%</div>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-label">Dew Point</div>
-        <div class="stat-value">${disp(dewK)}</div>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-label">Visibility</div>
-        <div class="stat-value">${vis}</div>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-label">Cloud Cover</div>
-        <div class="stat-value">${data.clouds.all}%</div>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-label">Sunrise</div>
-        <div class="stat-value">${sunrise}</div>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-label">Sunset</div>
-        <div class="stat-value">${sunset}</div>
-      </div>
-    </div>
-  `;
+  el.innerHTML =
+    '<div class="current-city">' + data.name + (data.sys.country ? ', ' + data.sys.country : '') + '</div>' +
+    '<img class="current-icon" src="' + icon + '" alt="weather icon" />' +
+    '<div class="big-temp">' + formatTemp(data.main.temp) + '</div>' +
+    '<div class="condition-desc">' + data.weather[0].description + '</div>' +
+    '<div class="feels-like">Feels like ' + formatTemp(data.main.feels_like) + '</div>' +
+    '<div class="stat-grid">' +
+    '<div class="stat-cell"><div class="stat-label">Wind</div><div class="stat-value">' + windSpeed + ' ' + windDir + '</div></div>' +
+    '<div class="stat-cell"><div class="stat-label">Pressure</div><div class="stat-value">' + data.main.pressure + ' hPa</div></div>' +
+    '<div class="stat-cell"><div class="stat-label">Humidity</div><div class="stat-value">' + data.main.humidity + '%</div></div>' +
+    '<div class="stat-cell"><div class="stat-label">Dew Point</div><div class="stat-value">' + formatTemp(dewK) + '</div></div>' +
+    '<div class="stat-cell"><div class="stat-label">Visibility</div><div class="stat-value">' + vis + '</div></div>' +
+    '<div class="stat-cell"><div class="stat-label">Cloud Cover</div><div class="stat-value">' + data.clouds.all + '%</div></div>' +
+    '</div>' 
+  ;
 }
 
-// ============================================================
-// 4b. RENDER — 5-Day Forecast
-// ============================================================
+// ---- RENDER: FORECAST ----
+
 function renderForecast(data) {
   const el = document.getElementById('forecast-strip');
   if (!data || !data.list) {
-    el.innerHTML = '<div class="loading-msg" style="grid-column:1/-1">No forecast data.</div>';
+    el.innerHTML = '<div class="loading-msg">No forecast data available.</div>';
     return;
   }
-
-  // Group 3-hour slots by calendar date
-  const byDay = {};
-  data.list.forEach(item => {
-    const key = new Date(item.dt * 1000).toDateString();
-    if (!byDay[key]) byDay[key] = [];
-    byDay[key].push(item);
-  });
-
-  const days = Object.keys(byDay).slice(0, 5);
-  el.innerHTML = days.map(key => {
-    const items  = byDay[key];
-    const high   = Math.max(...items.map(i => i.main.temp_max));
-    const low    = Math.min(...items.map(i => i.main.temp_min));
-    const mid    = items[Math.floor(items.length / 2)];
-    const icon   = weatherEmoji(mid.weather[0].id);
-    const label  = new Date(key).toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
-    return `
-      <div class="forecast-day">
-        <div class="forecast-day-name">${label}</div>
-        <div class="forecast-icon">${icon}</div>
-        <div class="forecast-high">${disp(high)}</div>
-        <div class="forecast-low">${disp(low)}</div>
-      </div>
-    `;
+  const days = groupForecastByDay(data.list);
+  el.innerHTML = days.map(function(d) {
+    return '<div class="forecast-day">' +
+      '<div class="forecast-day-name">' + d.name + '</div>' +
+      '<img class="forecast-icon" src="https://openweathermap.org/img/wn/' + d.icon + '@2x.png" alt="" />' +
+      '<div class="forecast-high">' + formatTemp(d.high) + '</div>' +
+      '<div class="forecast-low">' + formatTemp(d.low) + '</div>' +
+      '</div>';
   }).join('');
 }
 
-// ============================================================
-// 4c. RENDER — Air Quality Index
-// ============================================================
+// ---- RENDER: AQI ----
+
 function renderAQI(data) {
   const el = document.getElementById('aqi-content');
   if (!data || !data.list || !data.list[0]) {
     el.innerHTML = '<div class="loading-msg">No AQI data available.</div>';
     return;
   }
-  const aqi  = data.list[0].main.aqi;
+  const aqi = data.list[0].main.aqi;
   const comp = data.list[0].components;
-  const cat  = aqiCategory(aqi);
-
-  el.innerHTML = `
-    <div class="aqi-number" style="color:${cat.color}">${aqi}</div>
-    <div class="aqi-label"  style="color:${cat.color}">${cat.label}</div>
-    <div class="aqi-bar-track">
-      <div class="aqi-bar-fill" style="width:${cat.pct}%;background:${cat.color}"></div>
-    </div>
-    <div class="stat-grid">
-      <div class="stat-cell">
-        <div class="stat-label">PM2.5</div>
-        <div class="stat-value">${comp.pm2_5.toFixed(1)} μg/m³</div>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-label">PM10</div>
-        <div class="stat-value">${comp.pm10.toFixed(1)} μg/m³</div>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-label">Ozone O₃</div>
-        <div class="stat-value">${comp.o3.toFixed(1)} μg/m³</div>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-label">NO₂</div>
-        <div class="stat-value">${comp.no2.toFixed(1)} μg/m³</div>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-label">SO₂</div>
-        <div class="stat-value">${comp.so2.toFixed(1)} μg/m³</div>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-label">CO</div>
-        <div class="stat-value">${(comp.co / 1000).toFixed(2)} mg/m³</div>
-      </div>
-    </div>
-  `;
+  const cat = aqiCategory(aqi);
+  el.innerHTML =
+    '<div class="aqi-number" style="color:' + cat.color + '">'  + aqi + '</div>' +
+    '<div class="aqi-label" style="color:' + cat.color + '">'   + cat.label + '</div>' +
+    '<div class="aqi-bar-track"><div class="aqi-bar-fill" style="width:' + cat.pct + '%;background:' + cat.color + '"></div></div>' +
+    '<div class="stat-grid">' +
+    '<div class="stat-cell"><div class="stat-label">PM2.5</div><div class="stat-value">' + comp.pm2_5.toFixed(1) + ' &#956;g/m&#179;</div></div>' +
+    '<div class="stat-cell"><div class="stat-label">PM10</div><div class="stat-value">' + comp.pm10.toFixed(1) + ' &#956;g/m&#179;</div></div>' +
+    '<div class="stat-cell"><div class="stat-label">NO&#8322;</div><div class="stat-value">' + comp.no2.toFixed(1) + ' &#956;g/m&#179;</div></div>' +
+    '<div class="stat-cell"><div class="stat-label">Ozone O&#8323;</div><div class="stat-value">' + comp.o3.toFixed(1) + ' &#956;g/m&#179;</div></div>' +
+    '</div>';
 }
 
-// ============================================================
-// 4d. RENDER — UV Index
-// ============================================================
-function renderUV(uvIndex) {
+// ---- RENDER: UV INDEX ----
+
+function renderUV(data) {
   const el = document.getElementById('uv-content');
-  if (uvIndex == null) {
+  let uvIndex = null;
+  if (data) { uvIndex = typeof data === 'object' ? (data.value !== undefined ? data.value : null) : data; }
+  if (uvIndex === null) {
     el.innerHTML = '<div class="loading-msg">No UV data available.</div>';
     return;
   }
-  const cat       = uvCategory(uvIndex);
+  const cat = uvCategory(uvIndex);
   const pipColors = ['#4caf50', '#8bc34a', '#ffeb3b', '#ff9800', '#f44336'];
-
-  const pips = pipColors.map((c, i) =>
-    `<div class="uv-pip${i < cat.pips ? ' active' : ''}"` +
-    `${i < cat.pips ? ` style="background:${c}"` : ''}></div>`
-  ).join('');
-
-  const tips = cat.tips.map(t =>
-    `<div class="uv-tip-line">${t}</div>`
-  ).join('');
-
-  el.innerHTML = `
-    <div class="uv-number" style="color:${cat.color}">${Math.round(uvIndex)}</div>
-    <div class="uv-label-badge" style="color:${cat.color}">${cat.label}</div>
-    <div class="uv-pips">${pips}</div>
-    <div class="uv-tips">${tips}</div>
-  `;
+  const pips = pipColors.map(function(c, i) {
+    return '<div class="uv-pip' + (i < cat.pips ? ' active' : '') + '"' + (i < cat.pips ? ' style="background:' + c + '"' : '') + '></div>';
+  }).join('');
+  const tips = cat.tips.map(function(t) {
+    return '<div class="uv-tip-line">' + t + '</div>';
+  }).join('');
+  el.innerHTML =
+    '<div class="uv-number" style="color:' + cat.color + '">'  + Math.round(uvIndex) + '</div>' +
+    '<div class="uv-label-badge" style="color:' + cat.color + '">'  + cat.label + '</div>' +
+    '<div class="uv-pips">' + pips + '</div>' +
+    '<div class="uv-tips">' + tips + '</div>';
 }
 
-// ============================================================
-// 5. SKY BACKGROUND
-// ============================================================
+// ---- SKY BACKGROUND ----
+
 function updateSkyBackground(code) {
   const el = document.querySelector('.sky-bg');
-  let gradient;
-  if      (code >= 200 && code < 300) gradient = 'linear-gradient(160deg,#2d2540 0%,#4a3d6b 100%)';
-  else if (code >= 300 && code < 600) gradient = 'linear-gradient(160deg,#1c3a5e 0%,#3a5c7e 100%)';
-  else if (code >= 600 && code < 700) gradient = 'linear-gradient(160deg,#a8c4d8 0%,#dce8f0 100%)';
-  else if (code >= 700 && code < 800) gradient = 'linear-gradient(160deg,#8a7e6e 0%,#b0a898 100%)';
-  else if (code === 800)              gradient = 'linear-gradient(160deg,#e8a020 0%,#4a90d0 100%)';
-  else                                gradient = 'linear-gradient(160deg,#6a7e8a 0%,#9ab0be 100%)';
-  el.style.background = gradient;
+  if (!el) return;
+  let g;
+  if      (code === 800)               g = 'linear-gradient(160deg, #87ceeb 0%, #f2d96a 100%)';
+  else if (code >= 801 && code <= 804) g = 'linear-gradient(160deg, #8a9aaa 0%, #b0b8c8 100%)';
+  else if (code >= 500 && code < 600)  g = 'linear-gradient(160deg, #3a5a7a 0%, #1a3a5a 100%)';
+  else if (code >= 300 && code < 400)  g = 'linear-gradient(160deg, #4a6a8a 0%, #2a4a6a 100%)';
+  else if (code >= 200 && code < 300)  g = 'linear-gradient(160deg, #3a2d4a 0%, #1a1a2e 100%)';
+  else if (code >= 600 && code < 700)  g = 'linear-gradient(160deg, #d0e8f8 0%, #e8f4ff 100%)';
+  else if (code >= 700 && code < 800)  g = 'linear-gradient(160deg, #b8a888 0%, #a89878 100%)';
+  else                                  g = 'linear-gradient(160deg, #8a9aaa 0%, #b0b8c8 100%)';
+  el.style.background = g;
 }
 
-// ============================================================
-// 5. UNIT TOGGLE
-// ============================================================
-function toggleUnits(unit) {
-  state.unit = unit;
-  document.getElementById('btn-f').classList.toggle('active', unit === 'F');
-  document.getElementById('btn-c').classList.toggle('active', unit === 'C');
+// ---- UNIT TOGGLE ----
+
+function toggleUnits(newUnit) {
+  state.unit = newUnit;
+  document.getElementById('btn-f').classList.toggle('active', newUnit === 'imperial');
+  document.getElementById('btn-c').classList.toggle('active', newUnit === 'metric');
   if (state.weatherData) {
     renderCurrent(state.weatherData);
     renderForecast(state.forecastData);
   }
 }
 
-// ============================================================
-// 6. GEOLOCATION
-// ============================================================
+// ---- GEOLOCATION ----
+
 function handleLocate() {
   if (!navigator.geolocation) {
-    showError('Geolocation is not supported by your browser.');
+    document.getElementById('current-content').innerHTML = '<div class="error-msg">Geolocation not supported by your browser.</div>';
     return;
   }
   navigator.geolocation.getCurrentPosition(
-    pos => loadWeather({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
-    ()  => showError('Location access denied. Please enter a city manually.')
+    function(pos) { loadWeather({ lat: pos.coords.latitude, lon: pos.coords.longitude }); },
+    function()    { document.getElementById('current-content').innerHTML = '<div class="error-msg">Location access denied. Please enter a city manually.</div>'; }
   );
 }
 
-// ============================================================
-// 7. CATEGORY LOGIC HELPERS
-// ============================================================
+// ---- FORECAST GROUPING ----
+
+function groupForecastByDay(list) {
+  const today = new Date().toDateString();
+  const map = {};
+  list.forEach(function(item) {
+    const d = new Date(item.dt * 1000);
+    const key = d.toDateString();
+    if (key === today) return;
+    if (!map[key]) map[key] = [];
+    map[key].push(item);
+  });
+  const days = [];
+  Object.keys(map).slice(0, 5).forEach(function(key) {
+    const items = map[key];
+    const high = Math.max.apply(null, items.map(function(i) { return i.main.temp; }));
+    const low  = Math.min.apply(null, items.map(function(i) { return i.main.temp; }));
+    const mid  = items[Math.floor(items.length / 2)];
+    const name = new Date(key).toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+    days.push({ name: name, high: high, low: low, icon: mid.weather[0].icon });
+  });
+  return days;
+}
+
+// ---- CATEGORY HELPERS ----
+
 function aqiCategory(aqi) {
-  const labels = ['', 'Good',    'Fair',    'Moderate', 'Poor',    'Very Poor'];
-  const colors = ['', '#2a6a1a', '#8bc34a', '#f0a500',  '#d84315', '#7b1fa2'];
+  const labels = ['', 'Good', 'Fair', 'Moderate', 'Poor', 'Very Poor'];
+  const colors = ['', '#2a6a1a', '#8bc34a', '#f0a500', '#d84315', '#7b1fa2'];
   return { label: labels[aqi], color: colors[aqi], pct: (aqi / 5) * 100 };
 }
 
 function uvCategory(uv) {
-  const tips = {
-    low:      ['No protection needed', 'Safe to be outside'],
-    mod:      ['Wear SPF 30+', 'Seek shade at midday'],
-    high:     ['SPF 30+ required', 'Cover up', 'Peak hours 10am–4pm'],
-    vhigh:    ['SPF 50+', 'Limit midday exposure', 'Hat & sunglasses'],
-    extreme:  ['Avoid sun 10am–4pm', 'Full cover', 'SPF 50+ every 2 hrs'],
-  };
-  if (uv <= 2)  return { label: 'Low',       pips: 1, color: '#4caf50', tips: tips.low     };
-  if (uv <= 5)  return { label: 'Moderate',  pips: 2, color: '#8bc34a', tips: tips.mod     };
-  if (uv <= 7)  return { label: 'High',      pips: 3, color: '#8a6800', tips: tips.high    };
-  if (uv <= 10) return { label: 'Very High', pips: 4, color: '#ff9800', tips: tips.vhigh   };
-  return              { label: 'Extreme',   pips: 5, color: '#f44336', tips: tips.extreme };
+  if (uv <= 2)  return { label: 'Low',       pips: 1, color: '#4caf50', tips: ['No protection needed', 'Safe to be outside'] };
+  if (uv <= 5)  return { label: 'Moderate',  pips: 2, color: '#8bc34a', tips: ['Wear SPF 30+', 'Seek shade at midday'] };
+  if (uv <= 7)  return { label: 'High',      pips: 3, color: '#8a6800', tips: ['SPF 30+ required', 'Cover up', 'Peak hours 10am-4pm'] };
+  if (uv <= 10) return { label: 'Very High', pips: 4, color: '#ff9800', tips: ['SPF 50+', 'Limit midday exposure', 'Hat & sunglasses'] };
+  return           { label: 'Extreme',   pips: 5, color: '#f44336', tips: ['Avoid sun 10am-4pm', 'Full cover required', 'SPF 50+ every 2 hrs'] };
 }
 
-function weatherEmoji(code) {
-  if (code >= 200 && code < 300) return '⛈';
-  if (code >= 300 && code < 400) return '🌦';
-  if (code >= 500 && code < 600) return '🌧';
-  if (code >= 600 && code < 700) return '❄️';
-  if (code >= 700 && code < 800) return '🌫';
-  if (code === 800)               return '☀️';
-  if (code === 801)               return '🌤';
-  if (code === 802)               return '⛅';
-  return '☁️';
-}
-
-// Magnus formula: returns dew point as Kelvin
-function calcDewPointK(tempK, humidity) {
-  const tc    = tempK - 273.15;
-  const a     = 17.27, b = 237.7;
-  const alpha = (a * tc) / (b + tc) + Math.log(humidity / 100);
-  const dpC   = (b * alpha) / (a - alpha);
-  return dpC + 273.15;
-}
-
-function getWindDir(deg) {
+function degToCardinal(deg) {
   if (deg == null) return '';
   const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
   return dirs[Math.round(deg / 22.5) % 16];
 }
 
-function fmtTime(unix) {
-  return new Date(unix * 1000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+// ---- DATE/TIME HELPERS ----
+
+function initMastheadDate() {
+  const el = document.getElementById('masthead-date');
+  if (!el) return;
+  const now = new Date();
+  el.textContent = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 }
 
-// ============================================================
-// 8. UI HELPERS
-// ============================================================
-function showLoading() {
-  const msg = '<div class="loading-msg">Receiving transmission&hellip;</div>';
+function updateFooter(cityName) {
+  const el = document.getElementById('footer-text');
+  if (!el) return;
+  const now  = new Date();
+  const next = new Date(now.getTime() + 3 * 60 * 60 * 1000);
+  const fmt  = function(d) { return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }); };
+  el.textContent = 'Teletype transmission · ' + (cityName || '--') + ' · Report issued ' + fmt(now) + ' · Next bulletin ' + fmt(next);
+}
+
+// ---- LOADING STATE ----
+
+function setLoading() {
+  const msg = '<div class="loading-msg">Receiving transmission&#8230;</div>';
   document.getElementById('current-content').innerHTML = msg;
   document.getElementById('aqi-content').innerHTML     = msg;
   document.getElementById('uv-content').innerHTML      = msg;
-  document.getElementById('forecast-strip').innerHTML  =
-    '<div class="loading-msg" style="grid-column:1/-1">Receiving forecast data&hellip;</div>';
+  document.getElementById('forecast-strip').innerHTML  = '<div class="loading-msg">Receiving forecast data&#8230;</div>';
 }
 
-function showError(msg) {
-  document.getElementById('current-content').innerHTML =
-    `<div class="error-msg">${msg}</div>`;
-}
+// ---- EVENT WIRING + INIT ----
 
-function updateTeletypeFooter() {
-  if (!state.city) return;
-  const now    = new Date();
-  const next   = new Date(now.getTime() + 3 * 60 * 60 * 1000);
-  const fmt    = d => d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-  document.getElementById('footer-text').textContent =
-    `Teletype transmission · ${state.city} · Report issued ${fmt(now)} · Next bulletin ${fmt(next)}`;
-}
+document.addEventListener('DOMContentLoaded', function() {
+  initMastheadDate();
 
-function setMastheadDate() {
-  const now = new Date();
-  const formatted = now.toLocaleDateString('en-US', {
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  const cityInput   = document.getElementById('city-input');
+  const dispatchBtn = document.getElementById('dispatch-btn');
+  const locateBtn   = document.getElementById('locate-btn');
+  const btnF        = document.getElementById('btn-f');
+  const btnC        = document.getElementById('btn-c');
+
+  cityInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      const city = cityInput.value.trim();
+      if (city) loadWeather({ city: city });
+    }
   });
-  document.getElementById('masthead-date').textContent = formatted;
-}
 
-// ============================================================
-// 7. EVENT LISTENERS
-// ============================================================
-document.getElementById('city-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') {
-    const city = e.target.value.trim();
-    if (city) loadWeather(city);
-  }
+  dispatchBtn.addEventListener('click', function() {
+    const city = cityInput.value.trim();
+    if (city) loadWeather({ city: city });
+  });
+
+  locateBtn.addEventListener('click', handleLocate);
+
+  btnF.addEventListener('click', function() { toggleUnits('imperial'); });
+  btnC.addEventListener('click', function() { toggleUnits('metric'); });
+
+  loadWeather({ city: 'Omaha,NE,US' });
 });
-
-document.getElementById('dispatch-btn').addEventListener('click', () => {
-  const city = document.getElementById('city-input').value.trim();
-  if (city) loadWeather(city);
-});
-
-document.getElementById('locate-btn').addEventListener('click', handleLocate);
-
-document.getElementById('btn-f').addEventListener('click', () => toggleUnits('F'));
-document.getElementById('btn-c').addEventListener('click', () => toggleUnits('C'));
-
-// ============================================================
-// 8. INIT
-// ============================================================
-setMastheadDate();
-loadWeather('Omaha');
