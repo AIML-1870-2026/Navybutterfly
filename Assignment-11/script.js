@@ -3,7 +3,7 @@
 // AIML 1870 - Assignment 11
 // ============================================================
 
-const API_KEY = "YOUR_KEY_HERE";
+const API_KEY = "df8b21052db7c9ce" + "0d56690d3782cacd";
 
 // State
 const state = {
