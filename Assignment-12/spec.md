@@ -1,0 +1,991 @@
+# Sentinel — NEO Close Approach Tracker
+## Project Specification
+
+### Overview
+Build a single-page web dashboard called **Sentinel** that pulls live data from NASA and JPL APIs to visualize near-Earth objects (NEOs). The dashboard should feel like a cinematic planetary defense mission console — dark, immersive, and awe-inspiring.
+
+The final product is a **single `index.html` file** with all CSS in a `<style>` block and all JS in a `<script>` block. No backend, no build step, no npm — all API calls happen client-side. Deployable directly to GitHub Pages.
+
+**Build order:** Write HTML structure first → then CSS → then JavaScript. Do not mix layers.
+
+---
+
+### API Keys & Endpoints
+
+**NASA API Key:** `2l4Abax857hOPkgfMBFVkN1MFkWw97On9IY2FedL`
+JPL APIs (SBDB and Sentry) require no key.
+
+| API | Endpoint |
+|-----|----------|
+| NeoWs (NASA) | `https://api.nasa.gov/neo/rest/v1/feed?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD&api_key=KEY` |
+| SBDB Close-Approach (JPL) | `https://ssd-api.jpl.nasa.gov/cad.api?date-min=YYYY-MM-DD&date-max=YYYY-MM-DD&dist-max=10LD&diameter=true&sort=date` |
+| Sentry (JPL) | `https://ssd-api.jpl.nasa.gov/sentry.api?removed=0` |
+
+---
+
+## SECTION 1 — HTML STRUCTURE
+
+Write all markup first. Use semantic, well-classed elements. No inline styles. No JavaScript yet — just the skeleton.
+
+### External Dependencies (in `<head>`)
+```html
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/globe.gl"></script>
+```
+
+### Page Layout
+```
+<body>
+  <canvas id="starfield"></canvas>
+  <header id="site-header">
+    <div class="header-logo">           <!-- SENTINEL wordmark + satellite SVG icon -->
+    <nav class="tab-nav">              <!-- 4 tab buttons -->
+    <div class="header-badge">         <!-- "X NEOs this week" live count -->
+  </header>
+  <main id="main-content">
+    <section id="tab-orbital">         <!-- Tab 1 -->
+    <section id="tab-this-week">       <!-- Tab 2 -->
+    <section id="tab-archive">         <!-- Tab 3 -->
+    <section id="tab-sentry">          <!-- Tab 4 -->
+  </main>
+</body>
+```
+
+### Header
+- `.header-logo` — text "SENTINEL" + satellite SVG icon
+- `.tab-nav` — four `<button class="tab-btn" data-tab="...">`:
+  - `data-tab="orbital"` → "ORBITAL VIEW"
+  - `data-tab="this-week"` → "THIS WEEK"
+  - `data-tab="archive"` → "DEEP ARCHIVE"
+  - `data-tab="sentry"` → "SENTRY WATCH"
+- `.header-badge` — `<span id="neo-week-count">—</span> NEOs THIS WEEK`
+
+### Tab 1 — `#tab-orbital`
+```html
+<div id="globe-container"></div>
+<div id="globe-overlay">Loading orbital data…</div>
+<aside class="globe-legend">
+  <div class="legend-item hazardous">● Potentially Hazardous</div>
+  <div class="legend-item safe">● Routine Flyby</div>
+  <div class="legend-moon">◎ Moon — 1 LD</div>
+  <div id="legend-date-range"></div>
+  <div id="legend-count"></div>
+</aside>
+<div id="asteroid-detail-card" class="hidden">
+  <h3 class="detail-name"></h3>
+  <div class="detail-fields"></div>
+  <button class="detail-crosslink">View in This Week →</button>
+  <button class="detail-close">✕</button>
+</div>
+<div class="mobile-fallback" style="display:none">
+  <div id="mobile-neo-list"></div>
+</div>
+```
+
+### Tab 2 — `#tab-this-week`
+```html
+<div class="mission-briefing">
+  <div class="stat-card" id="stat-total"></div>
+  <div class="stat-card" id="stat-closest"></div>
+  <div class="stat-card" id="stat-largest"></div>
+  <div class="stat-card" id="stat-fastest"></div>
+</div>
+<div class="tab-controls">
+  <label>Sort by:
+    <select id="week-sort">
+      <option value="date">Date</option>
+      <option value="distance">Miss Distance</option>
+      <option value="size">Size</option>
+      <option value="velocity">Velocity</option>
+    </select>
+  </label>
+  <label class="toggle-label">
+    <input type="checkbox" id="filter-hazardous"> Show only hazardous
+  </label>
+</div>
+<div id="asteroid-grid" class="card-grid"></div>
+```
+
+Each asteroid card (rendered by JS into `#asteroid-grid`):
+```html
+<article class="asteroid-card [hazardous|safe]" data-neo-id="...">
+  <div class="card-header">
+    <a class="asteroid-name" href="..." target="_blank"></a>
+    <span class="hazard-badge [hazardous|safe]"></span>
+  </div>
+  <div class="card-date"></div>
+  <div class="card-row"><span class="label">Miss Distance</span><span class="value"></span></div>
+  <div class="card-row"><span class="label">Diameter</span><span class="value"></span></div>
+  <div class="card-row"><span class="label">Size</span><span class="value comparison"></span></div>
+  <div class="card-row"><span class="label">Velocity</span><span class="value"></span></div>
+  <div class="card-row"><span class="label">Speed</span><span class="value comparison"></span></div>
+</article>
+```
+
+### Tab 3 — `#tab-archive`
+```html
+<section id="notable-approaches">
+  <h2>Notable Upcoming Approaches</h2>
+  <div class="highlight-strip" id="notable-strip"></div>
+</section>
+<div class="tab-controls archive-controls">
+  <input type="date" id="archive-start">
+  <input type="date" id="archive-end">
+  <label>Max distance (LD): <input type="number" id="archive-dist" value="10" min="0.1" max="100"></label>
+  <select id="archive-diameter">
+    <option value="">Any size</option>
+    <option value="25">≥ 25m</option>
+    <option value="50">≥ 50m</option>
+    <option value="100">≥ 100m</option>
+    <option value="500">≥ 500m</option>
+    <option value="1000">≥ 1km</option>
+  </select>
+  <select id="archive-sort">
+    <option value="date">Date</option>
+    <option value="dist">Distance</option>
+    <option value="size">Size</option>
+  </select>
+  <button id="archive-search">Search Archive</button>
+</div>
+<div class="table-wrapper">
+  <table id="archive-table">
+    <thead>
+      <tr>
+        <th>Name</th><th>Date</th><th>Distance (LD)</th><th>Distance (km)</th>
+        <th>Diameter (m)</th><th>Velocity (km/s)</th><th>Hazardous?</th>
+      </tr>
+    </thead>
+    <tbody id="archive-tbody"></tbody>
+  </table>
+</div>
+```
+
+### Tab 4 — `#tab-sentry`
+```html
+<p id="sentry-summary-text" class="sentry-summary"></p>
+<details class="explainer-card">
+  <summary>About Sentry, the Torino Scale & the Palermo Scale</summary>
+  <div class="explainer-body">
+    <p><strong>Sentry</strong> is JPL's automated impact monitoring system...</p>
+    <p><strong>Torino Scale</strong> (0–10): 0 = no hazard, 10 = certain collision...</p>
+    <p><strong>Palermo Scale</strong>: negative = below background risk, positive = above...</p>
+    <div class="torino-key"><!-- color swatches rendered here --></div>
+  </div>
+</details>
+<div class="tab-controls">
+  <select id="sentry-sort">
+    <option value="ip">Impact Probability</option>
+    <option value="ps">Palermo Scale</option>
+    <option value="size">Size</option>
+    <option value="year">Year</option>
+  </select>
+  <select id="sentry-torino-filter">
+    <option value="all">All Torino Levels</option>
+    <option value="0">0 only</option>
+    <option value="1">1+</option>
+    <option value="2">2+</option>
+  </select>
+</div>
+<div id="sentry-grid" class="card-grid"></div>
+```
+
+### Shared UI Elements
+- Skeletons: `<div class="skeleton-card"></div>` — injected by JS during fetch
+- Errors: `<div class="error-card"><p class="error-msg"></p><button class="retry-btn">Retry</button></div>`
+
+---
+
+## SECTION 2 — CSS
+
+All styles in a single `<style>` block in `<head>`. Complete all CSS before writing any JS.
+
+### 1. CSS Custom Properties
+```css
+:root {
+  --bg:             #0a0e1a;
+  --surface:        rgba(255,255,255,0.04);
+  --border:         rgba(0, 212, 255, 0.15);
+  --accent:         #00d4ff;
+  --hazard:         #ff6b35;
+  --text-primary:   #e8eaf6;
+  --text-secondary: #7986cb;
+  --success:        #69f0ae;
+  --warning:        #ffd740;
+  --danger:         #ff5252;
+  --font:           'Space Grotesk', sans-serif;
+  --radius:         12px;
+  --transition:     0.2s ease;
+}
+```
+
+### 2. Reset & Base
+```css
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text-primary); font-family: var(--font); min-height: 100vh; overflow-x: hidden; }
+#starfield { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+header, main, section, aside, article, div { position: relative; z-index: 1; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+```
+
+### 3. Header
+```css
+#site-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2rem; height: 64px;
+  border-bottom: 1px solid var(--accent);
+  backdrop-filter: blur(12px);
+  position: sticky; top: 0; z-index: 100;
+}
+.header-logo {
+  font-size: 1.4rem; font-weight: 700;
+  letter-spacing: 0.2em; color: var(--accent);
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.tab-nav { display: flex; gap: 0.25rem; }
+.tab-btn {
+  background: transparent; border: 1px solid transparent;
+  color: var(--text-secondary); font-family: var(--font);
+  font-size: 0.8rem; font-weight: 500; letter-spacing: 0.05em;
+  padding: 0.4rem 1rem; border-radius: 20px; cursor: pointer;
+  transition: all var(--transition);
+}
+.tab-btn:hover { color: var(--text-primary); border-color: var(--border); }
+.tab-btn.active { background: var(--accent); color: #0a0e1a; font-weight: 700; border-color: var(--accent); }
+.header-badge {
+  font-size: 0.75rem; font-weight: 500; color: var(--accent);
+  border: 1px solid var(--border); border-radius: 20px; padding: 0.25rem 0.75rem;
+}
+```
+
+### 4. Tab Sections
+```css
+section[id^="tab-"] { display: none; padding: 2rem; }
+section[id^="tab-"].active { display: block; }
+```
+
+### 5. Glass Card (shared)
+```css
+.asteroid-card, .stat-card, .explainer-card, .error-card, .highlight-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  backdrop-filter: blur(12px);
+  padding: 1.25rem;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+.asteroid-card:hover, .highlight-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 16px rgba(0,212,255,0.15);
+}
+.asteroid-card.hazardous {
+  border-color: rgba(255,107,53,0.4);
+  box-shadow: 0 0 12px rgba(255,107,53,0.1);
+}
+.asteroid-card.hazardous:hover {
+  border-color: var(--hazard);
+  box-shadow: 0 0 20px rgba(255,107,53,0.25);
+}
+```
+
+### 6. Mission Briefing (Tab 2)
+```css
+.mission-briefing {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 1rem; margin-bottom: 2rem;
+}
+.stat-card .stat-label {
+  font-size: 0.7rem; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+.stat-card .stat-value {
+  font-size: 1.4rem; font-weight: 700; color: var(--accent);
+}
+.stat-card .stat-sub {
+  font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;
+}
+```
+
+### 7. Card Grid & Card Rows
+```css
+.card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
+.card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem; }
+.asteroid-name { font-weight: 700; font-size: 0.9rem; color: var(--text-primary); }
+.card-date { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.75rem; }
+.card-row { display: flex; justify-content: space-between; margin-top: 0.4rem; font-size: 0.875rem; }
+.card-row .label { color: var(--text-secondary); }
+.card-row .value { font-weight: 500; }
+.comparison { color: var(--accent); font-size: 0.8rem; font-style: italic; }
+```
+
+### 8. Hazard Badge
+```css
+.hazard-badge {
+  font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em;
+  padding: 0.2rem 0.5rem; border-radius: 4px; text-transform: uppercase;
+  white-space: nowrap;
+}
+.hazard-badge.hazardous { background: rgba(255,107,53,0.2); color: var(--hazard); }
+.hazard-badge.safe      { background: rgba(0,212,255,0.1);  color: var(--accent); }
+```
+
+### 9. Tab Controls
+```css
+.tab-controls {
+  display: flex; flex-wrap: wrap; gap: 1rem;
+  align-items: center; margin-bottom: 1.5rem;
+}
+.tab-controls label { font-size: 0.8rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.4rem; }
+select, input[type="number"], input[type="date"] {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text-primary); font-family: var(--font);
+  border-radius: 6px; padding: 0.4rem 0.75rem; font-size: 0.85rem;
+}
+select:focus, input:focus { outline: none; border-color: var(--accent); }
+button {
+  background: var(--accent); color: #0a0e1a; font-family: var(--font);
+  font-weight: 700; border: none; border-radius: 6px;
+  padding: 0.4rem 1rem; cursor: pointer; font-size: 0.85rem;
+  transition: opacity var(--transition);
+}
+button:hover { opacity: 0.85; }
+```
+
+### 10. Archive Table
+```css
+.table-wrapper { overflow-x: auto; }
+#archive-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+#archive-table th {
+  color: var(--text-secondary); text-transform: uppercase;
+  font-size: 0.7rem; letter-spacing: 0.08em;
+  padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); text-align: left;
+}
+#archive-table td { padding: 0.65rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.04); }
+#archive-table tbody tr { cursor: pointer; transition: background var(--transition); }
+#archive-table tbody tr:hover { background: rgba(0,212,255,0.05); }
+#archive-table tbody tr.hazardous-row { border-left: 3px solid var(--hazard); }
+#archive-table tbody tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+.archive-detail-row td { background: rgba(0,212,255,0.04); padding: 1rem; }
+```
+
+### 11. Notable Approaches Strip (Tab 3)
+```css
+#notable-approaches { margin-bottom: 2rem; }
+#notable-approaches h2 { font-size: 1rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 1rem; }
+.highlight-strip { display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 0.75rem; }
+.highlight-strip::-webkit-scrollbar { height: 4px; }
+.highlight-strip::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.highlight-card { min-width: 200px; flex-shrink: 0; }
+.highlight-card .hc-name { font-weight: 700; font-size: 0.85rem; margin-bottom: 0.4rem; }
+.highlight-card .hc-date { font-size: 0.75rem; color: var(--text-secondary); }
+.highlight-card .hc-dist { font-size: 1.1rem; font-weight: 700; color: var(--accent); margin: 0.4rem 0; }
+```
+
+### 12. Globe Tab
+```css
+#tab-orbital { padding: 0; }
+#globe-container { width: 100%; height: calc(100vh - 64px); }
+#globe-overlay {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  color: var(--text-secondary); font-size: 0.9rem; letter-spacing: 0.1em;
+  text-transform: uppercase; pointer-events: none;
+}
+.globe-legend {
+  position: absolute; right: 2rem; bottom: 2rem;
+  font-size: 0.8rem; display: flex; flex-direction: column; gap: 0.4rem;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 1rem; backdrop-filter: blur(12px);
+}
+.legend-item.hazardous { color: var(--hazard); }
+.legend-item.safe      { color: var(--accent); }
+.legend-moon           { color: #ffffff; }
+#legend-date-range, #legend-count { color: var(--text-secondary); font-size: 0.75rem; margin-top: 0.25rem; }
+#asteroid-detail-card {
+  position: absolute; top: 2rem; right: 2rem; width: 280px;
+  z-index: 10;
+}
+#asteroid-detail-card.hidden { display: none; }
+.detail-name { font-size: 1rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--accent); }
+.detail-close {
+  position: absolute; top: 0.75rem; right: 0.75rem;
+  background: transparent; color: var(--text-secondary);
+  border: none; cursor: pointer; font-size: 1rem; padding: 0;
+}
+.detail-crosslink { margin-top: 1rem; width: 100%; }
+```
+
+### 13. Sentry Risk Colors
+```css
+.palermo-low    { color: var(--success); }
+.palermo-medium { color: var(--warning); }
+.palermo-high   { color: var(--danger);  }
+.sentry-summary { color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.9rem; }
+.explainer-card { margin-bottom: 1.5rem; }
+.explainer-card summary { cursor: pointer; font-weight: 500; color: var(--accent); }
+.explainer-body { margin-top: 1rem; font-size: 0.875rem; line-height: 1.6; color: var(--text-secondary); }
+.explainer-body p { margin-bottom: 0.75rem; }
+```
+
+### 14. Skeleton Loaders
+```css
+.skeleton-card {
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.04) 25%,
+    rgba(255,255,255,0.08) 50%,
+    rgba(255,255,255,0.04) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius);
+  height: 180px;
+}
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.error-card { text-align: center; padding: 2rem; }
+.error-msg { color: var(--danger); margin-bottom: 1rem; }
+```
+
+### 15. Responsive
+```css
+@media (max-width: 1024px) {
+  .mission-briefing { grid-template-columns: repeat(2, 1fr); }
+  .card-grid        { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 768px) {
+  .tab-btn  { font-size: 0.68rem; padding: 0.3rem 0.5rem; letter-spacing: 0; }
+  .mission-briefing, .card-grid { grid-template-columns: 1fr; }
+  #globe-container { display: none; }
+  .mobile-fallback { display: block !important; padding: 1rem; }
+}
+```
+
+---
+
+## SECTION 3 — JAVASCRIPT
+
+All JS in a single `<script>` block before `</body>`. Write and complete each module fully before moving to the next.
+
+### Module 1 — Constants & Helpers
+```js
+const NASA_KEY  = '2l4Abax857hOPkgfMBFVkN1MFkWw97On9IY2FedL';
+const KM_PER_LD = 384400;
+const ISS_SPEED = 7.7; // km/s
+
+const SIZE_LABELS = [
+  [10,       'car-sized'],
+  [25,       'house-sized'],
+  [50,       'half a football field'],
+  [100,      'a football field'],
+  [250,      'a city block'],
+  [500,      'a small mountain'],
+  [1000,     'a large mountain'],
+  [Infinity, 'city-sized'],
+];
+
+const TORINO_COLORS = {
+  0: '#69f0ae',
+  1: '#ffd740', 2: '#ffd740', 3: '#ffd740',
+  4: '#ff6d00', 5: '#ff6d00', 6: '#ff6d00', 7: '#ff6d00',
+  8: '#ff1744', 9: '#ff1744', 10: '#ff1744',
+};
+
+function getToday() {
+  return new Date().toISOString().split('T')[0];
+}
+function addDays(dateStr, n) {
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + n);
+  return d.toISOString().split('T')[0];
+}
+function formatDate(dateStr) {
+  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+function sizeLabel(meters) {
+  for (const [threshold, label] of SIZE_LABELS) {
+    if (meters < threshold) return label;
+  }
+}
+function speedLabel(kmps) {
+  return `${(kmps / ISS_SPEED).toFixed(1)}× the ISS`;
+}
+function torinoColor(ts) {
+  return TORINO_COLORS[Math.min(Math.max(parseInt(ts) || 0, 0), 10)];
+}
+function palermoClass(ps) {
+  const v = parseFloat(ps);
+  if (v < -2) return 'palermo-low';
+  if (v <= 0)  return 'palermo-medium';
+  return 'palermo-high';
+}
+function formatImpactProb(ipStr) {
+  const p = parseFloat(ipStr);
+  const pct = (p * 100).toFixed(4) + '%';
+  const oneIn = Math.round(1 / p).toLocaleString();
+  return `1 in ${oneIn} (${pct})`;
+}
+```
+
+### Module 2 — Starfield
+```js
+function initStarfield() {
+  const canvas = document.getElementById('starfield');
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const ctx = canvas.getContext('2d');
+  for (let i = 0; i < 300; i++) {
+    ctx.beginPath();
+    ctx.arc(
+      Math.random() * canvas.width,
+      Math.random() * canvas.height,
+      Math.random() * 1.5 + 0.3,
+      0, Math.PI * 2
+    );
+    ctx.fillStyle = `rgba(255,255,255,${(Math.random() * 0.7 + 0.3).toFixed(2)})`;
+    ctx.fill();
+  }
+}
+```
+
+### Module 3 — Tab Navigation
+```js
+const loaded = { orbital: false, 'this-week': false, archive: false, sentry: false };
+
+function initTabs() {
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('section[id^="tab-"]').forEach(s => s.classList.remove('active'));
+      btn.classList.add('active');
+      const section = document.getElementById('tab-' + btn.dataset.tab);
+      if (section) section.classList.add('active');
+      lazyLoad(btn.dataset.tab);
+    });
+  });
+}
+
+function lazyLoad(tabName) {
+  if (loaded[tabName]) return;
+  loaded[tabName] = true;
+  if (tabName === 'this-week') initThisWeek();
+  if (tabName === 'archive')   initArchive();
+  if (tabName === 'sentry')    initSentry();
+}
+
+function switchToTab(tabName, highlightId) {
+  // Programmatically switch tab — used by globe crosslink button
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('section[id^="tab-"]').forEach(s => s.classList.remove('active'));
+  const btn = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
+  if (btn) btn.classList.add('active');
+  const section = document.getElementById('tab-' + tabName);
+  if (section) section.classList.add('active');
+  lazyLoad(tabName);
+  if (highlightId) {
+    setTimeout(() => {
+      const card = document.querySelector(`[data-neo-id="${highlightId}"]`);
+      if (card) { card.scrollIntoView({ behavior: 'smooth' }); card.classList.add('highlighted'); }
+    }, 300);
+  }
+}
+```
+
+### Module 4 — NeoWs Fetch (shared cache for Tabs 1 & 2)
+```js
+let neoData = null;
+
+async function fetchNeoWs() {
+  const start = getToday();
+  const end   = addDays(start, 7);
+  const url   = `https://api.nasa.gov/neo/rest/v1/feed?start_date=${start}&end_date=${end}&api_key=${NASA_KEY}`;
+  try {
+    const res = await fetch(url);
+    if (res.status === 429) {
+      showRateLimitError('asteroid-grid', fetchNeoWs);
+      return null;
+    }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    neoData = flattenNeos(json);
+    document.getElementById('neo-week-count').textContent = neoData.length;
+    return neoData;
+  } catch (err) {
+    showError('asteroid-grid', err.message, fetchNeoWs);
+    return null;
+  }
+}
+
+function flattenNeos(apiResponse) {
+  return Object.values(apiResponse.near_earth_objects)
+    .flat()
+    .map(neo => ({ ...neo, close_approach: neo.close_approach_data[0] }));
+}
+```
+
+### Module 5 — Tab 1: Orbital View
+```js
+function ldToAltitude(ld) {
+  const logMin = Math.log10(0.1), logMax = Math.log10(200);
+  const clamped = Math.max(parseFloat(ld), 0.1);
+  return 0.1 + ((Math.log10(clamped) - logMin) / (logMax - logMin)) * 2.4;
+}
+
+async function initOrbitalView() {
+  if (!neoData) await fetchNeoWs();
+  if (!neoData) return; // fetch failed
+  document.getElementById('globe-overlay').style.display = 'none';
+
+  const points = neoData.map(neo => ({
+    lat:   (Math.random() - 0.5) * 160,
+    lng:   (Math.random() - 0.5) * 360,
+    alt:   ldToAltitude(neo.close_approach.miss_distance.lunar),
+    color: neo.is_potentially_hazardous_asteroid ? '#ff6b35' : '#00d4ff',
+    size:  neo.is_potentially_hazardous_asteroid ? 0.6 : 0.4,
+    neo,
+  }));
+
+  // Moon reference point
+  points.push({ lat: 23, lng: 45, alt: ldToAltitude(1), color: '#ffffff', size: 0.8, isMoon: true });
+
+  const globe = Globe()(document.getElementById('globe-container'))
+    .globeImageUrl('https://unpkg.com/globe.gl/example/img/earth-blue-marble.jpg')
+    .backgroundColor('#0a0e1a')
+    .pointsData(points)
+    .pointColor('color')
+    .pointAltitude('alt')
+    .pointRadius('size')
+    .pointLabel(d => d.isMoon ? 'MOON — 1 LD' : d.neo.name)
+    .onPointClick(point => {
+      if (point.isMoon) return;
+      showAsteroidDetailCard(point.neo);
+    });
+
+  const start = getToday();
+  document.getElementById('legend-date-range').textContent = `${formatDate(start)} — ${formatDate(addDays(start, 7))}`;
+  document.getElementById('legend-count').textContent = `${neoData.length} objects tracked`;
+
+  // Mobile fallback list
+  if (window.innerWidth <= 768) {
+    const list = document.getElementById('mobile-neo-list');
+    list.innerHTML = neoData.map(neo =>
+      `<div class="asteroid-card ${neo.is_potentially_hazardous_asteroid ? 'hazardous' : 'safe'}">
+        <strong>${neo.name}</strong> — ${parseFloat(neo.close_approach.miss_distance.lunar).toFixed(2)} LD
+       </div>`
+    ).join('');
+  }
+}
+
+function showAsteroidDetailCard(neo) {
+  const card = document.getElementById('asteroid-detail-card');
+  const ca = neo.close_approach;
+  const diamMin = neo.estimated_diameter.meters.estimated_diameter_min.toFixed(0);
+  const diamMax = neo.estimated_diameter.meters.estimated_diameter_max.toFixed(0);
+  const vel = parseFloat(ca.relative_velocity.kilometers_per_second).toFixed(2);
+  const distLD = parseFloat(ca.miss_distance.lunar).toFixed(3);
+  const distKM = parseFloat(ca.miss_distance.kilometers).toLocaleString(undefined, {maximumFractionDigits: 0});
+
+  card.querySelector('.detail-name').textContent = neo.name;
+  card.querySelector('.detail-fields').innerHTML = `
+    <div class="card-row"><span class="label">Date</span><span class="value">${formatDate(ca.close_approach_date)}</span></div>
+    <div class="card-row"><span class="label">Distance</span><span class="value">${distLD} LD (${distKM} km)</span></div>
+    <div class="card-row"><span class="label">Diameter</span><span class="value">${diamMin}–${diamMax} m</span></div>
+    <div class="card-row"><span class="label">Velocity</span><span class="value">${vel} km/s</span></div>
+    <div class="card-row"><span class="label">Hazard</span><span class="value ${neo.is_potentially_hazardous_asteroid ? 'palermo-high' : 'palermo-low'}">${neo.is_potentially_hazardous_asteroid ? 'POTENTIALLY HAZARDOUS' : 'ROUTINE FLYBY'}</span></div>
+  `;
+
+  card.querySelector('.detail-crosslink').onclick = () => {
+    card.classList.add('hidden');
+    switchToTab('this-week', neo.id);
+  };
+  card.querySelector('.detail-close').onclick = () => card.classList.add('hidden');
+  card.classList.remove('hidden');
+}
+```
+
+### Module 6 — Tab 2: This Week
+```js
+async function initThisWeek() {
+  showSkeletons('asteroid-grid', 6);
+  if (!neoData) await fetchNeoWs();
+  if (!neoData) return;
+  renderMissionBriefing(neoData);
+  renderAsteroidGrid(neoData);
+  document.getElementById('week-sort').addEventListener('change', () => renderAsteroidGrid(neoData));
+  document.getElementById('filter-hazardous').addEventListener('change', () => renderAsteroidGrid(neoData));
+}
+
+function renderMissionBriefing(neos) {
+  const total = neos.length;
+  const closest = neos.reduce((a, b) =>
+    parseFloat(a.close_approach.miss_distance.lunar) < parseFloat(b.close_approach.miss_distance.lunar) ? a : b);
+  const largest = neos.reduce((a, b) =>
+    a.estimated_diameter.meters.estimated_diameter_max > b.estimated_diameter.meters.estimated_diameter_max ? a : b);
+  const fastest = neos.reduce((a, b) =>
+    parseFloat(a.close_approach.relative_velocity.kilometers_per_second) >
+    parseFloat(b.close_approach.relative_velocity.kilometers_per_second) ? a : b);
+
+  document.getElementById('stat-total').innerHTML =
+    `<div class="stat-label">🪨 Total NEOs This Week</div><div class="stat-value">${total}</div>`;
+  document.getElementById('stat-closest').innerHTML =
+    `<div class="stat-label">📍 Closest Approach</div>
+     <div class="stat-value">${parseFloat(closest.close_approach.miss_distance.lunar).toFixed(2)} LD</div>
+     <div class="stat-sub">${closest.name}</div>`;
+  document.getElementById('stat-largest').innerHTML =
+    `<div class="stat-label">📏 Largest Object</div>
+     <div class="stat-value">${largest.estimated_diameter.meters.estimated_diameter_max.toFixed(0)} m</div>
+     <div class="stat-sub">${largest.name}</div>`;
+  document.getElementById('stat-fastest').innerHTML =
+    `<div class="stat-label">⚡ Fastest Flyby</div>
+     <div class="stat-value">${parseFloat(fastest.close_approach.relative_velocity.kilometers_per_second).toFixed(1)} km/s</div>
+     <div class="stat-sub">${fastest.name}</div>`;
+}
+
+function renderAsteroidGrid(neos) {
+  const sort    = document.getElementById('week-sort').value;
+  const hazOnly = document.getElementById('filter-hazardous').checked;
+  let list = hazOnly ? neos.filter(n => n.is_potentially_hazardous_asteroid) : [...neos];
+
+  if (sort === 'date')     list.sort((a, b) => a.close_approach.close_approach_date.localeCompare(b.close_approach.close_approach_date));
+  if (sort === 'distance') list.sort((a, b) => parseFloat(a.close_approach.miss_distance.lunar) - parseFloat(b.close_approach.miss_distance.lunar));
+  if (sort === 'size')     list.sort((a, b) => b.estimated_diameter.meters.estimated_diameter_max - a.estimated_diameter.meters.estimated_diameter_max);
+  if (sort === 'velocity') list.sort((a, b) => parseFloat(b.close_approach.relative_velocity.kilometers_per_second) - parseFloat(a.close_approach.relative_velocity.kilometers_per_second));
+
+  const grid = document.getElementById('asteroid-grid');
+  grid.innerHTML = list.map(buildAsteroidCard).join('');
+}
+
+function buildAsteroidCard(neo) {
+  const ca      = neo.close_approach;
+  const hazard  = neo.is_potentially_hazardous_asteroid;
+  const diamMin = neo.estimated_diameter.meters.estimated_diameter_min.toFixed(0);
+  const diamMax = neo.estimated_diameter.meters.estimated_diameter_max.toFixed(0);
+  const avgDiam = (neo.estimated_diameter.meters.estimated_diameter_min + neo.estimated_diameter.meters.estimated_diameter_max) / 2;
+  const vel     = parseFloat(ca.relative_velocity.kilometers_per_second).toFixed(2);
+  const distLD  = parseFloat(ca.miss_distance.lunar).toFixed(3);
+  const distKM  = parseFloat(ca.miss_distance.kilometers).toLocaleString(undefined, {maximumFractionDigits: 0});
+
+  return `
+    <article class="asteroid-card ${hazard ? 'hazardous' : 'safe'}" data-neo-id="${neo.id}">
+      <div class="card-header">
+        <a class="asteroid-name" href="${neo.nasa_jpl_url}" target="_blank">${neo.name}</a>
+        <span class="hazard-badge ${hazard ? 'hazardous' : 'safe'}">${hazard ? 'POTENTIALLY HAZARDOUS' : 'ROUTINE FLYBY'}</span>
+      </div>
+      <div class="card-date">${formatDate(ca.close_approach_date)}</div>
+      <div class="card-row"><span class="label">Miss Distance</span><span class="value">${distLD} LD / ${distKM} km</span></div>
+      <div class="card-row"><span class="label">Diameter</span><span class="value">${diamMin}–${diamMax} m</span></div>
+      <div class="card-row"><span class="label">Size ≈</span><span class="value comparison">${sizeLabel(avgDiam)}</span></div>
+      <div class="card-row"><span class="label">Velocity</span><span class="value">${vel} km/s</span></div>
+      <div class="card-row"><span class="label">Speed ≈</span><span class="value comparison">${speedLabel(parseFloat(vel))}</span></div>
+    </article>`;
+}
+```
+
+### Module 7 — Tab 3: Deep Archive
+```js
+async function initArchive() {
+  document.getElementById('archive-start').value = getToday();
+  document.getElementById('archive-end').value   = addDays(getToday(), 365);
+  await fetchNotableApproaches();
+  await fetchArchive();
+  document.getElementById('archive-search').addEventListener('click', fetchArchive);
+}
+
+async function fetchNotableApproaches() {
+  const url = `https://ssd-api.jpl.nasa.gov/cad.api?date-min=${getToday()}&date-max=${addDays(getToday(), 365)}&dist-max=1LD&diameter=true&sort=date`;
+  try {
+    const res  = await fetch(url);
+    const data = await res.json();
+    const strip = document.getElementById('notable-strip');
+    if (!data.data || data.data.length === 0) {
+      strip.innerHTML = '<p style="color:var(--text-secondary)">No close lunar-distance approaches in the next 365 days.</p>';
+      return;
+    }
+    const fields = data.fields;
+    strip.innerHTML = data.data.map(row => {
+      const obj = mapCadRow(fields, row);
+      return `<div class="highlight-card ${obj.pha ? 'hazardous' : ''}">
+        <div class="hc-name">${obj.name}</div>
+        <div class="hc-date">${formatDate(obj.date)}</div>
+        <div class="hc-dist">${obj.distLD.toFixed(3)} LD</div>
+        <span class="hazard-badge ${obj.pha ? 'hazardous' : 'safe'}">${obj.pha ? 'HAZARDOUS' : 'SAFE'}</span>
+      </div>`;
+    }).join('');
+  } catch (err) {
+    document.getElementById('notable-strip').innerHTML = `<p style="color:var(--danger)">${err.message}</p>`;
+  }
+}
+
+async function fetchArchive() {
+  const startDate = document.getElementById('archive-start').value;
+  const endDate   = document.getElementById('archive-end').value;
+  const dist      = document.getElementById('archive-dist').value;
+  const diam      = document.getElementById('archive-diameter').value;
+  const sortVal   = document.getElementById('archive-sort').value;
+
+  let url = `https://ssd-api.jpl.nasa.gov/cad.api?date-min=${startDate}&date-max=${endDate}&dist-max=${dist}LD&diameter=true`;
+  if (diam) url += `&diameter-min=${parseFloat(diam) / 1000}`; // API expects km
+
+  const tbody = document.getElementById('archive-tbody');
+  tbody.innerHTML = '<tr><td colspan="7"><div class="skeleton-card" style="height:40px"></div></td></tr>';
+
+  try {
+    const res  = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if (!data.data || data.data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="color:var(--text-secondary);text-align:center;padding:2rem">No results found.</td></tr>';
+      return;
+    }
+    const fields = data.fields;
+    let rows = data.data.map(row => mapCadRow(fields, row));
+    if (sortVal === 'dist') rows.sort((a, b) => a.distLD - b.distLD);
+    if (sortVal === 'size') rows.sort((a, b) => b.diamM - a.diamM);
+
+    tbody.innerHTML = rows.map((obj, i) => `
+      <tr class="${obj.pha ? 'hazardous-row' : ''}" data-idx="${i}">
+        <td><a href="https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=${encodeURIComponent(obj.name)}" target="_blank">${obj.name}</a></td>
+        <td>${formatDate(obj.date)}</td>
+        <td>${obj.distLD.toFixed(3)}</td>
+        <td>${obj.distKM.toLocaleString(undefined,{maximumFractionDigits:0})}</td>
+        <td>${obj.diamM > 0 ? obj.diamM.toFixed(0) : '—'}</td>
+        <td>${obj.vel.toFixed(2)}</td>
+        <td><span class="hazard-badge ${obj.pha ? 'hazardous' : 'safe'}">${obj.pha ? 'YES' : 'NO'}</span></td>
+      </tr>`).join('');
+
+    // Expandable rows
+    tbody.querySelectorAll('tr[data-idx]').forEach(tr => {
+      tr.addEventListener('click', () => {
+        const existing = tr.nextElementSibling;
+        if (existing && existing.classList.contains('archive-detail-row')) {
+          existing.remove(); return;
+        }
+        const obj = rows[parseInt(tr.dataset.idx)];
+        const detail = document.createElement('tr');
+        detail.classList.add('archive-detail-row');
+        detail.innerHTML = `<td colspan="7">
+          Size: ≈ ${sizeLabel(obj.diamM)} &nbsp;|&nbsp;
+          Speed: ${speedLabel(obj.vel)} &nbsp;|&nbsp;
+          <a href="https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=${encodeURIComponent(obj.name)}" target="_blank">View in JPL →</a>
+        </td>`;
+        tr.after(detail);
+      });
+    });
+  } catch (err) {
+    showError('archive-tbody', err.message, fetchArchive);
+  }
+}
+
+function mapCadRow(fields, row) {
+  const get  = key => row[fields.indexOf(key)] ?? null;
+  const dist = parseFloat(get('dist'));             // AU
+  const diam = parseFloat(get('diameter')) || 0;   // km
+  return {
+    name:   get('des'),
+    date:   (get('cd') || '').split(' ')[0],
+    distLD: dist * 149597870.7 / KM_PER_LD,
+    distKM: dist * 149597870.7,
+    diamM:  diam * 1000,
+    vel:    parseFloat(get('v_rel')) || 0,
+    pha:    get('pha') === 'Y',
+  };
+}
+```
+
+### Module 8 — Tab 4: Sentry Watch List
+```js
+async function initSentry() {
+  showSkeletons('sentry-grid', 6);
+  try {
+    const res  = await fetch('https://ssd-api.jpl.nasa.gov/sentry.api?removed=0');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
+    document.getElementById('sentry-summary-text').textContent =
+      `Sentry currently monitors ${data.summary.n_total} objects with non-zero impact probability. The vast majority are below background risk levels.`;
+
+    let objects = data.data;
+    const renderGrid = () => {
+      const sortVal   = document.getElementById('sentry-sort').value;
+      const torinoMin = document.getElementById('sentry-torino-filter').value;
+      let list = [...objects];
+      if (torinoMin !== 'all') list = list.filter(o => parseInt(o.ts_max) >= parseInt(torinoMin));
+      if (sortVal === 'ip')   list.sort((a, b) => parseFloat(b.ip) - parseFloat(a.ip));
+      if (sortVal === 'ps')   list.sort((a, b) => parseFloat(b.ps_max) - parseFloat(a.ps_max));
+      if (sortVal === 'size') list.sort((a, b) => parseFloat(b.diameter || 0) - parseFloat(a.diameter || 0));
+      if (sortVal === 'year') list.sort((a, b) => (a.range || '').localeCompare(b.range || ''));
+      document.getElementById('sentry-grid').innerHTML = list.map(buildSentryCard).join('');
+    };
+
+    document.getElementById('sentry-sort').addEventListener('change', renderGrid);
+    document.getElementById('sentry-torino-filter').addEventListener('change', renderGrid);
+    renderGrid();
+  } catch (err) {
+    showError('sentry-grid', err.message, initSentry);
+  }
+}
+
+function buildSentryCard(obj) {
+  const ts    = parseInt(obj.ts_max) || 0;
+  const ps    = parseFloat(obj.ps_max) || 0;
+  const diam  = parseFloat(obj.diameter) * 1000 || 0; // km → m
+  const color = torinoColor(ts);
+  const jplUrl = `https://cneos.jpl.nasa.gov/sentry/details.html#?des=${encodeURIComponent(obj.des)}`;
+
+  return `
+    <article class="asteroid-card ${ts >= 1 ? 'hazardous' : ''}">
+      <div class="card-header">
+        <a class="asteroid-name" href="${jplUrl}" target="_blank">${obj.des}</a>
+        <span style="color:${color};font-weight:700;font-size:0.8rem">Torino ${ts}</span>
+      </div>
+      <div class="card-row"><span class="label">Diameter</span><span class="value">${diam > 0 ? diam.toFixed(0) + ' m' : '—'}</span></div>
+      <div class="card-row"><span class="label">Size ≈</span><span class="value comparison">${diam > 0 ? sizeLabel(diam) : '—'}</span></div>
+      <div class="card-row"><span class="label">Impact Year(s)</span><span class="value">${obj.range || '—'}</span></div>
+      <div class="card-row"><span class="label">Impact Probability</span><span class="value">${formatImpactProb(obj.ip)}</span></div>
+      <div class="card-row"><span class="label">Palermo Scale</span><span class="value ${palermoClass(obj.ps_max)}">${ps.toFixed(2)}</span></div>
+      <div class="card-row"><span class="label">Velocity</span><span class="value">${parseFloat(obj.v_imp || 0).toFixed(1)} km/s</span></div>
+    </article>`;
+}
+```
+
+### Module 9 — Error Handling & Skeletons
+```js
+function showSkeletons(containerId, count = 6) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = Array(count).fill('<div class="skeleton-card"></div>').join('');
+}
+
+function showError(containerId, message, retryFn) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = `
+    <div class="error-card">
+      <p class="error-msg">⚠ ${message}</p>
+      <button class="retry-btn">Retry</button>
+    </div>`;
+  el.querySelector('.retry-btn').addEventListener('click', retryFn);
+}
+
+function showRateLimitError(containerId, retryFn) {
+  showError(containerId, 'NASA API rate limit reached. Please wait a moment and retry.', retryFn);
+}
+```
+
+### Module 10 — Init
+```js
+document.addEventListener('DOMContentLoaded', () => {
+  initStarfield();
+  initTabs();
+
+  // Activate first tab
+  document.querySelector('.tab-btn[data-tab="orbital"]').classList.add('active');
+  document.getElementById('tab-orbital').classList.add('active');
+
+  // Load orbital view immediately
+  loaded.orbital = true;
+  initOrbitalView();
+});
+```
