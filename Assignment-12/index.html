@@ -570,7 +570,7 @@
       const points = neoData.map(neo => ({
         lat:   (Math.random() - 0.5) * 160,
         lng:   (Math.random() - 0.5) * 360,
-        alt:   0,
+        alt:   0.01,
         color: neo.is_potentially_hazardous_asteroid ? '#ff6b35' : '#00d4ff',
         size:  neo.is_potentially_hazardous_asteroid ? 0.7 : 0.5,
         neo,
@@ -732,7 +732,7 @@
       const today = getToday();
       const url = `https://ssd-api.jpl.nasa.gov/cad.api?date-min=${today}&date-max=${addDays(today, 365)}&dist-max=1LD&diameter=true&sort=date`;
       try {
-        const res  = await fetch(url);
+        const res  = await jplFetch(url);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         const strip = document.getElementById('notable-strip');
@@ -769,7 +769,7 @@
       tbody.innerHTML = '<tr><td colspan="7"><div class="skeleton-card" style="height:40px"></div></td></tr>';
 
       try {
-        const res  = await fetch(url);
+        const res  = await jplFetch(url);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (!data.data || data.data.length === 0) {
@@ -836,7 +836,7 @@
     async function initSentry() {
       showSkeletons('sentry-grid', 6);
       try {
-        const res  = await fetch('https://ssd-api.jpl.nasa.gov/sentry.api?removed=0');
+        const res  = await jplFetch('https://ssd-api.jpl.nasa.gov/sentry.api?removed=0');
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
 
@@ -904,9 +904,14 @@
     // -----------------------------------------------------------------------
     // Module 9 — Error Handling & Skeletons
     // -----------------------------------------------------------------------
+    // ssd-api.jpl.nasa.gov doesn't send CORS headers, so route through a proxy
+    function jplFetch(url) {
+      return fetch('https://corsproxy.io/?' + encodeURIComponent(url));
+    }
+
     function fetchErrMsg(err) {
       return err.message.includes('Failed to fetch')
-        ? 'Network error — the JPL API may be blocking cross-origin requests in your browser. Try a hard refresh (Cmd+Shift+R).'
+        ? 'Network error — CORS proxy unreachable. Try a hard refresh (Cmd+Shift+R).'
         : err.message;
     }
 
