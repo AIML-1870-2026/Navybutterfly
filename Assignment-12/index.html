@@ -841,7 +841,7 @@
         const data = await res.json();
 
         document.getElementById('sentry-summary-text').textContent =
-          `Sentry currently monitors ${data.summary.n_total} objects with non-zero impact probability. The vast majority are below background risk levels.`;
+          `Sentry currently monitors ${data.count} objects with non-zero impact probability. The vast majority are below background risk levels.`;
 
         // Build Torino key
         const torinoKey = document.getElementById('torino-key');
@@ -897,7 +897,7 @@
           <div class="card-row"><span class="label">Impact Year(s)</span><span class="value">${obj.range || '—'}</span></div>
           <div class="card-row"><span class="label">Impact Probability</span><span class="value">${formatImpactProb(obj.ip)}</span></div>
           <div class="card-row"><span class="label">Palermo Scale</span><span class="value ${palermoClass(obj.ps_max)}">${ps.toFixed(2)}</span></div>
-          <div class="card-row"><span class="label">Velocity</span><span class="value">${parseFloat(obj.v_imp || 0).toFixed(1)} km/s</span></div>
+          <div class="card-row"><span class="label">Velocity</span><span class="value">${parseFloat(obj.v_inf || 0).toFixed(1)} km/s</span></div>
         </article>`;
     }
 
@@ -931,9 +931,9 @@
 
       activateTab('orbital');
 
-      // Load orbital view immediately — defer one frame so the section is painted
+      // Load orbital view immediately — defer so the section has painted and has real dimensions
       loaded.orbital = true;
-      requestAnimationFrame(() => initOrbitalView());
+      setTimeout(initOrbitalView, 100);
     });
   </script>
 </body>
