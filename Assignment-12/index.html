@@ -585,18 +585,24 @@
       // Moon reference point
       points.push({ lat: 23, lng: 45, alt: ldToAltitude(1), color: '#ffffff', size: 0.8, isMoon: true });
 
-      const globe = Globe()(document.getElementById('globe-container'))
-        .globeImageUrl('https://unpkg.com/globe.gl/example/img/earth-blue-marble.jpg')
-        .backgroundColor('#0a0e1a')
-        .pointsData(points)
-        .pointColor('color')
-        .pointAltitude('alt')
-        .pointRadius('size')
-        .pointLabel(d => d.isMoon ? 'MOON — 1 LD' : d.neo.name)
-        .onPointClick(point => {
-          if (point.isMoon) return;
-          showAsteroidDetailCard(point.neo);
-        });
+      let globe;
+      try {
+        globe = Globe()(document.getElementById('globe-container'))
+          .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
+          .backgroundColor('#0a0e1a')
+          .pointsData(points)
+          .pointColor('color')
+          .pointAltitude('alt')
+          .pointRadius('size')
+          .pointLabel(d => d.isMoon ? 'MOON — 1 LD' : d.neo.name)
+          .onPointClick(point => {
+            if (point.isMoon) return;
+            showAsteroidDetailCard(point.neo);
+          });
+      } catch(e) {
+        document.getElementById('globe-overlay').textContent = 'Globe error: ' + e.message;
+        document.getElementById('globe-overlay').style.display = '';
+      }
 
       const start = getToday();
       document.getElementById('legend-date-range').textContent = `${formatDate(start)} — ${formatDate(addDays(start, 7))}`;
