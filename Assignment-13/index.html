@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Drug Safety Explorer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" role="navigation" aria-label="Main navigation">
+    <div class="sidebar-header">
+      <div class="app-name">Drug Safety<br>Explorer</div>
+      <div class="app-tagline">Powered by OpenFDA</div>
+    </div>
+    <div class="sidebar-divider"></div>
+    <nav class="sidebar-nav">
+      <button class="nav-item active" data-mode="lookup" title="Drug Lookup">
+        <span class="nav-icon" aria-hidden="true">🔍</span>
+        <span class="nav-label">Drug Lookup</span>
+      </button>
+      <button class="nav-item" data-mode="compare" title="Compare Drugs">
+        <span class="nav-icon" aria-hidden="true">⚖️</span>
+        <span class="nav-label">Compare Drugs</span>
+      </button>
+      <button class="nav-item" data-mode="classes" title="Drug Classes">
+        <span class="nav-icon" aria-hidden="true">🧬</span>
+        <span class="nav-label">Drug Classes</span>
+      </button>
+      <button class="nav-item" data-mode="timeline" title="Recall Timeline">
+        <span class="nav-icon" aria-hidden="true">📋</span>
+        <span class="nav-label">Recall Timeline</span>
+      </button>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="sidebar-divider"></div>
+      <button class="about-link" id="btn-about" aria-label="About this tool">ⓘ About This Tool</button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="content-inner">
+
+      <!-- Mode 1: Drug Lookup -->
+      <section id="mode-lookup" class="mode-section active" aria-label="Drug Lookup">
+        <div class="mode-header">
+          <h1 class="mode-title">Drug Lookup</h1>
+          <p class="mode-desc">Deep dive into a single drug — adverse events, label warnings, and recall history in one place.</p>
+        </div>
+        <div class="search-bar">
+          <input type="text" id="lookup-input" class="search-input"
+            placeholder="e.g. ibuprofen, warfarin, metformin"
+            value="warfarin"
+            aria-label="Enter drug name to search">
+          <button id="lookup-btn" class="btn-primary">Search</button>
+        </div>
+        <div id="lookup-results"></div>
+      </section>
+
+      <!-- Mode 2: Compare Drugs -->
+      <section id="mode-compare" class="mode-section" aria-label="Compare Drugs">
+        <div class="mode-header">
+          <h1 class="mode-title">Compare Drugs</h1>
+          <p class="mode-desc">Side-by-side safety comparison of two drugs across warnings, adverse events, and recalls.</p>
+        </div>
+        <div class="compare-inputs">
+          <div class="compare-input-group">
+            <label for="compare-a" class="compare-label">Drug A</label>
+            <input type="text" id="compare-a" class="search-input" placeholder="Drug A" value="warfarin" aria-label="Drug A name">
+          </div>
+          <span class="compare-vs">vs</span>
+          <div class="compare-input-group">
+            <label for="compare-b" class="compare-label">Drug B</label>
+            <input type="text" id="compare-b" class="search-input" placeholder="Drug B" value="ibuprofen" aria-label="Drug B name">
+          </div>
+          <button id="compare-btn" class="btn-primary">Compare</button>
+        </div>
+        <div class="tab-bar" role="tablist">
+          <button class="tab active" data-tab="warnings" role="tab" aria-selected="true">Warnings</button>
+          <button class="tab" data-tab="events" role="tab" aria-selected="false">Adverse Events</button>
+          <button class="tab" data-tab="recalls" role="tab" aria-selected="false">Recalls</button>
+        </div>
+        <div id="compare-results"></div>
+      </section>
+
+      <!-- Mode 3: Drug Classes -->
+      <section id="mode-classes" class="mode-section" aria-label="Drug Classes">
+        <div class="mode-header">
+          <h1 class="mode-title">Drug Classes</h1>
+          <p class="mode-desc">Explore and compare safety profiles of related medications within a therapeutic class.</p>
+        </div>
+        <div id="class-pills" class="class-pills" role="group" aria-label="Select a drug class"></div>
+        <div id="classes-results"></div>
+      </section>
+
+      <!-- Mode 4: Recall Timeline -->
+      <section id="mode-timeline" class="mode-section" aria-label="Recall Timeline">
+        <div class="mode-header">
+          <h1 class="mode-title">Recall Timeline</h1>
+          <p class="mode-desc">Chronological view of drug recalls — search by name or browse recent activity.</p>
+        </div>
+        <div class="search-bar">
+          <input type="text" id="timeline-input" class="search-input"
+            placeholder="Search recalls by drug name..."
+            aria-label="Search recalls by drug name">
+          <button id="timeline-btn" class="btn-primary">Search</button>
+        </div>
+        <div id="timeline-results"></div>
+      </section>
+
+    </div>
+
+    <footer class="site-footer">
+      <p>This product uses publicly available data from the U.S. Food and Drug Administration (FDA). FDA is not responsible for the product and does not endorse or recommend this or any other product. For educational purposes only. Not a substitute for professional medical advice.</p>
+    </footer>
+  </main>
+
+  <!-- Help Modal -->
+  <div id="modal-backdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-card">
+      <button class="modal-close" id="modal-close" aria-label="Close modal">×</button>
+      <div class="modal-header-content">
+        <span class="modal-icon" id="modal-icon" aria-hidden="true"></span>
+        <h2 class="modal-title" id="modal-title"></h2>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
