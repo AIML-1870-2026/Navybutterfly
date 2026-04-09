@@ -567,6 +567,33 @@ details[open] .collapsible-summary::after {
   align-items: center;
 }
 
+/* Quick-fill class key link button */
+.btn-class-key {
+  display: inline-block;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--accent-2);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color var(--transition), opacity var(--transition);
+  margin-top: 2px;
+}
+
+.btn-class-key:hover {
+  color: #5a7d68;
+  opacity: 0.85;
+}
+
+.btn-class-key:focus-visible {
+  outline: 2px solid var(--accent-2);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
 .memory-badge {
   display: inline-flex;
   align-items: center;

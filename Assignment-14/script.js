@@ -6,6 +6,12 @@
 
 'use strict';
 
+/* ---- Class keys (quick-fill, in memory only) ---- */
+const CLASS_KEYS = {
+  openai:    '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',
+  anthropic: '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',
+};
+
 /* ---- In-memory state ---- */
 const state = {
   provider: 'openai',        // 'openai' | 'anthropic'
@@ -149,6 +155,9 @@ const dom = {
   btnClearKeyB:      $('btn-clear-key-b'),
   keyFileA:          $('key-file-a'),
   keyFileB:          $('key-file-b'),
+  btnClassKeyAOpenAI:  $('btn-class-key-a-openai'),
+  btnClassKeyAAnthropic: $('btn-class-key-a-anthropic'),
+  btnClassKeyB:      $('btn-class-key-b'),
   keyErrorA:         $('key-error-a'),
   keyErrorB:         $('key-error-b'),
   compareKeyToggle:  $('compare-key-toggle'),
@@ -273,12 +282,16 @@ function setProvider(provider) {
     dom.modelSelect.value = 'gpt-4o';
     state.model = 'gpt-4o';
     dom.anthropicInfo.classList.add('hidden');
+    dom.btnClassKeyAOpenAI.classList.remove('hidden');
+    dom.btnClassKeyAAnthropic.classList.add('hidden');
   } else {
     openaiGroup.setAttribute('disabled', '');
     anthropicGroup.removeAttribute('disabled');
     dom.modelSelect.value = 'claude-sonnet-4-6';
     state.model = 'claude-sonnet-4-6';
     dom.anthropicInfo.classList.remove('hidden');
+    dom.btnClassKeyAOpenAI.classList.add('hidden');
+    dom.btnClassKeyAAnthropic.classList.remove('hidden');
   }
   updateSendButton();
 }
@@ -302,6 +315,11 @@ function attachKeyListeners() {
   // File upload
   dom.keyFileA.addEventListener('change', e => handleKeyFile(e, 'a'));
   dom.keyFileB.addEventListener('change', e => handleKeyFile(e, 'b'));
+
+  // Class key quick-fill
+  dom.btnClassKeyAOpenAI.addEventListener('click', () => fillClassKey('a', 'openai'));
+  dom.btnClassKeyAAnthropic.addEventListener('click', () => fillClassKey('a', 'anthropic'));
+  dom.btnClassKeyB.addEventListener('click', () => fillClassKey('b', 'openai'));
 
   // Key tab switching (compare mode)
   document.querySelectorAll('[data-key-tab]').forEach(btn => {
@@ -380,6 +398,21 @@ function handleKeyFile(event, slot) {
   reader.readAsText(file);
   // Reset file input so the same file can be re-uploaded
   event.target.value = '';
+}
+
+function fillClassKey(slot, provider) {
+  const key = CLASS_KEYS[provider];
+  if (!key) return;
+  if (slot === 'a') {
+    state.apiKeyA = key;
+    dom.apiKeyA.value = key;
+  } else {
+    state.apiKeyB = key;
+    dom.apiKeyB.value = key;
+  }
+  maskKey(slot, key);
+  clearFieldError(slot === 'a' ? dom.keyErrorA : dom.keyErrorB);
+  updateSendButton();
 }
 
 function parseKeyFromFile(text, filename) {

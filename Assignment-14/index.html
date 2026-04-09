@@ -132,6 +132,8 @@
             <label for="key-file-a" class="btn btn-ghost btn-sm">Upload .env / .csv</label>
             <input type="file" id="key-file-a" accept=".env,.csv,.txt" class="visually-hidden" aria-label="Upload API key file for key A" />
           </div>
+          <button id="btn-class-key-a-openai" class="btn-class-key" type="button">Use class key</button>
+          <button id="btn-class-key-a-anthropic" class="btn-class-key hidden" type="button">Use class key</button>
           <p id="key-error-a" class="field-error hidden" role="alert">API key is required to send prompts.</p>
         </div>
 
@@ -159,6 +161,7 @@
             <label for="key-file-b" class="btn btn-ghost btn-sm">Upload .env / .csv</label>
             <input type="file" id="key-file-b" accept=".env,.csv,.txt" class="visually-hidden" aria-label="Upload API key file for key B" />
           </div>
+          <button id="btn-class-key-b" class="btn-class-key" type="button">Use class key</button>
           <p id="key-error-b" class="field-error hidden" role="alert">API key B is required for comparison mode.</p>
         </div>
 
