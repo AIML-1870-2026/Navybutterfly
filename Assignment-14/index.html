@@ -110,19 +110,25 @@
 
         <!-- Key A input -->
         <div class="key-input-group" id="key-section-a">
-          <div class="key-input-row">
-            <input
-              type="password"
-              id="api-key-a"
-              class="input"
-              placeholder="sk-..."
-              autocomplete="off"
-              spellcheck="false"
-              aria-label="OpenAI API key A"
-            />
-            <button class="btn-icon" id="btn-show-key-a" aria-label="Show or hide API key A">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            </button>
+          <div class="key-autocomplete-wrapper">
+            <div class="key-input-row">
+              <input
+                type="password"
+                id="api-key-a"
+                class="input"
+                placeholder="sk-..."
+                autocomplete="off"
+                spellcheck="false"
+                aria-label="OpenAI API key A"
+                aria-autocomplete="list"
+                aria-controls="key-suggestions-a"
+                aria-expanded="false"
+              />
+              <button class="btn-icon" id="btn-show-key-a" aria-label="Show or hide API key A">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+            <ul class="key-suggestions hidden" id="key-suggestions-a" role="listbox" aria-label="Preset API keys"></ul>
           </div>
           <div id="key-masked-a" class="key-masked hidden">
             <span id="key-masked-text-a" class="key-masked-text"></span>
@@ -132,26 +138,30 @@
             <label for="key-file-a" class="btn btn-ghost btn-sm">Upload .env / .csv</label>
             <input type="file" id="key-file-a" accept=".env,.csv,.txt" class="visually-hidden" aria-label="Upload API key file for key A" />
           </div>
-          <button id="btn-class-key-a-openai" class="btn-class-key" type="button">Use class key</button>
-          <button id="btn-class-key-a-anthropic" class="btn-class-key hidden" type="button">Use class key</button>
           <p id="key-error-a" class="field-error hidden" role="alert">API key is required to send prompts.</p>
         </div>
 
         <!-- Key B input (comparison mode only) -->
         <div class="key-input-group hidden" id="key-section-b">
-          <div class="key-input-row">
-            <input
-              type="password"
-              id="api-key-b"
-              class="input"
-              placeholder="sk-... (for Model B)"
-              autocomplete="off"
-              spellcheck="false"
-              aria-label="OpenAI API key B"
-            />
-            <button class="btn-icon" id="btn-show-key-b" aria-label="Show or hide API key B">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            </button>
+          <div class="key-autocomplete-wrapper">
+            <div class="key-input-row">
+              <input
+                type="password"
+                id="api-key-b"
+                class="input"
+                placeholder="sk-... (for Model B)"
+                autocomplete="off"
+                spellcheck="false"
+                aria-label="OpenAI API key B"
+                aria-autocomplete="list"
+                aria-controls="key-suggestions-b"
+                aria-expanded="false"
+              />
+              <button class="btn-icon" id="btn-show-key-b" aria-label="Show or hide API key B">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+            <ul class="key-suggestions hidden" id="key-suggestions-b" role="listbox" aria-label="Preset API keys"></ul>
           </div>
           <div id="key-masked-b" class="key-masked hidden">
             <span id="key-masked-text-b" class="key-masked-text"></span>
@@ -161,7 +171,6 @@
             <label for="key-file-b" class="btn btn-ghost btn-sm">Upload .env / .csv</label>
             <input type="file" id="key-file-b" accept=".env,.csv,.txt" class="visually-hidden" aria-label="Upload API key file for key B" />
           </div>
-          <button id="btn-class-key-b" class="btn-class-key" type="button">Use class key</button>
           <p id="key-error-b" class="field-error hidden" role="alert">API key B is required for comparison mode.</p>
         </div>
 
@@ -383,6 +392,12 @@
 
   <!-- Library backdrop -->
   <div id="library-backdrop" class="library-backdrop hidden" aria-hidden="true"></div>
+
+  <!-- Preset keys loaded by script.js at runtime — not secrets, class-shared keys -->
+  <div id="key-presets" hidden
+    data-openai="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"
+    data-anthropic="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"
+  ></div>
 
   <script src="script.js"></script>
 </body>

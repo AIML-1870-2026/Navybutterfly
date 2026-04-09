@@ -6,11 +6,8 @@
 
 'use strict';
 
-/* ---- Class keys (quick-fill, in memory only) ---- */
-const CLASS_KEYS = {
-  openai:    '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',
-  anthropic: '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',
-};
+/* ---- Preset keys — read from DOM at runtime (keys live in index.html) ---- */
+let CLASS_KEYS = { openai: '', anthropic: '' };
 
 /* ---- In-memory state ---- */
 const state = {
@@ -155,9 +152,8 @@ const dom = {
   btnClearKeyB:      $('btn-clear-key-b'),
   keyFileA:          $('key-file-a'),
   keyFileB:          $('key-file-b'),
-  btnClassKeyAOpenAI:  $('btn-class-key-a-openai'),
-  btnClassKeyAAnthropic: $('btn-class-key-a-anthropic'),
-  btnClassKeyB:      $('btn-class-key-b'),
+  keySuggestionsA:   $('key-suggestions-a'),
+  keySuggestionsB:   $('key-suggestions-b'),
   keyErrorA:         $('key-error-a'),
   keyErrorB:         $('key-error-b'),
   compareKeyToggle:  $('compare-key-toggle'),
@@ -238,6 +234,13 @@ const dom = {
    INIT
    ============================================================ */
 function init() {
+  // Read preset keys from HTML data attributes (keys never live in script.js)
+  const presetEl = document.getElementById('key-presets');
+  if (presetEl) {
+    CLASS_KEYS.openai    = presetEl.dataset.openai    || '';
+    CLASS_KEYS.anthropic = presetEl.dataset.anthropic || '';
+  }
+
   attachProviderListeners();
   attachKeyListeners();
   attachModeListeners();
@@ -282,16 +285,12 @@ function setProvider(provider) {
     dom.modelSelect.value = 'gpt-4o';
     state.model = 'gpt-4o';
     dom.anthropicInfo.classList.add('hidden');
-    dom.btnClassKeyAOpenAI.classList.remove('hidden');
-    dom.btnClassKeyAAnthropic.classList.add('hidden');
   } else {
     openaiGroup.setAttribute('disabled', '');
     anthropicGroup.removeAttribute('disabled');
     dom.modelSelect.value = 'claude-sonnet-4-6';
     state.model = 'claude-sonnet-4-6';
     dom.anthropicInfo.classList.remove('hidden');
-    dom.btnClassKeyAOpenAI.classList.add('hidden');
-    dom.btnClassKeyAAnthropic.classList.remove('hidden');
   }
   updateSendButton();
 }
@@ -316,10 +315,9 @@ function attachKeyListeners() {
   dom.keyFileA.addEventListener('change', e => handleKeyFile(e, 'a'));
   dom.keyFileB.addEventListener('change', e => handleKeyFile(e, 'b'));
 
-  // Class key quick-fill
-  dom.btnClassKeyAOpenAI.addEventListener('click', () => fillClassKey('a', 'openai'));
-  dom.btnClassKeyAAnthropic.addEventListener('click', () => fillClassKey('a', 'anthropic'));
-  dom.btnClassKeyB.addEventListener('click', () => fillClassKey('b', 'openai'));
+  // Autocomplete dropdowns
+  attachKeyDropdown(dom.apiKeyA, dom.keySuggestionsA, 'a');
+  attachKeyDropdown(dom.apiKeyB, dom.keySuggestionsB, 'b');
 
   // Key tab switching (compare mode)
   document.querySelectorAll('[data-key-tab]').forEach(btn => {
@@ -400,18 +398,82 @@ function handleKeyFile(event, slot) {
   event.target.value = '';
 }
 
-function fillClassKey(slot, provider) {
-  const key = CLASS_KEYS[provider];
+/* ============================================================
+   KEY AUTOCOMPLETE DROPDOWN
+   ============================================================ */
+function attachKeyDropdown(inputEl, listEl, slot) {
+  const presets = [
+    { label: 'OpenAI Class Key',    provider: 'openai' },
+    { label: 'Anthropic Class Key', provider: 'anthropic' },
+  ];
+
+  // Build list items once
+  presets.forEach(({ label, provider }) => {
+    const key = CLASS_KEYS[provider] || '';
+    const preview = key ? key.slice(0, 10) + '...' : '(not set)';
+
+    const li = document.createElement('li');
+    li.setAttribute('role', 'option');
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'key-suggestion-item';
+    btn.innerHTML =
+      `<span class="key-suggestion-icon" aria-hidden="true">🔑</span>` +
+      `<span class="key-suggestion-label">${escapeHtml(label)}</span>` +
+      `<span class="key-suggestion-preview">${escapeHtml(preview)}</span>`;
+
+    btn.addEventListener('mousedown', e => {
+      // mousedown fires before blur — prevent input from losing focus/hiding before click
+      e.preventDefault();
+      applyPresetKey(slot, key);
+      hideDropdown(inputEl, listEl);
+    });
+
+    li.appendChild(btn);
+    listEl.appendChild(li);
+  });
+
+  // Show on focus
+  inputEl.addEventListener('focus', () => {
+    if (CLASS_KEYS.openai || CLASS_KEYS.anthropic) {
+      showDropdown(inputEl, listEl);
+    }
+  });
+
+  // Hide on blur (blur fires after mousedown's e.preventDefault, so dropdown click still works)
+  inputEl.addEventListener('blur', () => {
+    hideDropdown(inputEl, listEl);
+  });
+
+  // Hide when user starts typing
+  inputEl.addEventListener('input', () => {
+    hideDropdown(inputEl, listEl);
+  });
+}
+
+function showDropdown(inputEl, listEl) {
+  listEl.classList.remove('hidden');
+  inputEl.setAttribute('aria-expanded', 'true');
+}
+
+function hideDropdown(inputEl, listEl) {
+  listEl.classList.add('hidden');
+  inputEl.setAttribute('aria-expanded', 'false');
+}
+
+function applyPresetKey(slot, key) {
   if (!key) return;
   if (slot === 'a') {
     state.apiKeyA = key;
     dom.apiKeyA.value = key;
+    clearFieldError(dom.keyErrorA);
   } else {
     state.apiKeyB = key;
     dom.apiKeyB.value = key;
+    clearFieldError(dom.keyErrorB);
   }
   maskKey(slot, key);
-  clearFieldError(slot === 'a' ? dom.keyErrorA : dom.keyErrorB);
   updateSendButton();
 }
 
