@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Product Review Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ============================================================
+       Design Tokens
+       ============================================================ */
+    :root {
+      --bg:           #faf8f5;
+      --surface:      #ffffff;
+      --surface-2:    #f5f0eb;
+      --border:       #e8e0d6;
+      --accent:       #c1714a;
+      --accent-2:     #7a9e87;
+      --accent-soft:  #f0e6de;
+      --text:         #2d2420;
+      --text-2:       #7a6b62;
+      --text-3:       #b5a89e;
+      --error:        #c0392b;
+      --error-bg:     #fdf0ee;
+      --error-border: #e8b5af;
+      --radius:       14px;
+      --radius-sm:    8px;
+      --radius-pill:  999px;
+      --shadow:       0 2px 12px rgba(45, 36, 32, 0.08);
+      --transition:   200ms ease;
+
+      --font-display: 'Fraunces', Georgia, serif;
+      --font-body:    'DM Sans', system-ui, sans-serif;
+    }
+
+    /* ============================================================
+       Reset & Base
+       ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .hidden { display: none !important; }
+
+    .visually-hidden {
+      position: absolute; width: 1px; height: 1px; padding: 0;
+      margin: -1px; overflow: hidden; clip: rect(0,0,0,0);
+      white-space: nowrap; border: 0;
+    }
+
+    /* ============================================================
+       Header
+       ============================================================ */
+    .site-header {
+      background: linear-gradient(135deg, #faf8f5 0%, #f0e6de 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 24px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 1px 8px rgba(45, 36, 32, 0.06);
+    }
+
+    .header-inner {
+      max-width: 1280px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .site-title {
+      font-family: var(--font-display);
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+    }
+
+    .site-subtitle {
+      font-size: 0.875rem;
+      color: var(--text-2);
+      margin-top: 2px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 12px;
+      border-radius: var(--radius-pill);
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    .badge-sage {
+      background: #e8f2ec;
+      color: var(--accent-2);
+      border: 1px solid #c3dece;
+    }
+
+    /* ============================================================
+       Main Layout
+       ============================================================ */
+    .main-layout {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 24px;
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    @media (max-width: 768px) {
+      .main-layout {
+        grid-template-columns: 1fr;
+        padding: 16px;
+      }
+    }
+
+    /* ============================================================
+       Cards
+       ============================================================ */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 16px;
+    }
+
+    /* ============================================================
+       Form Elements
+       ============================================================ */
+    .field-group { margin-bottom: 14px; }
+    .field-group:last-child { margin-bottom: 0; }
+
+    .field-label {
+      display: block;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-2);
+      margin-bottom: 6px;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-body);
+      font-size: 0.9375rem;
+      color: var(--text);
+      background: var(--surface);
+      transition: border-color var(--transition);
+      outline: none;
+    }
+
+    .input:focus { border-color: var(--accent); }
+    .input::placeholder { color: var(--text-3); }
+
+    .field-error {
+      font-size: 0.8125rem;
+      color: var(--error);
+      margin-top: 5px;
+    }
+
+    /* ============================================================
+       Sliders
+       ============================================================ */
+    .slider-wrapper { margin-bottom: 6px; }
+
+    .slider-ends {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--text-3);
+      margin-bottom: 4px;
+    }
+
+    .slider-label-display {
+      text-align: center;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--accent);
+      margin-top: 4px;
+      min-height: 1.25em;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: var(--border);
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      box-shadow: 0 1px 4px rgba(193, 113, 74, 0.4);
+      transition: transform var(--transition);
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      border: none;
+    }
+
+    /* ============================================================
+       Aspect Pills
+       ============================================================ */
+    .aspect-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .pill-btn {
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      font-family: var(--font-body);
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-2);
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .pill-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .pill-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .aspect-sentiment {
+      background: var(--surface-2);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      border: 1px solid var(--border);
+    }
+
+    .aspect-sentiment-label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-2);
+      margin-bottom: 8px;
+    }
+
+    /* ============================================================
+       Buttons
+       ============================================================ */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 18px;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-body);
+      font-size: 0.9375rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1.5px solid transparent;
+      transition: all var(--transition);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: #a85e38;
+      border-color: #a85e38;
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-2);
+      border-color: var(--border);
+    }
+
+    .btn-ghost:hover {
+      background: var(--surface-2);
+      color: var(--text);
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 0.8125rem;
+    }
+
+    .btn-full {
+      width: 100%;
+    }
+
+    .btn-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px;
+      border: none;
+      background: transparent;
+      color: var(--text-2);
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      transition: all var(--transition);
+      font-size: 1rem;
+      line-height: 1;
+    }
+
+    .btn-icon:hover { background: var(--surface-2); color: var(--text); }
+
+    /* ============================================================
+       API Key Card
+       ============================================================ */
+    .key-input-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .key-input-row .input { flex: 1; }
+
+    .key-upload-row {
+      margin-top: 8px;
+    }
+
+    .memory-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 10px;
+      font-size: 0.75rem;
+      color: var(--text-3);
+      font-weight: 500;
+    }
+
+    /* ============================================================
+       Spinner
+       ============================================================ */
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ============================================================
+       Output Area
+       ============================================================ */
+    .output-area {
+      position: sticky;
+      top: 88px;
+    }
+
+    .error-banner {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px 16px;
+      background: var(--error-bg);
+      border: 1px solid var(--error-border);
+      border-radius: var(--radius-sm);
+      color: var(--error);
+      font-size: 0.9rem;
+      margin-bottom: 16px;
+    }
+
+    .error-banner-text { flex: 1; }
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 24px;
+      text-align: center;
+      color: var(--text-3);
+    }
+
+    .empty-icon {
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    .empty-state p { font-size: 1rem; color: var(--text-2); }
+    .empty-hint { font-size: 0.875rem; color: var(--text-3); margin-top: 6px; }
+
+    .response-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .response-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface-2);
+    }
+
+    .response-model-label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-2);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .response-content {
+      padding: 20px;
+      font-size: 0.9375rem;
+      line-height: 1.75;
+      color: var(--text);
+      white-space: pre-wrap;
+    }
+
+    .metrics-bar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 10px 16px;
+      border-top: 1px solid var(--border);
+      background: var(--surface-2);
+    }
+
+    .metric-pill {
+      font-size: 0.8125rem;
+      color: var(--text-2);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+      padding: 3px 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Page Header -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div>
+        <h1 class="site-title">Product Review Generator</h1>
+        <p class="site-subtitle">AI-generated product reviews for educational purposes only</p>
+      </div>
+      <span class="badge badge-sage">Educational Use Only</span>
+    </div>
+  </header>
+
+  <!-- Main Layout -->
+  <main class="main-layout">
+
+    <!-- ===== LEFT COLUMN: Controls ===== -->
+    <aside>
+
+      <!-- 1. Product Info Card -->
+      <section class="card">
+        <h2 class="card-title">Product Info</h2>
+
+        <div class="field-group">
+          <label for="product-name" class="field-label">Product Name <span style="color:var(--error)">*</span></label>
+          <input type="text" id="product-name" class="input" placeholder="e.g. Sony WH-1000XM5" autocomplete="off" />
+          <p id="product-name-error" class="field-error hidden" role="alert">Product name is required.</p>
+        </div>
+
+        <div class="field-group">
+          <label for="product-category" class="field-label">Product Category <span style="color:var(--text-3);font-weight:400;text-transform:none">(optional)</span></label>
+          <input type="text" id="product-category" class="input" placeholder="e.g. Headphones" autocomplete="off" />
+        </div>
+      </section>
+
+      <!-- 2. Review Options Card -->
+      <section class="card">
+        <h2 class="card-title">Review Options</h2>
+
+        <!-- Tone Slider -->
+        <div class="field-group">
+          <label class="field-label">Tone</label>
+          <div class="slider-wrapper">
+            <div class="slider-ends"><span>Harsh</span><span>Glowing</span></div>
+            <input type="range" id="tone-slider" min="0" max="100" value="50" aria-label="Review tone" />
+            <div class="slider-label-display" id="tone-label">Balanced</div>
+          </div>
+        </div>
+
+        <!-- Length Slider -->
+        <div class="field-group">
+          <label class="field-label">Length</label>
+          <div class="slider-wrapper">
+            <div class="slider-ends"><span>Brief</span><span>Detailed</span></div>
+            <input type="range" id="length-slider" min="0" max="100" value="50" aria-label="Review length" />
+            <div class="slider-label-display" id="length-label">Medium (~250 words)</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. Aspects Card -->
+      <section class="card">
+        <h2 class="card-title">Aspects <span style="font-size:0.75rem;font-weight:400;color:var(--text-3)">(toggle to include)</span></h2>
+
+        <div class="aspect-pills" id="aspect-pills">
+          <button class="pill-btn" data-aspect="price">Price</button>
+          <button class="pill-btn" data-aspect="features">Features</button>
+          <button class="pill-btn" data-aspect="usability">Usability</button>
+          <button class="pill-btn" data-aspect="design">Design</button>
+          <button class="pill-btn" data-aspect="value">Value</button>
+        </div>
+
+        <!-- Sentiment sliders — revealed per toggled aspect -->
+        <div id="aspect-sentiments"></div>
+      </section>
+
+      <!-- 4. API Key Card -->
+      <section class="card">
+        <h2 class="card-title">API Key</h2>
+
+        <div class="key-input-row">
+          <input
+            type="password"
+            id="api-key"
+            class="input"
+            placeholder="sk-..."
+            autocomplete="off"
+            spellcheck="false"
+            aria-label="OpenAI API key"
+          />
+          <button class="btn-icon" id="btn-show-key" aria-label="Show or hide API key">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+
+        <div class="key-upload-row">
+          <label for="key-file" class="btn btn-ghost btn-sm">Upload .env / .csv</label>
+          <input type="file" id="key-file" accept=".env,.csv,.txt" class="visually-hidden" aria-label="Upload API key file" />
+        </div>
+
+        <p id="key-error" class="field-error hidden" role="alert">API key is required.</p>
+
+        <div class="memory-badge" aria-label="Key is stored in memory only and never saved">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Memory only — never saved
+        </div>
+      </section>
+
+      <!-- 5. Generate Button -->
+      <button id="btn-generate" class="btn btn-primary btn-full">
+        <span id="btn-generate-text">Generate Review</span>
+        <span id="btn-generate-spinner" class="spinner hidden" aria-hidden="true"></span>
+      </button>
+
+    </aside>
+
+    <!-- ===== RIGHT COLUMN: Output ===== -->
+    <section class="output-area" aria-live="polite">
+
+      <!-- Error banner -->
+      <div id="error-banner" class="error-banner hidden" role="alert">
+        <span class="error-banner-text" id="error-banner-text"></span>
+        <button class="btn-icon" id="btn-dismiss-error" aria-label="Dismiss error" style="flex-shrink:0">×</button>
+      </div>
+
+      <!-- Empty state -->
+      <div class="empty-state" id="empty-state">
+        <svg class="empty-icon" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <p>Your review will appear here.</p>
+        <p class="empty-hint">Fill in the product details and click Generate Review.</p>
+      </div>
+
+      <!-- Response panel -->
+      <article class="response-panel hidden" id="response-panel">
+        <header class="response-header">
+          <span id="response-model-label" class="response-model-label"></span>
+          <button id="btn-copy-response" class="btn btn-ghost btn-sm" aria-label="Copy review to clipboard">Copy</button>
+        </header>
+        <div id="response-content" class="response-content"></div>
+        <div class="metrics-bar" id="metrics-bar">
+          <span class="metric-pill" id="metric-time">⏱ —</span>
+          <span class="metric-pill" id="metric-tokens">🔢 —</span>
+          <span class="metric-pill" id="metric-chars">📝 —</span>
+        </div>
+      </article>
+
+    </section>
+  </main>
+
+  <!-- Preset key slot — leave data-openai empty; fill with class key if provided -->
+  <div id="key-presets" hidden data-openai=""></div>
+
+  <script>
+    'use strict';
+
+    /* ---- In-memory state (never persisted) ---- */
+    let apiKey = '';
+
+    /* ---- Aspect configuration ---- */
+    const ASPECTS = ['price', 'features', 'usability', 'design', 'value'];
+    const aspectState = {}; // { aspect: { active: bool, sentiment: 0-100 } }
+    ASPECTS.forEach(a => { aspectState[a] = { active: false, sentiment: 50 }; });
+
+    /* ---- DOM helpers ---- */
+    const $ = id => document.getElementById(id);
+
+    const dom = {
+      productName:      $('product-name'),
+      productCategory:  $('product-category'),
+      toneSlider:       $('tone-slider'),
+      toneLabel:        $('tone-label'),
+      lengthSlider:     $('length-slider'),
+      lengthLabel:      $('length-label'),
+      aspectPills:      $('aspect-pills'),
+      aspectSentiments: $('aspect-sentiments'),
+      apiKey:           $('api-key'),
+      btnShowKey:       $('btn-show-key'),
+      keyFile:          $('key-file'),
+      keyError:         $('key-error'),
+      btnGenerate:      $('btn-generate'),
+      btnGenerateText:  $('btn-generate-text'),
+      btnGenerateSpinner: $('btn-generate-spinner'),
+      errorBanner:      $('error-banner'),
+      errorBannerText:  $('error-banner-text'),
+      btnDismissError:  $('btn-dismiss-error'),
+      emptyState:       $('empty-state'),
+      responsePanel:    $('response-panel'),
+      responseModelLabel: $('response-model-label'),
+      responseContent:  $('response-content'),
+      btnCopyResponse:  $('btn-copy-response'),
+      metricTime:       $('metric-time'),
+      metricTokens:     $('metric-tokens'),
+      metricChars:      $('metric-chars'),
+      productNameError: $('product-name-error'),
+    };
+
+    /* ---- Tone helpers ---- */
+    function getToneLabel(v) {
+      if (v <= 20) return 'Harsh';
+      if (v <= 40) return 'Critical';
+      if (v <= 59) return 'Balanced';
+      if (v <= 79) return 'Positive';
+      return 'Glowing';
+    }
+
+    /* ---- Length helpers ---- */
+    function getLengthLabel(v) {
+      if (v <= 33) return 'Brief (~100 words)';
+      if (v <= 66) return 'Medium (~250 words)';
+      return 'Detailed (~500 words)';
+    }
+
+    /* ---- Sentiment helpers ---- */
+    function getSentimentLabel(v) {
+      if (v <= 33) return 'Negative';
+      if (v <= 66) return 'Neutral';
+      return 'Positive';
+    }
+
+    /* ---- Slider live update ---- */
+    dom.toneSlider.addEventListener('input', () => {
+      dom.toneLabel.textContent = getToneLabel(+dom.toneSlider.value);
+    });
+
+    dom.lengthSlider.addEventListener('input', () => {
+      dom.lengthLabel.textContent = getLengthLabel(+dom.lengthSlider.value);
+    });
+
+    /* ---- Aspect pills ---- */
+    dom.aspectPills.addEventListener('click', e => {
+      const btn = e.target.closest('.pill-btn');
+      if (!btn) return;
+      const aspect = btn.dataset.aspect;
+      aspectState[aspect].active = !aspectState[aspect].active;
+      btn.classList.toggle('active', aspectState[aspect].active);
+      renderSentimentSliders();
+    });
+
+    function renderSentimentSliders() {
+      dom.aspectSentiments.innerHTML = '';
+      ASPECTS.forEach(aspect => {
+        if (!aspectState[aspect].active) return;
+        const label = aspect.charAt(0).toUpperCase() + aspect.slice(1);
+        const currentVal = aspectState[aspect].sentiment;
+        const div = document.createElement('div');
+        div.className = 'aspect-sentiment';
+        div.innerHTML = `
+          <div class="aspect-sentiment-label">${label} Sentiment</div>
+          <div class="slider-ends" style="font-size:0.75rem;color:var(--text-3);display:flex;justify-content:space-between;margin-bottom:4px">
+            <span>Negative</span><span>Positive</span>
+          </div>
+          <input type="range" min="0" max="100" value="${currentVal}"
+            aria-label="${label} sentiment"
+            data-aspect="${aspect}" class="sentiment-slider" />
+          <div class="slider-label-display sentiment-label-display" style="margin-top:4px;font-size:0.875rem;font-weight:600;color:var(--accent);text-align:center">
+            ${getSentimentLabel(currentVal)}
+          </div>
+        `;
+        dom.aspectSentiments.appendChild(div);
+
+        const slider = div.querySelector('.sentiment-slider');
+        const labelEl = div.querySelector('.sentiment-label-display');
+        slider.addEventListener('input', () => {
+          const v = +slider.value;
+          aspectState[aspect].sentiment = v;
+          labelEl.textContent = getSentimentLabel(v);
+        });
+      });
+    }
+
+    /* ---- Show / hide API key ---- */
+    dom.btnShowKey.addEventListener('click', () => {
+      const isPassword = dom.apiKey.type === 'password';
+      dom.apiKey.type = isPassword ? 'text' : 'password';
+    });
+
+    /* ---- File upload for API key ---- */
+    dom.keyFile.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = evt => {
+        const text = evt.target.result;
+        // Parse OPENAI_API_KEY=sk-... or sk-... in first column of csv
+        const match = text.match(/(?:OPENAI_API_KEY\s*=\s*|^)(\bsk-[^\s,'"]+)/m);
+        if (match) {
+          dom.apiKey.value = match[1];
+          apiKey = match[1];
+        }
+      };
+      reader.readAsText(file);
+      // Reset so the same file can be re-uploaded
+      e.target.value = '';
+    });
+
+    /* ---- Keep in-memory apiKey synced ---- */
+    dom.apiKey.addEventListener('input', () => { apiKey = dom.apiKey.value.trim(); });
+
+    /* ---- Error banner ---- */
+    function showError(msg) {
+      dom.errorBannerText.textContent = msg;
+      dom.errorBanner.classList.remove('hidden');
+    }
+
+    function hideError() {
+      dom.errorBanner.classList.add('hidden');
+      dom.errorBannerText.textContent = '';
+    }
+
+    dom.btnDismissError.addEventListener('click', hideError);
+
+    /* ---- Loading state ---- */
+    function setLoading(on) {
+      dom.btnGenerate.disabled = on;
+      dom.btnGenerateText.textContent = on ? 'Generating…' : 'Generate Review';
+      dom.btnGenerateSpinner.classList.toggle('hidden', !on);
+    }
+
+    /* ---- Copy response ---- */
+    dom.btnCopyResponse.addEventListener('click', () => {
+      const text = dom.responseContent.textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        dom.btnCopyResponse.textContent = 'Copied!';
+        setTimeout(() => { dom.btnCopyResponse.textContent = 'Copy'; }, 1800);
+      });
+    });
+
+    /* ---- Prompt construction ---- */
+    function buildSystemPrompt() {
+      return 'You are a product review writer. Write realistic, balanced, human-sounding product reviews for educational purposes only. These reviews are not for publication or commercial use.';
+    }
+
+    function buildUserPrompt() {
+      const name = dom.productName.value.trim();
+      const category = dom.productCategory.value.trim();
+      const toneLabel = getToneLabel(+dom.toneSlider.value);
+      const lengthLabel = getLengthLabel(+dom.lengthSlider.value);
+
+      let prompt = `Write a ${lengthLabel} product review for "${name}"`;
+      if (category) prompt += `, a ${category}`;
+      prompt += ` in a ${toneLabel} tone.`;
+
+      const activeAspects = ASPECTS.filter(a => aspectState[a].active);
+      if (activeAspects.length > 0) {
+        prompt += '\n\nFocus on the following aspects and reflect the stated sentiment for each:';
+        activeAspects.forEach(a => {
+          const label = a.charAt(0).toUpperCase() + a.slice(1);
+          prompt += `\n- ${label}: ${getSentimentLabel(aspectState[a].sentiment)}`;
+        });
+      }
+
+      prompt += '\n\nWrite the review as a single piece of flowing prose. Do not use bullet points or headers inside the review itself.';
+      return prompt;
+    }
+
+    /* ---- Generate review ---- */
+    dom.btnGenerate.addEventListener('click', async () => {
+      hideError();
+
+      // Validate
+      const name = dom.productName.value.trim();
+      let valid = true;
+
+      if (!name) {
+        dom.productNameError.classList.remove('hidden');
+        valid = false;
+      } else {
+        dom.productNameError.classList.add('hidden');
+      }
+
+      const key = dom.apiKey.value.trim();
+      if (!key) {
+        dom.keyError.classList.remove('hidden');
+        valid = false;
+      } else {
+        dom.keyError.classList.add('hidden');
+      }
+
+      if (!valid) return;
+
+      setLoading(true);
+      const startTime = Date.now();
+
+      try {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${key}`
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o',
+            messages: [
+              { role: 'system', content: buildSystemPrompt() },
+              { role: 'user',   content: buildUserPrompt() }
+            ]
+          })
+        });
+
+        const elapsed = Date.now() - startTime;
+        const data = await response.json();
+
+        if (!response.ok) {
+          const msg = data?.error?.message || `API error ${response.status}`;
+          showError(msg);
+          setLoading(false);
+          return;
+        }
+
+        const reviewText = data.choices?.[0]?.message?.content ?? '';
+        const tokens = data.usage?.total_tokens ?? '—';
+        const model = data.model ?? 'gpt-4o';
+
+        // Show response
+        dom.emptyState.classList.add('hidden');
+        dom.responsePanel.classList.remove('hidden');
+        dom.responseModelLabel.textContent = model;
+        dom.responseContent.textContent = reviewText;
+        dom.metricTime.textContent = `⏱ ${(elapsed / 1000).toFixed(2)}s`;
+        dom.metricTokens.textContent = `🔢 ${tokens} tokens`;
+        dom.metricChars.textContent = `📝 ${reviewText.length} chars`;
+
+      } catch (err) {
+        showError(`Network error: ${err.message}`);
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    /* ---- Load preset key from DOM at startup (same pattern as Switchboard) ---- */
+    (function loadPresetKey() {
+      const presets = $('key-presets');
+      if (!presets) return;
+      const k = presets.dataset.openai;
+      if (k) {
+        dom.apiKey.value = k;
+        apiKey = k;
+      }
+    })();
+  </script>
+</body>
+</html>
