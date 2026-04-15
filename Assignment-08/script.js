@@ -26,12 +26,14 @@ const labels        = [0,1,2].map(i => document.getElementById(`label${i}`));
 
 // ── State ──────────────────────────────────────────
 const state = {
-  mode: 'light',   // 'light' | 'paint'
-  palette: [],     // array of hex strings
-  circles: null,   // set in initCircles()
+  mode: 'light',         // 'light' | 'paint'
+  palette: [],           // array of hex strings
+  circles: null,         // set in initCircles()
   intensities: [0.5, 0.5, 0.5],
-  drag: null,      // { index, offsetX, offsetY }
-  eyeColor: null,  // current eyedrop pixel
+  drag: null,            // { index, offsetX, offsetY } — color circle drag
+  eyePos: { x: 0, y: 0 }, // canvas-space coords of the sampler circle
+  eyeDrag: false,        // is the sampler circle being dragged?
+  eyeColor: null,        // hex color currently under sampler
 };
 
 // Circle definitions per mode — positions shared
@@ -61,6 +63,9 @@ function resizeCanvas() {
       c.y = Math.max(0, Math.min(canvas.height, c.y));
     });
   }
+  // Re-clamp eyedrop position
+  state.eyePos.x = Math.max(0, Math.min(canvas.width,  state.eyePos.x));
+  state.eyePos.y = Math.max(0, Math.min(canvas.height, state.eyePos.y));
 }
 
 // ── Default triangle positions ─────────────────────
@@ -78,6 +83,14 @@ function defaultPositions() {
 function initCircles() {
   const pos = defaultPositions();
   state.circles = pos.map(p => ({ x: p.x, y: p.y }));
+}
+
+function initEyedrop() {
+  // Place sampler in top-right area, away from the default circle triangle
+  state.eyePos.x = canvas.width  * 0.78;
+  state.eyePos.y = canvas.height * 0.18;
+  positionEyedropEl();
+  eyedropEl.style.display = 'block';
 }
 
 // ── Draw loop ──────────────────────────────────────
@@ -146,6 +159,9 @@ function draw() {
   });
 
   ctx.globalCompositeOperation = 'source-over';
+
+  // Sample the color under the eyedrop circle after each frame
+  sampleEyedropColor();
 }
 
 // ── Hit testing ────────────────────────────────────
@@ -179,18 +195,15 @@ canvas.addEventListener('mousedown', e => {
 });
 
 canvas.addEventListener('mousemove', e => {
-  const { x, y } = canvasCoords(e);
-  // Always update eyedrop preview
-  updateEyedrop(x, y, e.clientX, e.clientY);
-  // Also handle drag if active
   if (!state.drag) return;
+  const { x, y } = canvasCoords(e);
   const idx = state.drag.index;
   state.circles[idx].x = Math.max(0, Math.min(canvas.width,  x - state.drag.offsetX));
   state.circles[idx].y = Math.max(0, Math.min(canvas.height, y - state.drag.offsetY));
 });
 
 canvas.addEventListener('mouseup', () => { state.drag = null; });
-canvas.addEventListener('mouseleave', () => { state.drag = null; hideEyedrop(); });
+canvas.addEventListener('mouseleave', () => { state.drag = null; });
 
 // Touch
 canvas.addEventListener('touchstart', e => {
@@ -213,27 +226,68 @@ canvas.addEventListener('touchmove', e => {
 
 canvas.addEventListener('touchend', () => { state.drag = null; });
 
-// ── Eyedropper (always on) ─────────────────────────
-function updateEyedrop(cx, cy, clientX, clientY) {
-  const px = Math.floor(cx), py = Math.floor(cy);
+// ── Eyedropper sampler (draggable object) ──────────
+
+// Convert canvas-space coords → CSS px within canvasWrap and position the div
+function positionEyedropEl() {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = rect.width  / canvas.width;
+  const scaleY = rect.height / canvas.height;
+  eyedropEl.style.left = (state.eyePos.x * scaleX) + 'px';
+  eyedropEl.style.top  = (state.eyePos.y * scaleY) + 'px';
+}
+
+// Read the canvas pixel under the sampler center (called every rAF frame)
+function sampleEyedropColor() {
+  const px = Math.floor(state.eyePos.x);
+  const py = Math.floor(state.eyePos.y);
   if (px < 0 || py < 0 || px >= canvas.width || py >= canvas.height) return;
   const data = ctx.getImageData(px, py, 1, 1).data;
-  const hex = rgbToHex(data[0], data[1], data[2]);
+  const hex  = rgbToHex(data[0], data[1], data[2]);
   state.eyeColor = hex;
-
-  const wrapRect = canvasWrap.getBoundingClientRect();
-  eyedropEl.style.display = 'block';
   eyedropEl.style.backgroundColor = hex;
-  eyedropEl.style.color = hex;
-  eyedropEl.style.left = (clientX - wrapRect.left) + 'px';
-  eyedropEl.style.top  = (clientY - wrapRect.top)  + 'px';
+  eyedropEl.style.color = hex; // drives currentColor in the CSS animation
 }
 
-function hideEyedrop() {
-  eyedropEl.style.display = 'none';
-}
+// Start dragging the sampler circle
+eyedropEl.addEventListener('mousedown', e => {
+  e.preventDefault();
+  e.stopPropagation(); // don't start a color-circle drag underneath
+  state.eyeDrag = true;
+});
 
-// ADD COLOR button — captures current eyedrop color into palette
+eyedropEl.addEventListener('touchstart', e => {
+  e.preventDefault();
+  e.stopPropagation();
+  state.eyeDrag = true;
+}, { passive: false });
+
+// Track eyedrop drag at document level so it doesn't break when cursor moves fast
+document.addEventListener('mousemove', e => {
+  if (!state.eyeDrag) return;
+  const rect = canvas.getBoundingClientRect();
+  state.eyePos.x = Math.max(0, Math.min(canvas.width,
+    (e.clientX - rect.left) * (canvas.width  / rect.width)));
+  state.eyePos.y = Math.max(0, Math.min(canvas.height,
+    (e.clientY - rect.top)  * (canvas.height / rect.height)));
+  positionEyedropEl();
+});
+
+document.addEventListener('touchmove', e => {
+  if (!state.eyeDrag) return;
+  const touch = e.touches[0];
+  const rect  = canvas.getBoundingClientRect();
+  state.eyePos.x = Math.max(0, Math.min(canvas.width,
+    (touch.clientX - rect.left) * (canvas.width  / rect.width)));
+  state.eyePos.y = Math.max(0, Math.min(canvas.height,
+    (touch.clientY - rect.top)  * (canvas.height / rect.height)));
+  positionEyedropEl();
+}, { passive: false });
+
+document.addEventListener('mouseup',  () => { state.eyeDrag = false; });
+document.addEventListener('touchend', () => { state.eyeDrag = false; });
+
+// ADD COLOR — push whatever color is currently under the sampler into the palette
 addColorBtn.addEventListener('click', () => {
   if (!state.eyeColor) return;
   addToPalette(state.eyeColor);
@@ -373,12 +427,10 @@ function reverseMode(hex) {
     pcts[i].textContent = Math.round(state.intensities[i] * 100) + '%';
   });
 
-  // Flash the eyedrop preview at canvas center to show the reconstructed color
-  const wrapRect = canvasWrap.getBoundingClientRect();
-  const previewX = wrapRect.left + wrapRect.width  / 2;
-  const previewY = wrapRect.top  + wrapRect.height / 2;
-  const cx2 = canvas.width / 2, cy2 = canvas.height / 2;
-  updateEyedrop(cx2, cy2, previewX, previewY);
+  // Move sampler to canvas center so it sits over the overlap point
+  state.eyePos.x = canvas.width  / 2;
+  state.eyePos.y = canvas.height / 2;
+  positionEyedropEl();
 }
 
 // ── Suggestions ────────────────────────────────────
@@ -527,6 +579,7 @@ resizeObserver.observe(canvasWrap);
 // ── Init ───────────────────────────────────────────
 resizeCanvas();
 initCircles();
+initEyedrop();
 renderPalette();
 renderSuggestions();
 draw();
