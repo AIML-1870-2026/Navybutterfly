@@ -1,60 +1,507 @@
 /* ===================================================
-   RGB Petal Wheel Explorer — script.js
-   Vanilla JS, no libraries
+   RGB Color Studio — script.js
+   Vanilla JS only, no libraries
    =================================================== */
+
+// ── Constants ──────────────────────────────────────
+const CIRCLE_RADIUS = 180;
+const MAX_PALETTE   = 5;
+
+// ── DOM ────────────────────────────────────────────
+const canvas       = document.getElementById('mixCanvas');
+const ctx          = canvas.getContext('2d', { willReadFrequently: true });
+const canvasWrap   = document.getElementById('canvasWrap');
+const eyedropEl    = document.getElementById('eyedropPreview');
+const paletteSlots = document.getElementById('paletteSlots');
+const suggList     = document.getElementById('suggestionsList');
+const suggEmpty    = document.getElementById('suggestionsEmpty');
+const pickBtn      = document.getElementById('pickBtn');
+const pickWarning  = document.getElementById('pickWarning');
+const resetBtn     = document.getElementById('resetBtn');
+const btnLight     = document.getElementById('btnLight');
+const btnPaint     = document.getElementById('btnPaint');
+const sliders      = [0,1,2].map(i => document.getElementById(`slider${i}`));
+const pcts         = [0,1,2].map(i => document.getElementById(`pct${i}`));
+const labels       = [0,1,2].map(i => document.getElementById(`label${i}`));
 
 // ── State ──────────────────────────────────────────
 const state = {
-  r: 255,
-  g: 128,
-  b: 0,
-  primaries: new Set(['r', 'g']),   // two active primaries
-  constrained: 'b',
-  harmony: 'complement',
-  hueOffset: 0,
-  accessibilityOpen: false,
-  activeTab: 'contrast',
+  mode: 'light',   // 'light' | 'paint'
+  picking: false,
+  palette: [],     // array of hex strings
+  circles: null,   // set in initCircles()
+  intensities: [1, 1, 1],
+  drag: null,      // { index, offsetX, offsetY }
+  eyeColor: null,  // current eyedrop pixel
 };
 
-// ── DOM refs ───────────────────────────────────────
-const sliders   = { r: id('slider-r'), g: id('slider-g'), b: id('slider-b') };
-const vals      = { r: id('val-r'),    g: id('val-g'),    b: id('val-b')    };
-const tags      = { r: id('tag-r'),    g: id('tag-g'),    b: id('tag-b')    };
-const btns      = { r: id('btn-r'),    g: id('btn-g'),    b: id('btn-b')    };
-const preview   = id('colorPreview');
-const hexLabel  = id('previewHex');
-const rgbLabel  = id('previewRGB');
-const copyBtn   = id('copyHexBtn');
-const copyLabel = id('copyLabel');
-const marker    = id('wheelMarker');
-const paletteEl = id('paletteSwatches');
-const randomBtn = id('randomizeBtn');
-const uiCard    = id('uiCard');
-const uiHeading = id('uiHeading');
-const uiBody    = id('uiBody');
-const uiBtn     = id('uiBtn');
-const toolbarToggle  = id('toolbarToggle');
-const toolbarContent = id('toolbarContent');
-const fgInput   = id('fgColor');
-const bgInput   = id('bgColor');
-const fgSwatch  = id('fgSwatch');
-const bgSwatch  = id('bgSwatch');
-const swapBtn   = id('swapColorsBtn');
-const contrastRatio = id('contrastRatio');
-const wcagBadges    = id('wcagBadges');
-const cbSimGrid     = id('cbSimGrid');
+// Circle definitions per mode — positions shared
+const LIGHT_CIRCLES = [
+  { r: 255, g: 0,   b: 0   },  // Red
+  { r: 0,   g: 255, b: 0   },  // Green
+  { r: 0,   g: 0,   b: 255 },  // Blue
+];
+const PAINT_CIRCLES = [
+  { r: 0,   g: 255, b: 255 },  // Cyan
+  { r: 255, g: 0,   b: 255 },  // Magenta
+  { r: 255, g: 255, b: 0   },  // Yellow
+];
 
-function id(s) { return document.getElementById(s); }
+const LIGHT_LABELS = ['RED', 'GREEN', 'BLUE'];
+const PAINT_LABELS = ['CYAN', 'MAGENTA', 'YELLOW'];
 
-// ── Color math ─────────────────────────────────────
+// ── Canvas sizing ──────────────────────────────────
+function resizeCanvas() {
+  const rect = canvasWrap.getBoundingClientRect();
+  canvas.width  = Math.round(rect.width);
+  canvas.height = Math.round(rect.height);
+  // Re-clamp circle positions after resize
+  if (state.circles) {
+    state.circles.forEach(c => {
+      c.x = Math.max(0, Math.min(canvas.width,  c.x));
+      c.y = Math.max(0, Math.min(canvas.height, c.y));
+    });
+  }
+}
+
+// ── Default triangle positions ─────────────────────
+function defaultPositions() {
+  const cx = canvas.width  / 2;
+  const cy = canvas.height / 2;
+  const spread = Math.min(canvas.width, canvas.height) * 0.22;
+  return [
+    { x: cx,              y: cy - spread * 1.1 },   // top
+    { x: cx - spread,     y: cy + spread * 0.7 },   // bottom-left
+    { x: cx + spread,     y: cy + spread * 0.7 },   // bottom-right
+  ];
+}
+
+function initCircles() {
+  const pos = defaultPositions();
+  state.circles = pos.map(p => ({ x: p.x, y: p.y }));
+}
+
+// ── Draw loop ──────────────────────────────────────
+function draw() {
+  requestAnimationFrame(draw);
+
+  const w = canvas.width, h = canvas.height;
+  const isLight = state.mode === 'light';
+
+  // Background
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.fillStyle = isLight ? '#000000' : '#ffffff';
+  ctx.fillRect(0, 0, w, h);
+
+  const circles = isLight ? LIGHT_CIRCLES : PAINT_CIRCLES;
+  const compositeOp = isLight ? 'screen' : 'multiply';
+
+  state.circles.forEach((pos, i) => {
+    const col = circles[i];
+    const intensity = state.intensities[i];
+
+    if (isLight) {
+      // Outer glow halo
+      ctx.globalCompositeOperation = 'screen';
+      const halo = ctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, CIRCLE_RADIUS * 1.6);
+      halo.addColorStop(0, `rgba(${col.r}, ${col.g}, ${col.b}, ${intensity * 0.12})`);
+      halo.addColorStop(1, `rgba(${col.r}, ${col.g}, ${col.b}, 0)`);
+      ctx.fillStyle = halo;
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, CIRCLE_RADIUS * 1.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Main circle
+    ctx.globalCompositeOperation = compositeOp;
+    const grad = ctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, CIRCLE_RADIUS);
+    grad.addColorStop(0, `rgba(${col.r}, ${col.g}, ${col.b}, ${intensity})`);
+    grad.addColorStop(1, `rgba(${col.r}, ${col.g}, ${col.b}, 0)`);
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, CIRCLE_RADIUS, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  ctx.globalCompositeOperation = 'source-over';
+}
+
+// ── Hit testing ────────────────────────────────────
+function hitTest(x, y) {
+  // Test in reverse order so topmost circle wins
+  for (let i = state.circles.length - 1; i >= 0; i--) {
+    const c = state.circles[i];
+    const dx = x - c.x, dy = y - c.y;
+    if (dx * dx + dy * dy <= CIRCLE_RADIUS * CIRCLE_RADIUS) return i;
+  }
+  return -1;
+}
+
+// ── Canvas pointer coords ──────────────────────────
+function canvasCoords(e) {
+  const rect = canvas.getBoundingClientRect();
+  const src  = e.touches ? e.touches[0] : e;
+  return {
+    x: (src.clientX - rect.left) * (canvas.width  / rect.width),
+    y: (src.clientY - rect.top)  * (canvas.height / rect.height),
+  };
+}
+
+// ── Drag ───────────────────────────────────────────
+canvas.addEventListener('mousedown', e => {
+  const { x, y } = canvasCoords(e);
+  if (state.picking) {
+    pickColorAt(x, y);
+    return;
+  }
+  const idx = hitTest(x, y);
+  if (idx !== -1) {
+    state.drag = { index: idx, offsetX: x - state.circles[idx].x, offsetY: y - state.circles[idx].y };
+  }
+});
+
+canvas.addEventListener('mousemove', e => {
+  const { x, y } = canvasCoords(e);
+  if (state.picking) {
+    updateEyedrop(x, y, e.clientX, e.clientY);
+    return;
+  }
+  if (!state.drag) return;
+  const idx = state.drag.index;
+  state.circles[idx].x = Math.max(0, Math.min(canvas.width,  x - state.drag.offsetX));
+  state.circles[idx].y = Math.max(0, Math.min(canvas.height, y - state.drag.offsetY));
+});
+
+canvas.addEventListener('mouseup', () => { state.drag = null; });
+canvas.addEventListener('mouseleave', () => { state.drag = null; });
+
+// Touch
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault();
+  const { x, y } = canvasCoords(e);
+  if (state.picking) { pickColorAt(x, y); return; }
+  const idx = hitTest(x, y);
+  if (idx !== -1) {
+    state.drag = { index: idx, offsetX: x - state.circles[idx].x, offsetY: y - state.circles[idx].y };
+  }
+}, { passive: false });
+
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault();
+  const { x, y } = canvasCoords(e);
+  if (!state.drag) return;
+  const idx = state.drag.index;
+  state.circles[idx].x = Math.max(0, Math.min(canvas.width,  x - state.drag.offsetX));
+  state.circles[idx].y = Math.max(0, Math.min(canvas.height, y - state.drag.offsetY));
+}, { passive: false });
+
+canvas.addEventListener('touchend', () => { state.drag = null; });
+
+// ── Eyedropper ─────────────────────────────────────
+function updateEyedrop(cx, cy, clientX, clientY) {
+  const px = Math.floor(cx), py = Math.floor(cy);
+  if (px < 0 || py < 0 || px >= canvas.width || py >= canvas.height) return;
+  const data = ctx.getImageData(px, py, 1, 1).data;
+  const hex = rgbToHex(data[0], data[1], data[2]);
+  state.eyeColor = hex;
+
+  eyedropEl.style.display = 'block';
+  eyedropEl.style.backgroundColor = hex;
+  eyedropEl.style.color = hex;  // drives CSS currentColor in animation
+  eyedropEl.style.left = clientX - canvasWrap.getBoundingClientRect().left + 'px';
+  eyedropEl.style.top  = clientY - canvasWrap.getBoundingClientRect().top  + 'px';
+}
+
+function hideEyedrop() {
+  eyedropEl.style.display = 'none';
+  state.eyeColor = null;
+}
+
+function pickColorAt(x, y) {
+  const px = Math.floor(x), py = Math.floor(y);
+  if (px < 0 || py < 0 || px >= canvas.width || py >= canvas.height) return;
+  const data = ctx.getImageData(px, py, 1, 1).data;
+  const hex = rgbToHex(data[0], data[1], data[2]);
+  addToPalette(hex);
+  deactivatePicker();
+}
+
+function activatePicker() {
+  state.picking = true;
+  pickBtn.classList.add('active');
+  canvasWrap.classList.add('picking');
+}
+
+function deactivatePicker() {
+  state.picking = false;
+  pickBtn.classList.remove('active');
+  canvasWrap.classList.remove('picking');
+  hideEyedrop();
+}
+
+pickBtn.addEventListener('click', () => {
+  state.picking ? deactivatePicker() : activatePicker();
+});
+
+// Track mouse over the canvas wrap for eyedrop preview
+canvasWrap.addEventListener('mousemove', e => {
+  if (!state.picking) return;
+  const rect = canvas.getBoundingClientRect();
+  const cx = (e.clientX - rect.left) * (canvas.width  / rect.width);
+  const cy = (e.clientY - rect.top)  * (canvas.height / rect.height);
+  updateEyedrop(cx, cy, e.clientX, e.clientY);
+});
+
+canvasWrap.addEventListener('mouseleave', () => {
+  if (state.picking) hideEyedrop();
+});
+
+// ── Mode switch ────────────────────────────────────
+function setMode(mode) {
+  state.mode = mode;
+  document.body.classList.toggle('paint', mode === 'paint');
+
+  btnLight.classList.toggle('active', mode === 'light');
+  btnPaint.classList.toggle('active', mode === 'paint');
+
+  const lbls = mode === 'light' ? LIGHT_LABELS : PAINT_LABELS;
+  labels.forEach((el, i) => el.textContent = lbls[i]);
+}
+
+btnLight.addEventListener('click', () => setMode('light'));
+btnPaint.addEventListener('click', () => setMode('paint'));
+
+// ── Intensity sliders ──────────────────────────────
+sliders.forEach((sl, i) => {
+  sl.addEventListener('input', () => {
+    state.intensities[i] = parseFloat(sl.value);
+    pcts[i].textContent = Math.round(sl.value * 100) + '%';
+  });
+});
+
+resetBtn.addEventListener('click', () => {
+  state.intensities = [1, 1, 1];
+  sliders.forEach((sl, i) => {
+    sl.value = 1;
+    pcts[i].textContent = '100%';
+  });
+  resetBtn.classList.add('flash');
+  resetBtn.addEventListener('animationend', () => resetBtn.classList.remove('flash'), { once: true });
+});
+
+// ── Palette ────────────────────────────────────────
+function addToPalette(hex) {
+  if (state.palette.length >= MAX_PALETTE) {
+    showWarning('PALETTE FULL — REMOVE A COLOR FIRST');
+    return;
+  }
+  state.palette.push(hex);
+  renderPalette();
+  renderSuggestions();
+}
+
+function removeFromPalette(index) {
+  const swatches = paletteSlots.querySelectorAll('.palette-swatch');
+  const sw = swatches[index];
+  if (sw) {
+    sw.classList.add('removing');
+    sw.addEventListener('animationend', () => {
+      state.palette.splice(index, 1);
+      renderPalette();
+      renderSuggestions();
+    }, { once: true });
+  }
+}
+
+function renderPalette() {
+  paletteSlots.innerHTML = '';
+  for (let i = 0; i < MAX_PALETTE; i++) {
+    if (i < state.palette.length) {
+      const hex = state.palette[i];
+      const sw = document.createElement('div');
+      sw.className = 'palette-swatch';
+      sw.style.backgroundColor = hex;
+      sw.title = `Click to reverse-engineer ${hex}`;
+
+      const span = document.createElement('span');
+      span.className = 'swatch-hex';
+      span.textContent = hex.toUpperCase();
+      span.style.color = autoContrastColor(hex);
+
+      const removeEl = document.createElement('button');
+      removeEl.className = 'swatch-remove';
+      removeEl.textContent = '×';
+      removeEl.setAttribute('aria-label', `Remove ${hex}`);
+      removeEl.addEventListener('click', e => {
+        e.stopPropagation();
+        removeFromPalette(i);
+      });
+
+      sw.appendChild(span);
+      sw.appendChild(removeEl);
+      sw.addEventListener('click', () => reverseMode(hex));
+      paletteSlots.appendChild(sw);
+    } else {
+      const slot = document.createElement('div');
+      slot.className = 'palette-slot';
+      const txt = document.createElement('span');
+      txt.className = 'slot-empty-text';
+      txt.textContent = 'PICK A COLOR';
+      slot.appendChild(txt);
+      paletteSlots.appendChild(slot);
+    }
+  }
+}
+
+function showWarning(msg) {
+  pickWarning.textContent = msg;
+  pickWarning.style.opacity = '1';
+  clearTimeout(pickWarning._t);
+  pickWarning._t = setTimeout(() => {
+    pickWarning.style.opacity = '0';
+    setTimeout(() => { pickWarning.textContent = ''; }, 300);
+  }, 2000);
+}
+
+// ── Reverse Mode ───────────────────────────────────
+function reverseMode(hex) {
+  // Reset circle positions
+  const pos = defaultPositions();
+  state.circles = pos.map(p => ({ x: p.x, y: p.y }));
+
+  // Approximate intensities from the hex color
+  const [r, g, b] = hexToRgb(hex);
+  const isLight = state.mode === 'light';
+
+  if (isLight) {
+    // R, G, B channels → intensities
+    state.intensities[0] = Math.max(0.05, r / 255);
+    state.intensities[1] = Math.max(0.05, g / 255);
+    state.intensities[2] = Math.max(0.05, b / 255);
+  } else {
+    // CMY: C = 1 - R/255, M = 1 - G/255, Y = 1 - B/255
+    state.intensities[0] = Math.max(0.05, 1 - r / 255);
+    state.intensities[1] = Math.max(0.05, 1 - g / 255);
+    state.intensities[2] = Math.max(0.05, 1 - b / 255);
+  }
+
+  sliders.forEach((sl, i) => {
+    sl.value = state.intensities[i];
+    pcts[i].textContent = Math.round(state.intensities[i] * 100) + '%';
+  });
+
+  // Show eyedrop preview at canvas center
+  const cx = canvas.width / 2, cy = canvas.height / 2;
+  const rect = canvas.getBoundingClientRect();
+  const clientX = rect.left + (cx / canvas.width)  * rect.width;
+  const clientY = rect.top  + (cy / canvas.height) * rect.height;
+  eyedropEl.style.display = 'block';
+  eyedropEl.style.backgroundColor = hex;
+  eyedropEl.style.color = hex;
+  eyedropEl.style.left = clientX - canvasWrap.getBoundingClientRect().left + 'px';
+  eyedropEl.style.top  = clientY - canvasWrap.getBoundingClientRect().top  + 'px';
+  setTimeout(() => hideEyedrop(), 2000);
+}
+
+// ── Suggestions ────────────────────────────────────
+function renderSuggestions() {
+  if (state.palette.length === 0) {
+    suggList.innerHTML = '';
+    const p = document.createElement('p');
+    p.className = 'suggestions-empty';
+    p.id = 'suggestionsEmpty';
+    p.textContent = 'ADD A COLOR TO SEE SUGGESTIONS';
+    suggList.appendChild(p);
+    return;
+  }
+
+  const baseHex = state.palette[state.palette.length - 1];
+  const [r, g, b] = hexToRgb(baseHex);
+  const [h, s, l] = rgbToHsl(r, g, b);
+
+  const rows = [
+    {
+      label: 'COMPLEMENTARY',
+      colors: [hslToHex((h + 180) % 360, s, l)],
+    },
+    {
+      label: 'ANALOGOUS',
+      colors: [-30, -15, 15, 30].map(o => hslToHex((h + o + 360) % 360, s, l)),
+    },
+    {
+      label: 'TRIADIC',
+      colors: [120, 240].map(o => hslToHex((h + o) % 360, s, l)),
+    },
+    {
+      label: 'SPLIT-COMP',
+      colors: [150, 210].map(o => hslToHex((h + o) % 360, s, l)),
+    },
+    {
+      label: 'TETRADIC',
+      colors: [90, 180, 270].map(o => hslToHex((h + o) % 360, s, l)),
+    },
+    {
+      label: 'MONOCHROMATIC',
+      colors: [0.2, 0.4, 0.6, 0.8].map(lt => hslToHex(h, s, lt)),
+    },
+    {
+      label: 'WARM / COOL',
+      colors: [
+        hslToHex((h + 20 + 360) % 360, Math.min(s + 0.1, 1), l),  // warm → toward red/yellow
+        hslToHex((h + 200) % 360,       Math.min(s + 0.1, 1), l),  // cool → toward blue
+      ],
+    },
+  ];
+
+  suggList.innerHTML = '';
+  rows.forEach(row => {
+    const rowEl = document.createElement('div');
+    rowEl.className = 'suggestion-row';
+
+    const lbl = document.createElement('div');
+    lbl.className = 'suggestion-label';
+    lbl.textContent = row.label;
+    rowEl.appendChild(lbl);
+
+    const chips = document.createElement('div');
+    chips.className = 'suggestion-chips';
+    row.colors.forEach(hex => {
+      const chip = document.createElement('div');
+      chip.className = 'chip';
+      chip.style.backgroundColor = hex;
+      chip.title = hex;
+      chip.addEventListener('click', () => {
+        if (state.palette.length >= MAX_PALETTE) {
+          showWarning('PALETTE FULL — REMOVE A COLOR FIRST');
+          return;
+        }
+        chip.classList.add('added');
+        chip.addEventListener('animationend', () => chip.classList.remove('added'), { once: true });
+        addToPalette(hex);
+      });
+      chips.appendChild(chip);
+    });
+    rowEl.appendChild(chips);
+    suggList.appendChild(rowEl);
+  });
+}
+
+// ── Color math helpers ─────────────────────────────
+function rgbToHex(r, g, b) {
+  return '#' + [r, g, b].map(v => Math.max(0, Math.min(255, v)).toString(16).padStart(2, '0').toUpperCase()).join('');
+}
+
+function hexToRgb(hex) {
+  const m = hex.replace('#', '').match(/.{2}/g);
+  return m.map(x => parseInt(x, 16));
+}
 
 function rgbToHsl(r, g, b) {
   r /= 255; g /= 255; b /= 255;
   const max = Math.max(r, g, b), min = Math.min(r, g, b);
-  let h, s, l = (max + min) / 2;
-  if (max === min) {
-    h = s = 0;
-  } else {
+  let h = 0, s = 0;
+  const l = (max + min) / 2;
+  if (max !== min) {
     const d = max - min;
     s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
     switch (max) {
@@ -67,13 +514,11 @@ function rgbToHsl(r, g, b) {
 }
 
 function hslToRgb(h, s, l) {
-  h = ((h % 360) + 360) % 360;
-  h /= 360;
+  h = ((h % 360) + 360) % 360 / 360;
   const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
   const p = 2 * l - q;
   const hue2rgb = (p, q, t) => {
-    if (t < 0) t += 1;
-    if (t > 1) t -= 1;
+    if (t < 0) t += 1; if (t > 1) t -= 1;
     if (t < 1/6) return p + (q - p) * 6 * t;
     if (t < 1/2) return q;
     if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
@@ -86,412 +531,24 @@ function hslToRgb(h, s, l) {
   ];
 }
 
-function rgbToHex(r, g, b) {
-  return '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0').toUpperCase()).join('');
+function hslToHex(h, s, l) {
+  return rgbToHex(...hslToRgb(h, s, l));
 }
 
-function hexToRgb(hex) {
-  const m = hex.replace('#', '').match(/.{2}/g);
-  if (!m || m.length < 3) return null;
-  return m.slice(0, 3).map(x => parseInt(x, 16));
+function autoContrastColor(hex) {
+  const [r, g, b] = hexToRgb(hex);
+  return (0.299 * r + 0.587 * g + 0.114 * b) > 128 ? '#000000' : '#ffffff';
 }
 
-function relativeLuminance(r, g, b) {
-  const lin = v => {
-    v /= 255;
-    return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
-  };
-  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
-}
-
-function contrastRatioCalc(r1, g1, b1, r2, g2, b2) {
-  const L1 = relativeLuminance(r1, g1, b1);
-  const L2 = relativeLuminance(r2, g2, b2);
-  const [bright, dark] = L1 > L2 ? [L1, L2] : [L2, L1];
-  return (bright + 0.05) / (dark + 0.05);
-}
-
-// Color blindness simulation matrices
-const CB_MATRICES = {
-  protanopia:   [[0.567, 0.433, 0], [0.558, 0.442, 0], [0, 0.242, 0.758]],
-  deuteranopia: [[0.625, 0.375, 0], [0.700, 0.300, 0], [0, 0.300, 0.700]],
-  tritanopia:   [[0.950, 0.050, 0], [0, 0.433, 0.567], [0, 0.475, 0.525]],
-};
-
-function simulateCB(r, g, b, type) {
-  const m = CB_MATRICES[type];
-  return [
-    Math.round(Math.min(255, m[0][0]*r + m[0][1]*g + m[0][2]*b)),
-    Math.round(Math.min(255, m[1][0]*r + m[1][1]*g + m[1][2]*b)),
-    Math.round(Math.min(255, m[2][0]*r + m[2][1]*g + m[2][2]*b)),
-  ];
-}
-
-// ── Harmony calculations ────────────────────────────
-
-function generateHarmony(r, g, b, type, hueOffset) {
-  const [h, s, l] = rgbToHsl(r, g, b);
-  const baseHue = (h + hueOffset) % 360;
-  const sat = s > 0 ? s : 0.75;
-  const lit = l > 0.05 && l < 0.95 ? l : 0.5;
-
-  const makeColor = (hue) => {
-    const [cr, cg, cb] = hslToRgb(hue, sat, lit);
-    return { r: cr, g: cg, b: cb, hex: rgbToHex(cr, cg, cb) };
-  };
-
-  switch (type) {
-    case 'complement':
-      return [makeColor(baseHue), makeColor(baseHue + 180)];
-    case 'analogous':
-      return [-30, -15, 0, 15, 30].map(o => makeColor(baseHue + o));
-    case 'triadic':
-      return [0, 120, 240].map(o => makeColor(baseHue + o));
-    case 'split-comp':
-      return [makeColor(baseHue), makeColor(baseHue + 150), makeColor(baseHue + 210)];
-    case 'tetradic':
-      return [0, 90, 180, 270].map(o => makeColor(baseHue + o));
-    default:
-      return [makeColor(baseHue)];
-  }
-}
-
-// ── Wheel marker position ───────────────────────────
-
-function updateMarker(r, g, b) {
-  const [h, s] = rgbToHsl(r, g, b);
-  const angleRad = (h - 90) * (Math.PI / 180);
-  // radius: 0 (center) → ~90px (near tip)
-  const radius = s * 85;
-  const cx = 160 + radius * Math.cos(angleRad);
-  const cy = 160 + radius * Math.sin(angleRad);
-  marker.setAttribute('cx', cx.toFixed(2));
-  marker.setAttribute('cy', cy.toFixed(2));
-  marker.setAttribute('r', s < 0.1 ? '5' : '8');
-}
-
-// ── Constrained slider enforcement ─────────────────
-
-function updateConstrainedSlider() {
-  const primaries = [...state.primaries];
-  const p1 = sliders[primaries[0]];
-  const p2 = sliders[primaries[1]];
-  const con = sliders[state.constrained];
-
-  const maxVal = Math.min(parseInt(p1.value), parseInt(p2.value));
-  con.max = maxVal;
-  if (parseInt(con.value) > maxVal) {
-    con.value = maxVal;
-    state[state.constrained] = maxVal;
-    vals[state.constrained].textContent = maxVal;
-  }
-}
-
-function applyConstrainedUI() {
-  ['r', 'g', 'b'].forEach(ch => {
-    const isConstrained = ch === state.constrained;
-    sliders[ch].classList.toggle('constrained', isConstrained);
-    sliders[ch].disabled = isConstrained;
-    tags[ch].textContent = isConstrained ? 'CONSTRAINED 🔒' : '';
-  });
-}
-
-// ── Main render ─────────────────────────────────────
-
-function render() {
-  const { r, g, b } = state;
-  const hex = rgbToHex(r, g, b);
-
-  // Update preview
-  preview.style.backgroundColor = hex;
-  preview.style.color = hex;  // drives breatheGlow currentColor
-  hexLabel.textContent = `HEX ${hex}`;
-  rgbLabel.textContent = `RGB(${r}, ${g}, ${b})`;
-
-  // Update slider display values
-  vals.r.textContent = r;
-  vals.g.textContent = g;
-  vals.b.textContent = b;
-  sliders.r.value = r;
-  sliders.g.value = g;
-  sliders.b.value = b;
-
-  // Update wheel marker
-  updateMarker(r, g, b);
-
-  // Update palette
-  renderPalette();
-
-  // Update contrast if toolbar open
-  if (state.accessibilityOpen) {
-    syncContrastFromMixed();
-    renderContrast();
-    renderCBSim();
-  }
-}
-
-// ── Palette rendering ───────────────────────────────
-
-function renderPalette() {
-  const colors = generateHarmony(state.r, state.g, state.b, state.harmony, state.hueOffset);
-  paletteEl.innerHTML = '';
-  colors.forEach(c => {
-    const swatch = document.createElement('div');
-    swatch.className = 'swatch';
-    swatch.style.backgroundColor = c.hex;
-
-    const hexSpan = document.createElement('div');
-    hexSpan.className = 'swatch-hex';
-    hexSpan.textContent = c.hex;
-
-    const check = document.createElement('div');
-    check.className = 'swatch-check';
-    check.textContent = '✓';
-
-    swatch.appendChild(check);
-    swatch.appendChild(hexSpan);
-
-    swatch.addEventListener('click', () => {
-      navigator.clipboard.writeText(c.hex).catch(() => {});
-      swatch.classList.add('flash');
-      setTimeout(() => swatch.classList.remove('flash'), 600);
-    });
-
-    paletteEl.appendChild(swatch);
-  });
-
-  // Update UI preview mockup with first 3 colors
-  if (colors.length >= 2) {
-    const bg = colors[0].hex;
-    const accent = colors[1 % colors.length].hex;
-    const text = colors[Math.min(2, colors.length - 1)].hex;
-    uiCard.style.backgroundColor = bg;
-    uiCard.style.borderColor = accent + '66';
-    uiHeading.style.color = accent;
-    uiBody.style.color = text;
-    uiBtn.style.backgroundColor = accent;
-    uiBtn.style.color = bg;
-  }
-}
-
-// ── Contrast checker ───────────────────────────────
-
-function syncContrastFromMixed() {
-  const hex = rgbToHex(state.r, state.g, state.b);
-  const [h, s, l] = rgbToHsl(state.r, state.g, state.b);
-  const compHex = rgbToHex(...hslToRgb((h + 180) % 360, s > 0 ? s : 0.75, l > 0.05 ? l : 0.5));
-
-  // only auto-sync if user hasn't manually typed
-  if (!fgInput.dataset.manual) fgInput.value = hex;
-  if (!bgInput.dataset.manual) bgInput.value = compHex;
-
-  updateWellSwatches();
-}
-
-function updateWellSwatches() {
-  fgSwatch.style.backgroundColor = fgInput.value;
-  bgSwatch.style.backgroundColor = bgInput.value;
-}
-
-function renderContrast() {
-  const fg = hexToRgb(fgInput.value);
-  const bg = hexToRgb(bgInput.value);
-  if (!fg || !bg) return;
-
-  const ratio = contrastRatioCalc(...fg, ...bg);
-  contrastRatio.textContent = ratio.toFixed(2) + ' : 1';
-
-  const badges = [
-    { label: 'AA Normal',  pass: ratio >= 4.5 },
-    { label: 'AA Large',   pass: ratio >= 3   },
-    { label: 'AAA Normal', pass: ratio >= 7   },
-    { label: 'AAA Large',  pass: ratio >= 4.5 },
-  ];
-
-  wcagBadges.innerHTML = badges.map(b =>
-    `<span class="wcag-badge ${b.pass ? 'pass' : 'fail'}">${b.label} ${b.pass ? '✓' : '✗'}</span>`
-  ).join('');
-}
-
-function renderCBSim() {
-  const colors = generateHarmony(state.r, state.g, state.b, state.harmony, state.hueOffset);
-  const modes = [
-    { key: 'normal',      label: 'NORMAL',      desc: 'Standard trichromatic vision — baseline for comparison.' },
-    { key: 'protanopia',  label: 'PROTANOPIA',  desc: 'Reduced sensitivity to red wavelengths — affects ~1% of males.' },
-    { key: 'deuteranopia',label: 'DEUTERANOPIA',desc: 'Reduced sensitivity to green wavelengths — most common form, ~6% of males.' },
-    { key: 'tritanopia',  label: 'TRITANOPIA',  desc: 'Reduced sensitivity to blue wavelengths — rare, ~0.01% of population.' },
-  ];
-
-  cbSimGrid.innerHTML = modes.map(mode => {
-    const swatches = colors.map(c => {
-      const [sr, sg, sb] = mode.key === 'normal' ? [c.r, c.g, c.b] : simulateCB(c.r, c.g, c.b, mode.key);
-      return `<div class="cbsim-swatch" style="background-color:${rgbToHex(sr,sg,sb)}"></div>`;
-    }).join('');
-    return `
-      <div class="cbsim-row">
-        <div class="cbsim-label">${mode.label}</div>
-        <div class="cbsim-desc">${mode.desc}</div>
-        <div class="cbsim-swatches">${swatches}</div>
-      </div>`;
-  }).join('');
-}
-
-// ── Event: Primary selector buttons ────────────────
-
-Object.entries(btns).forEach(([ch, btn]) => {
-  btn.addEventListener('click', () => {
-    const isActive = state.primaries.has(ch);
-
-    if (isActive) {
-      // Must keep exactly 2 active — reject if only 2 remain
-      if (state.primaries.size <= 2) {
-        btn.classList.add('flicker');
-        btn.addEventListener('animationend', () => btn.classList.remove('flicker'), { once: true });
-        return;
-      }
-      state.primaries.delete(ch);
-    } else {
-      state.primaries.add(ch);
-      // If now more than 2, remove the one that wasn't just clicked (the constrained one)
-      if (state.primaries.size > 2) {
-        state.primaries.delete(state.constrained);
-      }
-    }
-
-    // Determine new constrained channel
-    state.constrained = ['r','g','b'].find(c => !state.primaries.has(c));
-
-    // Update button states
-    ['r','g','b'].forEach(c => {
-      const active = state.primaries.has(c);
-      btns[c].classList.toggle('active', active);
-      btns[c].setAttribute('aria-pressed', active);
-    });
-
-    applyConstrainedUI();
-    updateConstrainedSlider();
-
-    state.r = parseInt(sliders.r.value);
-    state.g = parseInt(sliders.g.value);
-    state.b = parseInt(sliders.b.value);
-    render();
-  });
+// ── Window resize ──────────────────────────────────
+const resizeObserver = new ResizeObserver(() => {
+  resizeCanvas();
 });
+resizeObserver.observe(canvasWrap);
 
-// ── Event: Sliders ─────────────────────────────────
-
-['r','g','b'].forEach(ch => {
-  sliders[ch].addEventListener('input', () => {
-    state[ch] = parseInt(sliders[ch].value);
-    vals[ch].textContent = state[ch];
-
-    if (state.primaries.has(ch)) {
-      updateConstrainedSlider();
-      state[state.constrained] = parseInt(sliders[state.constrained].value);
-      vals[state.constrained].textContent = state[state.constrained];
-    }
-
-    render();
-  });
-});
-
-// ── Event: Copy hex ────────────────────────────────
-
-copyBtn.addEventListener('click', () => {
-  const hex = rgbToHex(state.r, state.g, state.b);
-  navigator.clipboard.writeText(hex).catch(() => {});
-  copyBtn.classList.add('copied');
-  copyLabel.textContent = 'COPIED!';
-  setTimeout(() => {
-    copyBtn.classList.remove('copied');
-    copyLabel.textContent = 'COPY';
-  }, 1500);
-});
-
-// ── Event: Harmony buttons ─────────────────────────
-
-document.querySelectorAll('.harmony-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.harmony-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    state.harmony = btn.dataset.harmony;
-    renderPalette();
-    if (state.accessibilityOpen && state.activeTab === 'colorblind') renderCBSim();
-  });
-});
-
-// ── Event: Randomize ───────────────────────────────
-
-randomBtn.addEventListener('click', () => {
-  state.hueOffset = Math.random() * 360;
-  renderPalette();
-  if (state.accessibilityOpen && state.activeTab === 'colorblind') renderCBSim();
-});
-
-// ── Event: Accessibility toolbar toggle ────────────
-
-toolbarToggle.addEventListener('click', () => {
-  state.accessibilityOpen = !state.accessibilityOpen;
-  toolbarToggle.setAttribute('aria-expanded', state.accessibilityOpen);
-  toolbarContent.hidden = !state.accessibilityOpen;
-  toolbarToggle.textContent = (state.accessibilityOpen ? '▲' : '▼') + ' ACCESSIBILITY TOOLS';
-  if (state.accessibilityOpen) {
-    syncContrastFromMixed();
-    renderContrast();
-    renderCBSim();
-  }
-});
-
-// ── Event: Toolbar tabs ────────────────────────────
-
-document.querySelectorAll('.tab-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab-btn').forEach(b => {
-      b.classList.remove('active');
-      b.setAttribute('aria-selected', 'false');
-    });
-    btn.classList.add('active');
-    btn.setAttribute('aria-selected', 'true');
-    state.activeTab = btn.dataset.tab;
-
-    document.querySelectorAll('.tab-panel').forEach(p => {
-      p.classList.remove('active');
-      p.hidden = true;
-    });
-    const panel = id(`tab-${state.activeTab}`);
-    panel.classList.add('active');
-    panel.hidden = false;
-
-    if (state.activeTab === 'contrast') renderContrast();
-    if (state.activeTab === 'colorblind') renderCBSim();
-  });
-});
-
-// ── Event: Contrast well inputs ────────────────────
-
-[fgInput, bgInput].forEach(input => {
-  input.addEventListener('input', () => {
-    input.dataset.manual = '1';
-    updateWellSwatches();
-    if (input.value.length === 7) renderContrast();
-  });
-  input.addEventListener('blur', () => {
-    // reset manual flag after a delay so future mixed-color changes still sync
-    setTimeout(() => delete input.dataset.manual, 3000);
-    renderContrast();
-  });
-});
-
-swapBtn.addEventListener('click', () => {
-  const tmp = fgInput.value;
-  fgInput.value = bgInput.value;
-  bgInput.value = tmp;
-  updateWellSwatches();
-  renderContrast();
-});
-
-// ── Init ────────────────────────────────────────────
-
-applyConstrainedUI();
-updateConstrainedSlider();
-render();
+// ── Init ───────────────────────────────────────────
+resizeCanvas();
+initCircles();
+renderPalette();
+renderSuggestions();
+draw();
