@@ -133,12 +133,8 @@ body {
   flex: 1;
   position: relative;
   overflow: hidden;
-  cursor: default;
+  cursor: none;
   transition: background-color 0.4s ease;
-}
-
-.canvas-wrap.picking {
-  cursor: crosshair;
 }
 
 #mixCanvas {
@@ -479,7 +475,7 @@ body.paint #slider2 { background: linear-gradient(to right, rgba(255,255,0,0.1),
   50% { box-shadow: var(--glow-md) var(--neon-cyan), var(--glow-lg) rgba(0,255,238,0.3); color: var(--neon-cyan); border-color: var(--neon-cyan); }
 }
 
-.pick-btn {
+.add-color-btn {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -495,10 +491,12 @@ body.paint #slider2 { background: linear-gradient(to right, rgba(255,255,0,0.1),
   text-transform: uppercase;
   transition: all 0.2s;
 }
-.pick-btn:hover,
-.pick-btn.active {
+.add-color-btn:hover {
   background: rgba(0,255,238,0.1);
   box-shadow: var(--glow-sm) var(--neon-cyan), var(--glow-md) rgba(0,255,238,0.3);
+}
+.add-color-btn:active {
+  transform: scale(0.96);
 }
 
 .pick-warning {

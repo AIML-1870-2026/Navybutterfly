@@ -8,29 +8,28 @@ const CIRCLE_RADIUS = 180;
 const MAX_PALETTE   = 5;
 
 // ── DOM ────────────────────────────────────────────
-const canvas       = document.getElementById('mixCanvas');
-const ctx          = canvas.getContext('2d', { willReadFrequently: true });
-const canvasWrap   = document.getElementById('canvasWrap');
-const eyedropEl    = document.getElementById('eyedropPreview');
-const paletteSlots = document.getElementById('paletteSlots');
-const suggList     = document.getElementById('suggestionsList');
-const suggEmpty    = document.getElementById('suggestionsEmpty');
-const pickBtn      = document.getElementById('pickBtn');
-const pickWarning  = document.getElementById('pickWarning');
-const resetBtn     = document.getElementById('resetBtn');
-const btnLight     = document.getElementById('btnLight');
-const btnPaint     = document.getElementById('btnPaint');
-const sliders      = [0,1,2].map(i => document.getElementById(`slider${i}`));
-const pcts         = [0,1,2].map(i => document.getElementById(`pct${i}`));
-const labels       = [0,1,2].map(i => document.getElementById(`label${i}`));
+const canvas        = document.getElementById('mixCanvas');
+const ctx           = canvas.getContext('2d', { willReadFrequently: true });
+const canvasWrap    = document.getElementById('canvasWrap');
+const eyedropEl     = document.getElementById('eyedropPreview');
+const paletteSlots  = document.getElementById('paletteSlots');
+const suggList      = document.getElementById('suggestionsList');
+const suggEmpty     = document.getElementById('suggestionsEmpty');
+const addColorBtn   = document.getElementById('addColorBtn');
+const pickWarning   = document.getElementById('pickWarning');
+const resetBtn      = document.getElementById('resetBtn');
+const btnLight      = document.getElementById('btnLight');
+const btnPaint      = document.getElementById('btnPaint');
+const sliders       = [0,1,2].map(i => document.getElementById(`slider${i}`));
+const pcts          = [0,1,2].map(i => document.getElementById(`pct${i}`));
+const labels        = [0,1,2].map(i => document.getElementById(`label${i}`));
 
 // ── State ──────────────────────────────────────────
 const state = {
   mode: 'light',   // 'light' | 'paint'
-  picking: false,
   palette: [],     // array of hex strings
   circles: null,   // set in initCircles()
-  intensities: [1, 1, 1],
+  intensities: [0.5, 0.5, 0.5],
   drag: null,      // { index, offsetX, offsetY }
   eyeColor: null,  // current eyedrop pixel
 };
@@ -96,6 +95,10 @@ function draw() {
   const circles = isLight ? LIGHT_CIRCLES : PAINT_CIRCLES;
   const compositeOp = isLight ? 'screen' : 'multiply';
 
+  // Paint mode boost: slider 0→1 maps to 0→2× effective intensity
+  // so slider at 0.5 = old "100%", slider at 1.0 = double pass (much stronger)
+  const PAINT_BOOST = 2.0;
+
   state.circles.forEach((pos, i) => {
     const col = circles[i];
     const intensity = state.intensities[i];
@@ -110,17 +113,36 @@ function draw() {
       ctx.beginPath();
       ctx.arc(pos.x, pos.y, CIRCLE_RADIUS * 1.6, 0, Math.PI * 2);
       ctx.fill();
-    }
 
-    // Main circle
-    ctx.globalCompositeOperation = compositeOp;
-    const grad = ctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, CIRCLE_RADIUS);
-    grad.addColorStop(0, `rgba(${col.r}, ${col.g}, ${col.b}, ${intensity})`);
-    grad.addColorStop(1, `rgba(${col.r}, ${col.g}, ${col.b}, 0)`);
-    ctx.fillStyle = grad;
-    ctx.beginPath();
-    ctx.arc(pos.x, pos.y, CIRCLE_RADIUS, 0, Math.PI * 2);
-    ctx.fill();
+      // Single main circle pass for light mode
+      ctx.globalCompositeOperation = compositeOp;
+      const grad = ctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, CIRCLE_RADIUS);
+      grad.addColorStop(0, `rgba(${col.r}, ${col.g}, ${col.b}, ${intensity})`);
+      grad.addColorStop(1, `rgba(${col.r}, ${col.g}, ${col.b}, 0)`);
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, CIRCLE_RADIUS, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      // Paint mode: multi-pass to allow intensity > 100% effective strength
+      const scaled    = intensity * PAINT_BOOST;
+      const fullPasses = Math.floor(scaled);
+      const remainder  = scaled - fullPasses;
+
+      const drawPass = (alpha) => {
+        ctx.globalCompositeOperation = compositeOp;
+        const grad = ctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, CIRCLE_RADIUS);
+        grad.addColorStop(0, `rgba(${col.r}, ${col.g}, ${col.b}, ${alpha})`);
+        grad.addColorStop(1, `rgba(${col.r}, ${col.g}, ${col.b}, 0)`);
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, CIRCLE_RADIUS, 0, Math.PI * 2);
+        ctx.fill();
+      };
+
+      for (let p = 0; p < fullPasses; p++) drawPass(1.0);
+      if (remainder > 0.001) drawPass(remainder);
+    }
   });
 
   ctx.globalCompositeOperation = 'source-over';
@@ -150,10 +172,6 @@ function canvasCoords(e) {
 // ── Drag ───────────────────────────────────────────
 canvas.addEventListener('mousedown', e => {
   const { x, y } = canvasCoords(e);
-  if (state.picking) {
-    pickColorAt(x, y);
-    return;
-  }
   const idx = hitTest(x, y);
   if (idx !== -1) {
     state.drag = { index: idx, offsetX: x - state.circles[idx].x, offsetY: y - state.circles[idx].y };
@@ -162,10 +180,9 @@ canvas.addEventListener('mousedown', e => {
 
 canvas.addEventListener('mousemove', e => {
   const { x, y } = canvasCoords(e);
-  if (state.picking) {
-    updateEyedrop(x, y, e.clientX, e.clientY);
-    return;
-  }
+  // Always update eyedrop preview
+  updateEyedrop(x, y, e.clientX, e.clientY);
+  // Also handle drag if active
   if (!state.drag) return;
   const idx = state.drag.index;
   state.circles[idx].x = Math.max(0, Math.min(canvas.width,  x - state.drag.offsetX));
@@ -173,13 +190,12 @@ canvas.addEventListener('mousemove', e => {
 });
 
 canvas.addEventListener('mouseup', () => { state.drag = null; });
-canvas.addEventListener('mouseleave', () => { state.drag = null; });
+canvas.addEventListener('mouseleave', () => { state.drag = null; hideEyedrop(); });
 
 // Touch
 canvas.addEventListener('touchstart', e => {
   e.preventDefault();
   const { x, y } = canvasCoords(e);
-  if (state.picking) { pickColorAt(x, y); return; }
   const idx = hitTest(x, y);
   if (idx !== -1) {
     state.drag = { index: idx, offsetX: x - state.circles[idx].x, offsetY: y - state.circles[idx].y };
@@ -197,7 +213,7 @@ canvas.addEventListener('touchmove', e => {
 
 canvas.addEventListener('touchend', () => { state.drag = null; });
 
-// ── Eyedropper ─────────────────────────────────────
+// ── Eyedropper (always on) ─────────────────────────
 function updateEyedrop(cx, cy, clientX, clientY) {
   const px = Math.floor(cx), py = Math.floor(cy);
   if (px < 0 || py < 0 || px >= canvas.width || py >= canvas.height) return;
@@ -205,55 +221,22 @@ function updateEyedrop(cx, cy, clientX, clientY) {
   const hex = rgbToHex(data[0], data[1], data[2]);
   state.eyeColor = hex;
 
+  const wrapRect = canvasWrap.getBoundingClientRect();
   eyedropEl.style.display = 'block';
   eyedropEl.style.backgroundColor = hex;
-  eyedropEl.style.color = hex;  // drives CSS currentColor in animation
-  eyedropEl.style.left = clientX - canvasWrap.getBoundingClientRect().left + 'px';
-  eyedropEl.style.top  = clientY - canvasWrap.getBoundingClientRect().top  + 'px';
+  eyedropEl.style.color = hex;
+  eyedropEl.style.left = (clientX - wrapRect.left) + 'px';
+  eyedropEl.style.top  = (clientY - wrapRect.top)  + 'px';
 }
 
 function hideEyedrop() {
   eyedropEl.style.display = 'none';
-  state.eyeColor = null;
 }
 
-function pickColorAt(x, y) {
-  const px = Math.floor(x), py = Math.floor(y);
-  if (px < 0 || py < 0 || px >= canvas.width || py >= canvas.height) return;
-  const data = ctx.getImageData(px, py, 1, 1).data;
-  const hex = rgbToHex(data[0], data[1], data[2]);
-  addToPalette(hex);
-  deactivatePicker();
-}
-
-function activatePicker() {
-  state.picking = true;
-  pickBtn.classList.add('active');
-  canvasWrap.classList.add('picking');
-}
-
-function deactivatePicker() {
-  state.picking = false;
-  pickBtn.classList.remove('active');
-  canvasWrap.classList.remove('picking');
-  hideEyedrop();
-}
-
-pickBtn.addEventListener('click', () => {
-  state.picking ? deactivatePicker() : activatePicker();
-});
-
-// Track mouse over the canvas wrap for eyedrop preview
-canvasWrap.addEventListener('mousemove', e => {
-  if (!state.picking) return;
-  const rect = canvas.getBoundingClientRect();
-  const cx = (e.clientX - rect.left) * (canvas.width  / rect.width);
-  const cy = (e.clientY - rect.top)  * (canvas.height / rect.height);
-  updateEyedrop(cx, cy, e.clientX, e.clientY);
-});
-
-canvasWrap.addEventListener('mouseleave', () => {
-  if (state.picking) hideEyedrop();
+// ADD COLOR button — captures current eyedrop color into palette
+addColorBtn.addEventListener('click', () => {
+  if (!state.eyeColor) return;
+  addToPalette(state.eyeColor);
 });
 
 // ── Mode switch ────────────────────────────────────
@@ -280,10 +263,10 @@ sliders.forEach((sl, i) => {
 });
 
 resetBtn.addEventListener('click', () => {
-  state.intensities = [1, 1, 1];
+  state.intensities = [0.5, 0.5, 0.5];
   sliders.forEach((sl, i) => {
-    sl.value = 1;
-    pcts[i].textContent = '100%';
+    sl.value = 0.5;
+    pcts[i].textContent = '50%';
   });
   resetBtn.classList.add('flash');
   resetBtn.addEventListener('animationend', () => resetBtn.classList.remove('flash'), { once: true });
@@ -390,17 +373,12 @@ function reverseMode(hex) {
     pcts[i].textContent = Math.round(state.intensities[i] * 100) + '%';
   });
 
-  // Show eyedrop preview at canvas center
-  const cx = canvas.width / 2, cy = canvas.height / 2;
-  const rect = canvas.getBoundingClientRect();
-  const clientX = rect.left + (cx / canvas.width)  * rect.width;
-  const clientY = rect.top  + (cy / canvas.height) * rect.height;
-  eyedropEl.style.display = 'block';
-  eyedropEl.style.backgroundColor = hex;
-  eyedropEl.style.color = hex;
-  eyedropEl.style.left = clientX - canvasWrap.getBoundingClientRect().left + 'px';
-  eyedropEl.style.top  = clientY - canvasWrap.getBoundingClientRect().top  + 'px';
-  setTimeout(() => hideEyedrop(), 2000);
+  // Flash the eyedrop preview at canvas center to show the reconstructed color
+  const wrapRect = canvasWrap.getBoundingClientRect();
+  const previewX = wrapRect.left + wrapRect.width  / 2;
+  const previewY = wrapRect.top  + wrapRect.height / 2;
+  const cx2 = canvas.width / 2, cy2 = canvas.height / 2;
+  updateEyedrop(cx2, cy2, previewX, previewY);
 }
 
 // ── Suggestions ────────────────────────────────────

@@ -59,29 +59,24 @@
     <div class="intensity-group">
       <div class="intensity-row" id="intensityRow0">
         <label class="intensity-label" id="label0" for="slider0">RED</label>
-        <input type="range" class="intensity-slider" id="slider0" min="0.05" max="1" step="0.01" value="1" aria-label="Circle 1 intensity" />
-        <span class="intensity-pct" id="pct0">100%</span>
+        <input type="range" class="intensity-slider" id="slider0" min="0.05" max="1" step="0.01" value="0.5" aria-label="Circle 1 intensity" />
+        <span class="intensity-pct" id="pct0">50%</span>
       </div>
       <div class="intensity-row" id="intensityRow1">
         <label class="intensity-label" id="label1" for="slider1">GREEN</label>
-        <input type="range" class="intensity-slider" id="slider1" min="0.05" max="1" step="0.01" value="1" aria-label="Circle 2 intensity" />
-        <span class="intensity-pct" id="pct1">100%</span>
+        <input type="range" class="intensity-slider" id="slider1" min="0.05" max="1" step="0.01" value="0.5" aria-label="Circle 2 intensity" />
+        <span class="intensity-pct" id="pct1">50%</span>
       </div>
       <div class="intensity-row" id="intensityRow2">
         <label class="intensity-label" id="label2" for="slider2">BLUE</label>
-        <input type="range" class="intensity-slider" id="slider2" min="0.05" max="1" step="0.01" value="1" aria-label="Circle 3 intensity" />
-        <span class="intensity-pct" id="pct2">100%</span>
+        <input type="range" class="intensity-slider" id="slider2" min="0.05" max="1" step="0.01" value="0.5" aria-label="Circle 3 intensity" />
+        <span class="intensity-pct" id="pct2">50%</span>
       </div>
     </div>
 
     <div class="toolbar-actions">
       <button class="reset-btn" id="resetBtn" aria-label="Reset all intensities">RESET INTENSITIES</button>
-      <button class="pick-btn" id="pickBtn" aria-label="Toggle eyedropper color picker">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-          <path d="M13.7 1.3a1 1 0 0 0-1.4 0L10 3.6l-.7-.7a1 1 0 0 0-1.4 1.4l.7.7-6.3 6.3A1 1 0 0 0 2 12v2h2a1 1 0 0 0 .7-.3l6.3-6.3.7.7a1 1 0 0 0 1.4-1.4l-.7-.7 2.3-2.3a1 1 0 0 0 0-1.4z"/>
-        </svg>
-        PICK COLOR
-      </button>
+      <button class="add-color-btn" id="addColorBtn" aria-label="Add current eyedropper color to palette">+ ADD COLOR</button>
       <div class="pick-warning" id="pickWarning" aria-live="assertive"></div>
     </div>
   </div>
