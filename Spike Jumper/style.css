@@ -1,0 +1,98 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #0a0a0f;
+  --ground: #1a1a2e;
+  --ground-line: #00ffff;
+  --player-fill: #00ffff;
+  --player-glow: rgba(0, 255, 255, 0.53);
+  --spike-fill: #ff2d55;
+  --spike-glow: rgba(255, 45, 85, 0.4);
+  --saw-fill: #ffcc00;
+  --saw-glow: rgba(255, 204, 0, 0.4);
+  --text-primary: #ffffff;
+  --text-accent: #00ffff;
+  --hud-bg: rgba(0, 0, 0, 0.5);
+  --purple: #a855f7;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  font-family: 'Orbitron', monospace;
+  color: var(--text-primary);
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+
+#gameCanvas {
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  cursor: none;
+}
+
+/* ── HUD ─────────────────────────────────────────────────────────────────── */
+#hud {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+#muteBtn {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  width: 40px;
+  height: 40px;
+  background: var(--hud-bg);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 18px;
+  cursor: pointer;
+  pointer-events: all;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  z-index: 20;
+  line-height: 1;
+}
+
+#muteBtn:hover {
+  border-color: var(--ground-line);
+  box-shadow: 0 0 8px var(--player-glow);
+}
+
+#muteBtn:active {
+  transform: scale(0.92);
+}
+
+/* ── Loading / font-flash prevention ────────────────────────────────────── */
+body {
+  animation: bodyFadeIn 0.3s ease forwards;
+}
+
+@keyframes bodyFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Scrollbar hide ──────────────────────────────────────────────────────── */
+::-webkit-scrollbar { display: none; }

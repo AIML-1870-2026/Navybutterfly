@@ -31,8 +31,9 @@
     fgSwatch:     q('#fg-swatch'),
     sizeSlider:   q('#size-slider'),
     sizeReadout:  q('#size-readout'),
-    previewArea:  q('#preview-area'),
-    previewText:  q('#preview-text'),
+    previewArea:       q('#preview-area'),
+    previewFilterTarget: q('#preview-filter-target'),
+    previewText:       q('#preview-text'),
     lumBg:        q('#lum-bg'),
     lumFg:        q('#lum-fg'),
     contrastRatio:q('#contrast-ratio'),
@@ -71,7 +72,7 @@
     els.fgSwatch.style.background = `rgb(${fg.r},${fg.g},${fg.b})`;
 
     // Preview area
-    els.previewArea.style.background = `rgb(${bg.r},${bg.g},${bg.b})`;
+    els.previewFilterTarget.style.background = `rgb(${bg.r},${bg.g},${bg.b})`;
     els.previewText.style.color = `rgb(${fg.r},${fg.g},${fg.b})`;
     els.previewText.style.fontSize = `${size}px`;
 
@@ -86,12 +87,13 @@
     els.contrastRatio.textContent = ratio.toFixed(2) + ':1';
 
     // Badges
+    const isLargeText = state.size >= 24;
     setBadge(els.badgeNormal, ratio >= 4.5);
-    setBadge(els.badgeLarge,  ratio >= 3.0);
+    setBadge(els.badgeLarge,  isLargeText ? ratio >= 3.0 : ratio >= 4.5);
 
     // Vision filter on preview area
     const filterName = state.vision === 'normal' ? 'none' : `url(#filter-${state.vision})`;
-    els.previewArea.style.filter = filterName;
+    els.previewFilterTarget.style.filter = filterName;
   }
 
   function setBadge(el, pass) {
@@ -109,7 +111,10 @@
     });
 
     numEl.addEventListener('input', () => {
-      const v = clamp(parseInt(numEl.value, 10) || 0);
+      if (numEl.value === '') return;
+      const parsed = parseInt(numEl.value, 10);
+      if (isNaN(parsed)) return;
+      const v = clamp(parsed);
       colorObj[channel] = v;
       sliderEl.value = v;
       render();
