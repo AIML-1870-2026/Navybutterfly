@@ -1,4 +1,5 @@
 // ─── Constants ───────────────────────────────────────────────────────────────
+const COYOTE_TIME = 0.08;
 const GRAVITY = 2800;
 const JUMP_VELOCITY = -1050;
 const SHORT_HOP_CUTOFF = 0.35;
@@ -537,6 +538,7 @@ class Player {
     this.trail = [];
     this.dead = false;
     this.justLanded = false;
+    this.coyoteTimer = 0;
   }
 
   get hitbox() {
@@ -549,7 +551,7 @@ class Player {
   }
 
   jump(full) {
-    if (!this.onGround || this.dead) return false;
+    if ((this.coyoteTimer <= 0 && !this.onGround) || this.dead) return false;
     this.vy = JUMP_VELOCITY;
     this.onGround = false;
     this.jumpHeld = full;
@@ -584,6 +586,7 @@ class Player {
       this.y = groundTop;
       if (this.vy > 0) {
         this.onGround = true;
+        this.coyoteTimer = COYOTE_TIME;
         this.jumpHeld = false;
         this.jumpCut = false;
         this.justLanded = true;
@@ -593,6 +596,7 @@ class Player {
       }
       this.vy = 0;
     }
+    if (this.coyoteTimer > 0) this.coyoteTimer -= dt;
 
     // Squash/stretch recovery
     if (this.landTimer > 0) {
@@ -1001,7 +1005,7 @@ class Game {
       return;
     }
     if (this.state === 'playing') {
-      this.holdStartTime = performance.now();
+      this.holdStartTime = performance.now(); // always reset first
       const jumped = this.player.jump(true);
       if (jumped) {
         this.audio.playJump(true);
