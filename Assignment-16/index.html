@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Science Experiment Generator</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&family=Courier+Prime&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <header class="site-header">
+    <h1 class="site-title">Science Experiment Generator</h1>
+    <p class="site-tagline">Turn your supplies into discovery!</p>
+    <div class="header-emoji-row" aria-hidden="true">🔬 🧪 ⚗️ 💡 🌡️</div>
+  </header>
+
+  <div id="error-banner" class="error-banner hidden" role="alert">
+    <span id="error-banner-text"></span>
+    <button id="btn-dismiss-error" class="btn-dismiss" aria-label="Dismiss error">×</button>
+  </div>
+
+  <main class="main-layout">
+
+    <section class="col-inputs" aria-label="Experiment inputs">
+
+      <div class="card" id="card-api-key">
+        <h2 class="card-title">🔑 API Key</h2>
+
+        <label class="btn btn-outline btn-file-label" for="key-file">
+          🔒 Upload your .env file
+          <input type="file" id="key-file" accept=".env,.txt,.csv" class="visually-hidden">
+        </label>
+
+        <div id="key-loaded-badge" class="key-loaded-badge hidden" role="status">
+          🔒 Key loaded — memory only, never saved
+        </div>
+
+        <label for="api-key-manual" class="field-label">Or paste your key:</label>
+        <input
+          type="password"
+          id="api-key-manual"
+          class="input-field"
+          placeholder="sk-..."
+          autocomplete="off"
+          spellcheck="false"
+        >
+
+        <div id="key-error" class="field-error hidden" role="alert"></div>
+      </div>
+
+      <div class="card">
+        <label for="grade-select" class="card-title">🎓 Grade Level</label>
+        <select id="grade-select" class="select-field">
+          <option value="">Select a grade…</option>
+          <option value="Kindergarten">Kindergarten</option>
+          <option value="1st Grade">1st Grade</option>
+          <option value="2nd Grade">2nd Grade</option>
+          <option value="3rd Grade">3rd Grade</option>
+          <option value="4th Grade">4th Grade</option>
+          <option value="5th Grade">5th Grade</option>
+          <option value="6th Grade">6th Grade</option>
+          <option value="7th Grade">7th Grade</option>
+          <option value="8th Grade">8th Grade</option>
+          <option value="9th Grade">9th Grade</option>
+          <option value="10th Grade">10th Grade</option>
+          <option value="11th Grade">11th Grade</option>
+          <option value="12th Grade">12th Grade</option>
+        </select>
+        <div id="grade-error" class="field-error hidden" role="alert"></div>
+      </div>
+
+      <div class="card">
+        <label for="supplies-input" class="card-title">🧴 What supplies do you have?</label>
+        <textarea
+          id="supplies-input"
+          class="textarea-field textarea-supplies"
+          placeholder="e.g., baking soda, vinegar, food coloring, empty bottles, balloons..."
+          rows="4"
+        ></textarea>
+        <p class="field-helper">List anything you have on hand — household items work great!</p>
+        <div id="supplies-error" class="field-error hidden" role="alert"></div>
+      </div>
+
+      <div class="card" id="card-quick-supplies">
+        <h2 class="card-title">⚡ Quick Add Supplies</h2>
+        <div class="chip-legend" aria-label="Category legend">
+          <span class="legend-chip chip-chemical">Household chemicals</span>
+          <span class="legend-chip chip-kitchen">Kitchen items</span>
+          <span class="legend-chip chip-craft">Craft supplies</span>
+        </div>
+        <div class="quick-supplies-grid" id="quick-supplies-grid" role="group" aria-label="Quick add supply buttons">
+          <button type="button" class="supply-chip chip-chemical" data-supply="Baking soda">Baking soda</button>
+          <button type="button" class="supply-chip chip-chemical" data-supply="Vinegar">Vinegar</button>
+          <button type="button" class="supply-chip chip-chemical" data-supply="Dish soap">Dish soap</button>
+          <button type="button" class="supply-chip chip-chemical" data-supply="Food coloring">Food coloring</button>
+          <button type="button" class="supply-chip chip-chemical" data-supply="Water">Water</button>
+          <button type="button" class="supply-chip chip-kitchen" data-supply="Salt">Salt</button>
+          <button type="button" class="supply-chip chip-kitchen" data-supply="Sugar">Sugar</button>
+          <button type="button" class="supply-chip chip-kitchen" data-supply="Eggs">Eggs</button>
+          <button type="button" class="supply-chip chip-kitchen" data-supply="Lemons">Lemons</button>
+          <button type="button" class="supply-chip chip-kitchen" data-supply="Cornstarch">Cornstarch</button>
+          <button type="button" class="supply-chip chip-craft" data-supply="Balloons">Balloons</button>
+          <button type="button" class="supply-chip chip-craft" data-supply="Empty bottles">Empty bottles</button>
+          <button type="button" class="supply-chip chip-craft" data-supply="Rubber bands">Rubber bands</button>
+          <button type="button" class="supply-chip chip-craft" data-supply="Paper clips">Paper clips</button>
+          <button type="button" class="supply-chip chip-craft" data-supply="Aluminum foil">Aluminum foil</button>
+          <button type="button" class="supply-chip chip-craft" data-supply="Magnets">Magnets</button>
+          <button type="button" class="supply-chip chip-craft" data-supply="String">String</button>
+          <button type="button" class="supply-chip chip-craft" data-supply="Tape">Tape</button>
+          <button type="button" class="supply-chip chip-craft" data-supply="Straws">Straws</button>
+          <button type="button" class="supply-chip chip-craft" data-supply="Candles">Candles</button>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        id="btn-generate"
+        class="btn btn-generate"
+        disabled
+        aria-label="Generate science experiment"
+      >
+        <span id="btn-generate-text">🚀 Generate My Experiment!</span>
+        <span id="btn-generate-spinner" class="spinner hidden" aria-hidden="true"></span>
+      </button>
+
+    </section>
+
+    <section class="col-output" aria-label="Experiment output">
+
+      <div id="empty-state" class="empty-state">
+        <div class="empty-state-icon" aria-hidden="true">🔬</div>
+        <p class="empty-state-text">Your experiment will appear here!</p>
+        <p class="empty-state-sub">Fill in your supplies and hit Generate to get started.</p>
+      </div>
+
+      <div id="experiment-card" class="card experiment-card hidden">
+        <div class="experiment-card-header">
+          <div id="difficulty-badge" class="difficulty-badge hidden" aria-label="Difficulty level"></div>
+          <button type="button" id="btn-print" class="btn btn-sm btn-outline hidden" aria-label="Print worksheet">
+            🖨️ Print Worksheet
+          </button>
+        </div>
+
+        <div id="experiment-output" class="experiment-output"></div>
+
+        <div id="substitution-section" class="substitution-section hidden">
+          <button type="button" id="btn-substitution" class="btn btn-sm btn-secondary">
+            🔄 Missing a supply? Get substitutions
+          </button>
+          <div id="substitution-panel" class="substitution-panel hidden">
+            <label for="substitution-input" class="field-label">Which supply are you missing?</label>
+            <div class="substitution-input-row">
+              <input
+                type="text"
+                id="substitution-input"
+                class="input-field"
+                placeholder="e.g., vinegar"
+              >
+              <button type="button" id="btn-substitution-submit" class="btn btn-primary btn-sm">
+                Find Substitutes
+              </button>
+            </div>
+            <div id="substitution-output" class="substitution-output hidden" role="region" aria-live="polite"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="history-section" class="history-section hidden" aria-label="Experiment history">
+        <div class="history-header">
+          <h2 class="history-title">📚 Your Experiment History</h2>
+          <button type="button" id="btn-clear-history" class="btn btn-sm btn-outline">
+            Clear History
+          </button>
+        </div>
+        <div id="history-list" class="history-list" role="list"></div>
+      </div>
+
+    </section>
+  </main>
+
+  <div id="print-worksheet" class="print-worksheet" aria-hidden="true">
+    <div class="print-header">
+      <h1>Science Lab Worksheet</h1>
+    </div>
+    <div class="print-meta">
+      <span>Name: ____________________________________________</span>
+      <span>Date: ____________________</span>
+      <span>Grade: ____________________</span>
+    </div>
+    <div id="print-experiment-title" class="print-experiment-title"></div>
+    <div class="print-section">
+      <h2>Hypothesis</h2>
+      <p><em>What do you think will happen?</em></p>
+      <div class="print-lines">
+        <div class="print-line"></div>
+        <div class="print-line"></div>
+        <div class="print-line"></div>
+      </div>
+    </div>
+    <div class="print-section">
+      <h2>Observation Log</h2>
+      <table class="print-obs-table">
+        <thead>
+          <tr><th>Step</th><th>What I Observed</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td></td></tr>
+          <tr><td>2</td><td></td></tr>
+          <tr><td>3</td><td></td></tr>
+          <tr><td>4</td><td></td></tr>
+          <tr><td>5</td><td></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="print-section">
+      <h2>Conclusion</h2>
+      <p><em>What did I learn?</em></p>
+      <div class="print-lines">
+        <div class="print-line"></div>
+        <div class="print-line"></div>
+        <div class="print-line"></div>
+        <div class="print-line"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
