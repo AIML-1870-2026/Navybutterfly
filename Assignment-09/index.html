@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Readable — Color Contrast Explorer</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Hidden SVG filters for vision simulation -->
+  <svg id="vision-filters" aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden;">
+    <defs>
+      <filter id="filter-normal">
+        <feColorMatrix type="matrix"
+          values="1 0 0 0 0
+                  0 1 0 0 0
+                  0 0 1 0 0
+                  0 0 0 1 0" />
+      </filter>
+      <filter id="filter-protanopia">
+        <feColorMatrix type="matrix"
+          values="0.567 0.433 0 0 0
+                  0.558 0.442 0 0 0
+                  0     0.242 0.758 0 0
+                  0     0     0     1 0" />
+      </filter>
+      <filter id="filter-deuteranopia">
+        <feColorMatrix type="matrix"
+          values="0.625 0.375 0 0 0
+                  0.7   0.3   0 0 0
+                  0     0.3   0.7 0 0
+                  0     0     0   1 0" />
+      </filter>
+      <filter id="filter-tritanopia">
+        <feColorMatrix type="matrix"
+          values="0.95  0.05  0     0 0
+                  0     0.433 0.567 0 0
+                  0     0.475 0.525 0 0
+                  0     0     0     1 0" />
+      </filter>
+      <filter id="filter-monochromacy">
+        <feColorMatrix type="matrix"
+          values="0.299 0.587 0.114 0 0
+                  0.299 0.587 0.114 0 0
+                  0.299 0.587 0.114 0 0
+                  0     0     0     1 0" />
+      </filter>
+    </defs>
+  </svg>
+
+  <header class="app-header">
+    <div class="header-left">
+      <span class="header-logo">◈</span>
+      <span class="header-title">READABLE</span>
+    </div>
+    <div class="header-right">WCAG 2.1</div>
+  </header>
+
+  <main class="app-main">
+
+    <!-- LEFT COLUMN: Controls -->
+    <aside class="controls-col">
+
+      <!-- Background Color -->
+      <section class="panel" id="panel-bg">
+        <div class="panel-label">BACKGROUND</div>
+        <div class="channel-row">
+          <span class="channel-letter">R</span>
+          <input class="channel-slider" type="range" min="0" max="255" value="255" id="bg-r-slider" />
+          <input class="channel-number" type="number" min="0" max="255" value="255" id="bg-r-num" />
+        </div>
+        <div class="channel-row">
+          <span class="channel-letter">G</span>
+          <input class="channel-slider" type="range" min="0" max="255" value="255" id="bg-g-slider" />
+          <input class="channel-number" type="number" min="0" max="255" value="255" id="bg-g-num" />
+        </div>
+        <div class="channel-row">
+          <span class="channel-letter">B</span>
+          <input class="channel-slider" type="range" min="0" max="255" value="255" id="bg-b-slider" />
+          <input class="channel-number" type="number" min="0" max="255" value="255" id="bg-b-num" />
+        </div>
+        <div class="swatch" id="bg-swatch"></div>
+      </section>
+
+      <!-- Text Color -->
+      <section class="panel" id="panel-fg">
+        <div class="panel-label">TEXT COLOR</div>
+        <div class="channel-row">
+          <span class="channel-letter">R</span>
+          <input class="channel-slider" type="range" min="0" max="255" value="0" id="fg-r-slider" />
+          <input class="channel-number" type="number" min="0" max="255" value="0" id="fg-r-num" />
+        </div>
+        <div class="channel-row">
+          <span class="channel-letter">G</span>
+          <input class="channel-slider" type="range" min="0" max="255" value="0" id="fg-g-slider" />
+          <input class="channel-number" type="number" min="0" max="255" value="0" id="fg-g-num" />
+        </div>
+        <div class="channel-row">
+          <span class="channel-letter">B</span>
+          <input class="channel-slider" type="range" min="0" max="255" value="0" id="fg-b-slider" />
+          <input class="channel-number" type="number" min="0" max="255" value="0" id="fg-b-num" />
+        </div>
+        <div class="swatch" id="fg-swatch"></div>
+      </section>
+
+      <!-- Text Size -->
+      <section class="panel" id="panel-size">
+        <div class="panel-label">TEXT SIZE</div>
+        <div class="channel-row">
+          <input class="channel-slider size-slider" type="range" min="8" max="72" value="32" id="size-slider" style="flex:1;" />
+          <span class="size-readout" id="size-readout">32px</span>
+        </div>
+      </section>
+
+      <!-- Luminance Display -->
+      <section class="panel" id="panel-luminance">
+        <div class="panel-label">LUMINANCE</div>
+        <div class="luminance-row">
+          <span class="lum-label">BG</span>
+          <span class="lum-value" id="lum-bg">1.000</span>
+        </div>
+        <div class="luminance-row">
+          <span class="lum-label">FG</span>
+          <span class="lum-value" id="lum-fg">0.000</span>
+        </div>
+      </section>
+
+    </aside>
+
+    <!-- RIGHT COLUMN: Preview + Stats + Simulation + Presets -->
+    <div class="preview-col">
+
+      <!-- Text Preview Area -->
+      <div class="preview-area" id="preview-area">
+        <p class="preview-text" id="preview-text">
+          The ascending aorta branches into the brachiocephalic trunk, left common carotid,
+          and left subclavian arteries. Cardiac output equals stroke volume multiplied by heart rate.
+        </p>
+      </div>
+
+      <!-- Stats Bar -->
+      <div class="stats-bar">
+        <div class="stat-section">
+          <span class="contrast-ratio" id="contrast-ratio">21.00:1</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-section">
+          <span class="stat-label">NORMAL TEXT</span>
+          <span class="badge" id="badge-normal">PASS</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-section">
+          <span class="stat-label">LARGE TEXT</span>
+          <span class="badge" id="badge-large">PASS</span>
+        </div>
+      </div>
+
+      <!-- Vision Simulation -->
+      <div class="panel vision-panel">
+        <div class="panel-label">VISION SIMULATION</div>
+        <div class="vision-buttons">
+          <button class="vision-btn active" data-filter="normal">Normal</button>
+          <button class="vision-btn" data-filter="protanopia">Protanopia</button>
+          <button class="vision-btn" data-filter="deuteranopia">Deuteranopia</button>
+          <button class="vision-btn" data-filter="tritanopia">Tritanopia</button>
+          <button class="vision-btn" data-filter="monochromacy">Monochromacy</button>
+        </div>
+        <div class="sim-lock-note" id="sim-lock-note" style="display:none;">
+          color controls locked during simulation
+        </div>
+      </div>
+
+      <!-- Presets -->
+      <div class="panel presets-panel">
+        <div class="panel-label">PRESETS</div>
+        <div class="presets-grid" id="presets-grid">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
