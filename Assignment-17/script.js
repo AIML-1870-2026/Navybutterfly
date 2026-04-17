@@ -979,6 +979,16 @@ document.getElementById('api-key-input').addEventListener('input', (e) => {
     console.log('[AI Agent] API key set via paste input.');
   }
 });
+document.getElementById('api-key-input').addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter') return;
+  const val = e.target.value.trim();
+  if (val.startsWith('sk-ant-')) {
+    apiKey = val;
+    aiStatusDot.className     = 'dot-loaded';
+    aiStatusLabel.textContent = 'Key loaded';
+    console.log('[AI Agent] API key set via Enter key.');
+  }
+});
 
 envFileInput.addEventListener('change', () => {
   const file = envFileInput.files[0];
