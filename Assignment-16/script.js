@@ -183,7 +183,49 @@ function updateGenerateButton() {
 /* ============================================================
    QUICK-SELECT CHIPS (Stretch 2)
    ============================================================ */
+const CATEGORY_CLASS = {
+  'chip-chemical': 'chip-chemical',
+  'chip-kitchen':  'chip-kitchen',
+  'chip-craft':    'chip-craft',
+};
+
+let activeFilter = null;  // 'chip-chemical' | 'chip-kitchen' | 'chip-craft' | null
+
+function applyChipFilter(category) {
+  const allChips = dom.quickSuppliesGrid.querySelectorAll('.supply-chip');
+  allChips.forEach(chip => {
+    chip.style.display = (!category || chip.classList.contains(category)) ? '' : 'none';
+  });
+}
+
 function attachChipListeners() {
+  // Legend filter clicks
+  document.querySelectorAll('.chip-legend .legend-chip').forEach(legend => {
+    legend.style.cursor = 'pointer';
+    legend.addEventListener('click', () => {
+      const cat = Object.keys(CATEGORY_CLASS).find(c => legend.classList.contains(c));
+      if (!cat) return;
+
+      if (activeFilter === cat) {
+        // Deselect — show all
+        activeFilter = null;
+        legend.style.outline = '';
+        document.querySelectorAll('.chip-legend .legend-chip').forEach(l => {
+          l.style.opacity = '';
+        });
+      } else {
+        activeFilter = cat;
+        document.querySelectorAll('.chip-legend .legend-chip').forEach(l => {
+          l.style.opacity = l === legend ? '1' : '0.4';
+        });
+        legend.style.outline = '2px solid currentColor';
+        legend.style.outlineOffset = '2px';
+      }
+
+      applyChipFilter(activeFilter);
+    });
+  });
+
   dom.quickSuppliesGrid.addEventListener('click', e => {
     const chip = e.target.closest('.supply-chip');
     if (!chip) return;
