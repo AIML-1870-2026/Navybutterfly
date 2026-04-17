@@ -988,7 +988,7 @@ const apiKeySubmit = document.getElementById('api-key-submit');
 apiKeyInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') acceptApiKey(apiKeyInput);
 });
-apiKeySubmit.addEventListener('click', () => acceptApiKey(apiKeyInput));
+if (apiKeySubmit) apiKeySubmit.addEventListener('click', () => acceptApiKey(apiKeyInput));
 
 envFileInput.addEventListener('change', () => {
   const file = envFileInput.files[0];
