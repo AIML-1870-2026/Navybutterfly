@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Velvet Room — AI Edition</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ART DECO PAGE FRAME -->
+  <div id="deco-frame" aria-hidden="true"></div>
+
+  <!-- Corner ornaments (SVG) -->
+  <svg class="deco-corner tl" aria-hidden="true" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <polygon points="7,7 7,22 10,22 10,10 22,10 22,7" fill="#c9a84c"/>
+    <polygon points="0,0 0,14 4,10 4,4 10,4 14,0" fill="#c9a84c" opacity="0.55"/>
+    <rect x="5" y="5" width="4" height="4" fill="#c9a84c" transform="rotate(45 7 7)"/>
+  </svg>
+  <svg class="deco-corner tr" aria-hidden="true" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <polygon points="7,7 7,22 10,22 10,10 22,10 22,7" fill="#c9a84c"/>
+    <polygon points="0,0 0,14 4,10 4,4 10,4 14,0" fill="#c9a84c" opacity="0.55"/>
+    <rect x="5" y="5" width="4" height="4" fill="#c9a84c" transform="rotate(45 7 7)"/>
+  </svg>
+  <svg class="deco-corner bl" aria-hidden="true" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <polygon points="7,7 7,22 10,22 10,10 22,10 22,7" fill="#c9a84c"/>
+    <polygon points="0,0 0,14 4,10 4,4 10,4 14,0" fill="#c9a84c" opacity="0.55"/>
+    <rect x="5" y="5" width="4" height="4" fill="#c9a84c" transform="rotate(45 7 7)"/>
+  </svg>
+  <svg class="deco-corner br" aria-hidden="true" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <polygon points="7,7 7,22 10,22 10,10 22,10 22,7" fill="#c9a84c"/>
+    <polygon points="0,0 0,14 4,10 4,4 10,4 14,0" fill="#c9a84c" opacity="0.55"/>
+    <rect x="5" y="5" width="4" height="4" fill="#c9a84c" transform="rotate(45 7 7)"/>
+  </svg>
+
+  <!-- ENTRY / PASSWORD SCREEN -->
+  <div id="entry-screen" role="dialog" aria-labelledby="entry-title">
+    <div class="entry-wrap">
+      <span class="entry-diamond tl"></span>
+      <span class="entry-diamond tr"></span>
+      <span class="entry-diamond bl"></span>
+      <span class="entry-diamond br"></span>
+
+      <h1 class="entry-title" id="entry-title">The Velvet Room</h1>
+      <p class="entry-est">Est. 1923 &mdash; Members Only</p>
+
+      <div class="h-rule"></div>
+
+      <p class="entry-flavor">&ldquo;A gentleman doesn&rsquo;t knock twice.&rdquo;</p>
+
+      <input
+        type="password"
+        id="password-input"
+        autocomplete="off"
+        placeholder="The password, friend&hellip;"
+        aria-label="Password"
+      />
+      <button id="enter-btn">Enter</button>
+
+      <div class="h-rule bottom"></div>
+    </div>
+  </div>
+
+  <!-- MAIN GAME SCREEN -->
+  <div id="game-screen" aria-label="The Velvet Room Blackjack">
+
+    <!-- HEADER -->
+    <header id="game-header">
+      <h1>&#127924; THE VELVET ROOM &#127924;</h1>
+      <p class="tagline">Est. 1923 &mdash; Members Only</p>
+      <div id="session-stats">Hands: 0 &nbsp;|&nbsp; W: 0 &nbsp;L: 0 &nbsp;P: 0</div>
+    </header>
+
+    <div class="g-rule"></div>
+
+    <!-- EDDIE MARLOWE -->
+    <section id="eddie-section" aria-live="polite" aria-label="Ace Eddie Marlowe's advice">
+      <div id="eddie-portrait" aria-hidden="true">
+        <svg viewBox="0 0 60 80" xmlns="http://www.w3.org/2000/svg" fill="#c9a84c">
+          <!-- Fedora brim -->
+          <ellipse cx="30" cy="15" rx="22" ry="4.5"/>
+          <!-- Fedora crown -->
+          <path d="M18 15 Q18 4 30 3 Q42 4 42 15Z"/>
+          <!-- Hatband -->
+          <rect x="18" y="13" width="24" height="3" fill="#1a0f0a" opacity="0.7"/>
+          <!-- Head -->
+          <ellipse cx="30" cy="28" rx="10.5" ry="12.5"/>
+          <!-- Neck -->
+          <rect x="26.5" y="39" width="7" height="6"/>
+          <!-- Bow tie left -->
+          <polygon points="24,43 27,46 27,40" fill="#1a0f0a"/>
+          <!-- Bow tie right -->
+          <polygon points="36,43 33,46 33,40" fill="#1a0f0a"/>
+          <!-- Bow tie knot -->
+          <rect x="27" y="41.5" width="6" height="3" rx="1" fill="#c9a84c"/>
+          <!-- Shirt collar -->
+          <polygon points="26,40 24,44 30,42" fill="#f5f0e8" opacity="0.5"/>
+          <polygon points="34,40 36,44 30,42" fill="#f5f0e8" opacity="0.5"/>
+          <!-- Jacket body -->
+          <path d="M9 80 L14 52 Q22 45 27 44 L30 56 L33 44 Q38 45 46 52 L51 80Z"/>
+          <!-- Left lapel shadow -->
+          <path d="M27 44 L18 60 L30 56Z" fill="#1a0f0a" opacity="0.45"/>
+          <!-- Right lapel shadow -->
+          <path d="M33 44 L42 60 L30 56Z" fill="#1a0f0a" opacity="0.45"/>
+          <!-- Pocket square (left chest) -->
+          <polygon points="15,55 19,53 19,58 15,59" fill="#f5f0e8" opacity="0.4"/>
+        </svg>
+      </div>
+
+      <div id="eddie-bubble">
+        <div id="eddie-name">Ace Eddie Marlowe</div>
+        <p id="eddie-text">Good evening, friend. The house always welcomes new blood.</p>
+      </div>
+    </section>
+
+    <div class="g-rule"></div>
+
+    <!-- DEALER HAND -->
+    <section class="hand-section" id="dealer-section">
+      <div class="hand-meta">
+        <span class="hand-label">Dealer</span>
+        <span class="hand-score" id="dealer-score">—</span>
+      </div>
+      <div class="cards-row" id="dealer-hand" aria-label="Dealer's cards"></div>
+    </section>
+
+    <!-- FELT TABLE CENTER (results live here) -->
+    <div id="felt-center">
+      <div id="felt-watermark">EST. 1923</div>
+      <div id="result-banner" aria-live="assertive">
+        <div class="result-text" id="result-text"></div>
+        <div class="result-detail" id="result-detail"></div>
+      </div>
+    </div>
+
+    <!-- PLAYER HAND(S) -->
+    <section class="hand-section" id="player-section">
+      <div class="hand-meta">
+        <span class="hand-label">Player</span>
+        <span class="hand-score" id="player-score">—</span>
+      </div>
+      <!-- Single hand (normal play) -->
+      <div class="cards-row" id="player-hand" aria-label="Your cards"></div>
+      <!-- Split hands (shown during split) -->
+      <div id="player-hands-wrap" style="display:none;" aria-label="Your split hands"></div>
+    </section>
+
+    <div class="g-rule"></div>
+
+    <!-- AI AGENT PANEL (NEW) -->
+    <div id="ai-panel">
+      <div id="ai-panel-header">
+        <span id="ai-panel-title">&#129302; AI Analysis</span>
+        <div id="ai-status-row">
+          <span id="ai-status-dot" class="dot-inactive"></span>
+          <span id="ai-status-label">No API key loaded</span>
+          <label id="env-upload-label" for="env-file-input">Upload .env</label>
+          <input type="file" id="env-file-input" accept=".env" style="display:none">
+        </div>
+      </div>
+      <div id="ai-divider"></div>
+      <div id="ai-content">
+        <div id="ai-recommendation-row">
+          <span id="ai-rec-label">Recommendation:</span>
+          <span id="ai-rec-badge" class="rec-none">&mdash;</span>
+        </div>
+        <p id="ai-reasoning">Upload a .env file with your ANTHROPIC_API_KEY to enable the AI agent.</p>
+        <button id="ai-execute-btn" disabled>Execute Recommendation</button>
+      </div>
+    </div>
+
+    <div class="g-rule"></div>
+
+    <!-- BETTING AREA -->
+    <div id="betting-area">
+      <div id="bet-balance-bar">
+        <span class="bet-label">Bet: <span class="gold-val" id="current-bet-display">$0</span></span>
+        <span class="bet-label">Balance: <span class="gold-val" id="balance-display">$500</span></span>
+      </div>
+      <div id="chips-and-clear">
+        <button class="chip chip-ivory" data-value="1"  aria-label="Add $1 chip">$1</button>
+        <button class="chip chip-red"   data-value="5"  aria-label="Add $5 chip">$5</button>
+        <button class="chip chip-green" data-value="25" aria-label="Add $25 chip">$25</button>
+        <button class="chip chip-black" data-value="100" aria-label="Add $100 chip">$100</button>
+        <button id="clear-bet-btn" aria-label="Clear current bet">Clear Bet</button>
+      </div>
+    </div>
+
+    <!-- ACTION BUTTONS -->
+    <div id="action-buttons">
+      <button class="action-btn" id="deal-btn">Deal</button>
+      <button class="action-btn" id="hit-btn"    disabled>Hit</button>
+      <button class="action-btn" id="stand-btn"  disabled>Stand</button>
+      <button class="action-btn" id="double-btn" disabled>Double</button>
+      <button class="action-btn" id="split-btn"  disabled>Split</button>
+    </div>
+
+  </div><!-- /#game-screen -->
+
+  <!-- GAME OVER SCREEN -->
+  <div id="gameover-screen" role="dialog" aria-labelledby="gameover-title">
+    <div class="gameover-box">
+      <h2 class="gameover-title" id="gameover-title">The House Wins Tonight</h2>
+      <p class="gameover-sub">Your chips have run dry, friend.<br>Every gambler's luck turns eventually.</p>
+      <button id="restart-btn">Try Again</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
