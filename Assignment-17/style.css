@@ -599,6 +599,25 @@ body::after {
   color: var(--gold);
 }
 
+#api-key-input {
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.75rem;
+  background: rgba(201,168,76,0.06);
+  border: none;
+  border-bottom: 1px solid var(--gold-40);
+  color: var(--cream);
+  padding: 4px 8px;
+  width: 200px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+#api-key-input:focus {
+  border-color: var(--gold);
+}
+#api-key-input::placeholder {
+  color: rgba(245,240,232,0.35);
+}
+
 #ai-divider {
   height: 1px;
   background: linear-gradient(to right, transparent, var(--gold-20), transparent);

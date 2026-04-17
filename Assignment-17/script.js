@@ -902,6 +902,16 @@ restartBtn.addEventListener('click', () => {
 let apiKey = null;
 let currentAIAction = null;
 
+document.getElementById('api-key-input').addEventListener('input', (e) => {
+  const val = e.target.value.trim();
+  if (val.startsWith('sk-ant-')) {
+    apiKey = val;
+    aiStatusDot.className     = 'dot-loaded';
+    aiStatusLabel.textContent = 'Key loaded';
+    console.log('[AI Agent] API key set via paste input.');
+  }
+});
+
 envFileInput.addEventListener('change', () => {
   const file = envFileInput.files[0];
   if (!file) return;
