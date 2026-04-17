@@ -69,7 +69,20 @@
     <header id="game-header">
       <h1>&#127924; THE VELVET ROOM &#127924;</h1>
       <p class="tagline">Est. 1923 &mdash; Members Only</p>
-      <div id="session-stats">Hands: 0 &nbsp;|&nbsp; W: 0 &nbsp;L: 0 &nbsp;P: 0</div>
+      <div id="header-controls-row">
+        <div id="count-display">
+          Count:&nbsp;<span id="running-count-val">0</span>&nbsp;|&nbsp;True:&nbsp;<span id="true-count-val">0.0</span>&nbsp;|&nbsp;Decks:&nbsp;<span id="decks-left-val">~6.0</span>
+        </div>
+        <div id="header-right-group">
+          <div id="deck-selector">
+            Shoe:
+            <button class="deck-btn" data-decks="1">1</button>
+            <button class="deck-btn" data-decks="2">2</button>
+            <button class="deck-btn deck-btn-active" data-decks="6">6</button>
+          </div>
+          <div id="session-stats">Hands: 0 &nbsp;|&nbsp; W: 0 &nbsp;L: 0 &nbsp;P: 0</div>
+        </div>
+      </div>
     </header>
 
     <div class="g-rule"></div>

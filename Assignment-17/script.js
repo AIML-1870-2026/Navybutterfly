@@ -153,6 +153,42 @@ function isBlackjack(hand) {
 }
 
 /* ============================================================
+   HI-LO CARD COUNTING
+============================================================ */
+function hiLoValue(rank) {
+  if (['2','3','4','5','6'].includes(rank)) return 1;
+  if (['7','8','9'].includes(rank)) return 0;
+  return -1; // 10, J, Q, K, A
+}
+
+function countCard(rank) {
+  runningCount += hiLoValue(rank);
+  updateCountDisplay();
+}
+
+function updateCountDisplay() {
+  const decksLeft = Math.max(deck.length / 52, 0.1);
+  const trueCount = runningCount / decksLeft;
+
+  const rcSign = runningCount > 0 ? '+' : '';
+  runningCountVal.textContent = rcSign + runningCount;
+  if (runningCount > 0) {
+    runningCountVal.style.color   = 'var(--gold)';
+    runningCountVal.style.opacity = '1';
+  } else if (runningCount < 0) {
+    runningCountVal.style.color   = '#cc3333';
+    runningCountVal.style.opacity = '1';
+  } else {
+    runningCountVal.style.color   = '';
+    runningCountVal.style.opacity = '0.6';
+  }
+
+  const tcSign = trueCount > 0 ? '+' : '';
+  trueCountVal.textContent = tcSign + trueCount.toFixed(1);
+  decksLeftVal.textContent = '~' + decksLeft.toFixed(1);
+}
+
+/* ============================================================
    GAME STATE
 ============================================================ */
 const S = { BETTING: 'betting', PLAYING: 'playing', COMPLETE: 'complete' };
@@ -166,6 +202,8 @@ let currentHandIdx = 0;
 let balance        = 500;
 let currentBet     = 0;
 let isSplitAces    = false;
+let selectedDecks  = 6;
+let runningCount   = 0;
 
 // Session stats — POLISH 22
 let handsPlayed = 0, wins = 0, losses = 0, pushes = 0;
@@ -200,6 +238,10 @@ const restartBtn     = $('restart-btn');
 const chipBtns       = document.querySelectorAll('.chip');
 const sessionStatsEl = $('session-stats');
 const feltWatermark  = $('felt-watermark');
+const runningCountVal = $('running-count-val');
+const trueCountVal    = $('true-count-val');
+const decksLeftVal    = $('decks-left-val');
+const deckBtns        = document.querySelectorAll('.deck-btn');
 
 // AI panel DOM refs
 const aiStatusDot    = $('ai-status-dot');
@@ -230,6 +272,9 @@ const eddieLines = {
   dealerAce:  "An ace. Careful now — the house has teeth tonight.",
   eleven:     "Eleven, friend. Double down — that's what I'd do.",
   soft1718:   "Soft hand. You could take one more without much risk.",
+  shoe1:      "One deck. Sharp eyes and sharper memory, friend.",
+  shoe2:      "Two decks. The odds narrow, but so does the mystery.",
+  shoe6:      "Six decks. The shoe is long tonight. Patience, friend.",
 };
 
 function getStrategyHint(hand, dealerUp) {
@@ -441,6 +486,7 @@ function dealCard(hand) {
    DEALER PLAY
 ============================================================ */
 function dealerPlay(callback) {
+  countCard(dealerHand[1].rank); // hole card now revealed
   renderDealerHand(false);
   playCardFlip();
 
@@ -448,7 +494,7 @@ function dealerPlay(callback) {
     const t = handTotal(dealerHand);
     if (t < 17) {
       setTimeout(() => {
-        dealCard(dealerHand);
+        countCard(dealCard(dealerHand).rank);
         renderDealerHand(false);
         dealerStep();
       }, 450);
@@ -676,6 +722,23 @@ clearBetBtn.addEventListener('click', () => {
 });
 
 /* ============================================================
+   DECK SELECTOR
+============================================================ */
+deckBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const n = parseInt(btn.dataset.decks, 10);
+    if (n === selectedDecks) return;
+    selectedDecks = n;
+    deckBtns.forEach(b => b.classList.toggle('deck-btn-active', b === btn));
+    deck = freshShoe(selectedDecks);
+    runningCount = 0;
+    updateCountDisplay();
+    const lines = { 1: eddieLines.shoe1, 2: eddieLines.shoe2, 6: eddieLines.shoe6 };
+    eddie(lines[selectedDecks]);
+  });
+});
+
+/* ============================================================
    ACTION: DEAL / NEW ROUND
    BUG 8 fix: 6-deck shoe, reshuffle if < 20 cards remain
 ============================================================ */
@@ -689,8 +752,10 @@ dealBtn.addEventListener('click', () => {
 
   // BUG 8: reshuffle shoe if running low
   if (deck.length < 20) {
-    deck = freshShoe();
-    console.log('[Deck] Reshuffled fresh 6-deck shoe.');
+    deck = freshShoe(selectedDecks);
+    runningCount = 0;
+    updateCountDisplay();
+    console.log('[Deck] Reshuffled fresh shoe.');
   }
 
   balance -= currentBet;
@@ -705,13 +770,13 @@ dealBtn.addEventListener('click', () => {
 
   state = S.PLAYING;
 
-  dealCard(playerHands[0]);
+  countCard(dealCard(playerHands[0]).rank);
   setTimeout(() => {
-    dealCard(dealerHand);
+    countCard(dealCard(dealerHand).rank); // up card
     setTimeout(() => {
-      dealCard(playerHands[0]);
+      countCard(dealCard(playerHands[0]).rank);
       setTimeout(() => {
-        dealCard(dealerHand); // hole card
+        dealCard(dealerHand); // hole card — counted when revealed
         renderDealerHand(true);
         renderPlayerHand();
         updateUI();
@@ -721,6 +786,7 @@ dealBtn.addEventListener('click', () => {
 
         if (pBJ || dBJ) {
           setTimeout(() => {
+            countCard(dealerHand[1].rank); // hole revealed
             renderDealerHand(false);
             playCardFlip();
             setTimeout(resolveRound, 600);
@@ -752,7 +818,7 @@ hitBtn.addEventListener('click', () => {
 
   if (prevT >= 18) eddie(eddieLines.boldHit);
 
-  dealCard(hand);
+  countCard(dealCard(hand).rank);
   renderPlayerHand();
   updateUI();
 
@@ -781,7 +847,7 @@ doubleBtn.addEventListener('click', () => {
   playerBets[currentHandIdx] *= 2;
   eddie(eddieLines.doubleDown);
 
-  dealCard(hand);
+  countCard(dealCard(hand).rank);
   renderPlayerHand();
   updateUI();
 
@@ -820,9 +886,9 @@ splitBtn.addEventListener('click', () => {
   if (isSplitAces) {
     // BUG 6 fix: fully chained sequence, no advanceSplitOrResolve for aces
     setTimeout(() => {
-      dealCard(playerHands[0]);
+      countCard(dealCard(playerHands[0]).rank);
       setTimeout(() => {
-        dealCard(playerHands[1]);
+        countCard(dealCard(playerHands[1]).rank);
         renderPlayerHand();
         updateUI();
         setTimeout(() => dealerPlay(resolveRound), 500);
@@ -830,9 +896,9 @@ splitBtn.addEventListener('click', () => {
     }, 300);
   } else {
     setTimeout(() => {
-      dealCard(playerHands[0]);
+      countCard(dealCard(playerHands[0]).rank);
       setTimeout(() => {
-        dealCard(playerHands[1]);
+        countCard(dealCard(playerHands[1]).rank);
         renderPlayerHand();
         updateUI();
         const hint = getStrategyHint(playerHands[0], dealerHand[0]);
@@ -890,6 +956,8 @@ function newRound() {
 ============================================================ */
 restartBtn.addEventListener('click', () => {
   balance = 500;
+  runningCount = 0;
+  updateCountDisplay();
   gameoverScreen.classList.remove('visible');
   newRound();
   balanceDisp.textContent = '$500';
@@ -1086,3 +1154,4 @@ aiExecuteBtn.addEventListener('click', () => {
    INIT
 ============================================================ */
 updateUI();
+updateCountDisplay();
