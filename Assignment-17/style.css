@@ -662,6 +662,22 @@ body::after {
   color: var(--gold);
 }
 
+#api-key-submit {
+  font-family: 'EB Garamond', serif;
+  font-size: 0.82rem;
+  color: var(--cream);
+  background: transparent;
+  border: 1px solid var(--gold-40);
+  padding: 4px 10px;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  transition: border-color 0.2s, color 0.2s;
+}
+#api-key-submit:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
 #api-key-input {
   font-family: 'Courier Prime', monospace;
   font-size: 0.75rem;

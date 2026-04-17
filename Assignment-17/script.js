@@ -970,25 +970,25 @@ restartBtn.addEventListener('click', () => {
 let apiKey = null;
 let currentAIAction = null;
 
-document.getElementById('api-key-input').addEventListener('input', (e) => {
-  const val = e.target.value.trim();
-  if (val.startsWith('sk-ant-')) {
-    apiKey = val;
-    aiStatusDot.className     = 'dot-loaded';
-    aiStatusLabel.textContent = 'Key loaded';
-    console.log('[AI Agent] API key set via paste input.');
-  }
+function acceptApiKey(inputEl) {
+  const val = inputEl.value.trim();
+  if (!val) return;
+  apiKey = val;
+  inputEl.value = '••••••••';
+  aiStatusDot.className     = 'dot-success';
+  aiStatusLabel.textContent = 'Anthropic key loaded ✓';
+  document.getElementById('api-key-submit').style.display = 'none';
+  setTimeout(() => { aiStatusDot.className = 'dot-loaded'; }, 800);
+  eddie("The credentials check out, friend. Let's play.");
+  console.log('[AI Agent] Anthropic API key accepted.');
+}
+
+const apiKeyInput  = document.getElementById('api-key-input');
+const apiKeySubmit = document.getElementById('api-key-submit');
+apiKeyInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') acceptApiKey(apiKeyInput);
 });
-document.getElementById('api-key-input').addEventListener('keydown', (e) => {
-  if (e.key !== 'Enter') return;
-  const val = e.target.value.trim();
-  if (val.startsWith('sk-ant-')) {
-    apiKey = val;
-    aiStatusDot.className     = 'dot-loaded';
-    aiStatusLabel.textContent = 'Key loaded';
-    console.log('[AI Agent] API key set via Enter key.');
-  }
-});
+apiKeySubmit.addEventListener('click', () => acceptApiKey(apiKeyInput));
 
 envFileInput.addEventListener('change', () => {
   const file = envFileInput.files[0];

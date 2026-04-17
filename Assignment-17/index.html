@@ -173,10 +173,11 @@
           <input
             type="text"
             id="api-key-input"
-            placeholder="…or paste API key here"
+            placeholder="Paste Anthropic API key, press Enter"
             autocomplete="off"
             spellcheck="false"
           />
+          <button id="api-key-submit">Submit</button>
         </div>
       </div>
       <div id="ai-divider"></div>
@@ -185,7 +186,7 @@
           <span id="ai-rec-label">Recommendation:</span>
           <span id="ai-rec-badge" class="rec-none">&mdash;</span>
         </div>
-        <p id="ai-reasoning">Upload a .env file with your ANTHROPIC_API_KEY to enable the AI agent.</p>
+        <p id="ai-reasoning">Upload a .env file or paste your Anthropic API key above to enable the AI agent.</p>
         <button id="ai-execute-btn" disabled>Execute Recommendation</button>
       </div>
     </div>
